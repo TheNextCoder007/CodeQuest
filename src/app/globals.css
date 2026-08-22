@@ -65,7 +65,10 @@
 
 @layer components {
   .cq-card {
-    @apply rounded-2xl border border-white/10 bg-night-900/70 backdrop-blur-sm shadow-card;
+    /* `min-w-0` e essencial: sem ele, um card que contenha bloco de codigo
+       (`white-space: pre`) forca a coluna do grid a ficar do tamanho da linha
+       mais longa - e a pagina inteira passa a rolar na horizontal no celular. */
+    @apply min-w-0 rounded-2xl border border-white/10 bg-night-900/70 backdrop-blur-sm shadow-card;
   }
 
   .cq-card-hover {
@@ -78,6 +81,12 @@
 
   .cq-label {
     @apply text-xs font-semibold uppercase tracking-[0.18em] text-slate-400;
+  }
+
+  /* Alvo de toque confortavel para links de texto pequenos. O `min-h` cresce
+     a area clicavel sem mexer na aparencia do texto. */
+  .cq-tap {
+    @apply inline-flex min-h-[44px] items-center gap-1.5;
   }
 
   /* Area segura para o notch/gestos do Android no build Capacitor. */

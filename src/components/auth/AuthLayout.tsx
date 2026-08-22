@@ -46,7 +46,7 @@ export function TextField({
       </label>
       <input
         id={id}
-        className="w-full rounded-xl border border-white/10 bg-night-950/60 px-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:border-mint-400/60 focus:outline-none focus:ring-2 focus:ring-mint-400/20"
+        className="min-h-[48px] w-full rounded-xl border border-white/10 bg-night-950/60 px-4 py-3 text-base text-white placeholder:text-slate-600 focus:border-mint-400/60 focus:outline-none focus:ring-2 focus:ring-mint-400/20 sm:text-sm"
         {...props}
       />
     </div>
@@ -65,7 +65,7 @@ export function GoogleButton({
       type="button"
       onClick={onClick}
       disabled={loading}
-      className="flex w-full items-center justify-center gap-3 rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white transition hover:border-white/25 hover:bg-white/10 disabled:opacity-50"
+      className="flex min-h-[48px] w-full items-center justify-center gap-3 rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white transition hover:border-white/25 hover:bg-white/10 disabled:opacity-50"
     >
       <svg className="h-4 w-4" viewBox="0 0 24 24" aria-hidden>
         <path

@@ -99,10 +99,10 @@ function PerfilContent() {
     <div className="space-y-6">
       {/* Identidade --------------------------------------------------- */}
       <section className="cq-card bg-gradient-to-br from-mint-600/15 via-night-900/60 to-electric-500/10 p-6">
-        <div className="flex flex-wrap items-center gap-5">
+        <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:gap-5">
           <Avatar name={profile.name} url={profile.avatar_url} size="lg" />
 
-          <div className="min-w-0 flex-1">
+          <div className="w-full min-w-0 flex-1">
             <Label>Perfil do estudante</Label>
 
             {editing ? (
@@ -125,7 +125,7 @@ function PerfilContent() {
                 </Button>
               </div>
             ) : (
-              <h1 className="mt-1 flex flex-wrap items-center gap-2 text-2xl font-extrabold text-white sm:text-3xl">
+              <h1 className="mt-1 flex flex-wrap items-center gap-1 break-words text-2xl font-extrabold text-white sm:text-3xl">
                 {profile.name}
                 <button
                   type="button"
@@ -133,7 +133,7 @@ function PerfilContent() {
                     setNameDraft(profile.name);
                     setEditing(true);
                   }}
-                  className="rounded-lg p-1.5 text-slate-500 transition hover:bg-white/5 hover:text-mint-300"
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-slate-500 transition hover:bg-white/5 hover:text-mint-300"
                   aria-label="Editar nome"
                 >
                   <Pencil className="h-4 w-4" />
@@ -190,7 +190,7 @@ function PerfilContent() {
                 <button
                   type="button"
                   onClick={abrirEdicaoUsername}
-                  className="rounded-lg p-1 text-slate-500 transition hover:bg-white/5 hover:text-mint-300"
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-slate-500 transition hover:bg-white/5 hover:text-mint-300"
                   aria-label="Editar nome de usuário"
                 >
                   <Pencil className="h-3.5 w-3.5" />
@@ -198,7 +198,7 @@ function PerfilContent() {
               </p>
             )}
 
-            <p className="mt-1 text-sm text-slate-400">{user?.email}</p>
+            <p className="mt-1 break-all text-sm text-slate-400">{user?.email}</p>
 
             <div className="mt-3 flex flex-wrap gap-2">
               <Pill tone="blue">
@@ -213,7 +213,7 @@ function PerfilContent() {
         </div>
 
         <div className="mt-6">
-          <div className="mb-2 flex items-center justify-between text-xs text-slate-400">
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-xs text-slate-400">
             <span>Nível {profile.level}</span>
             <span>{xpToNextLevel(profile.xp_total)} XP para o nível {profile.level + 1}</span>
           </div>

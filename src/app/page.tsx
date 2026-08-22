@@ -52,7 +52,7 @@ export default function LandingPage() {
               </LinkButton>
             ) : (
               <>
-                <LinkButton href="/login" variant="ghost" size="sm">
+                <LinkButton href="/login" variant="ghost" size="sm" className="hidden sm:inline-flex">
                   Entrar
                 </LinkButton>
                 <LinkButton href="/cadastro" size="sm">
@@ -66,19 +66,19 @@ export default function LandingPage() {
 
       {/* HERO ------------------------------------------------------------ */}
       <section className="mx-auto max-w-6xl px-4 pb-16 pt-14 sm:pt-20">
-        <div className="grid items-center gap-10 lg:grid-cols-[1.1fr_1fr]">
-          <div className="animate-fade-up">
+        <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
+          <div className="min-w-0 animate-fade-up">
             <Pill tone="mint">
               <Sparkles className="h-3.5 w-3.5" /> Projeto Integrador
             </Pill>
 
-            <h1 className="mt-5 text-4xl font-extrabold leading-[1.05] tracking-tight text-white sm:text-6xl">
+            <h1 className="mt-5 text-[2rem] font-extrabold leading-[1.08] tracking-tight text-white sm:text-5xl lg:text-6xl">
               Aprenda a programar
               <br />
               <span className="cq-gradient-text">jogando de verdade</span>
             </h1>
 
-            <p className="mt-5 max-w-xl text-lg leading-relaxed text-slate-300">
+            <p className="mt-5 max-w-xl text-base leading-relaxed text-slate-300 sm:text-lg">
               O CodeQuest transforma o aprendizado introdutório de programação em uma jornada
               gamificada: você aprende o conceito, resolve o desafio no editor e vê seu progresso
               crescer em XP, níveis, streak e conquistas.
@@ -139,7 +139,7 @@ export default function LandingPage() {
       {/* PROBLEMA -------------------------------------------------------- */}
       <section className="border-y border-white/5 bg-night-900/30 py-16">
         <div className="mx-auto max-w-6xl px-4">
-          <h2 className="text-3xl font-extrabold sm:text-4xl">O desafio de aprender programação</h2>
+          <h2 className="text-2xl font-extrabold sm:text-4xl">O desafio de aprender programação</h2>
           <p className="mt-3 max-w-2xl text-slate-400">
             Como tornar o aprendizado inicial de programação mais{' '}
             <strong className="text-mint-300">interativo, progressivo e motivador</strong>?
@@ -164,7 +164,7 @@ export default function LandingPage() {
       {/* JORNADA --------------------------------------------------------- */}
       <section className="py-16">
         <div className="mx-auto max-w-6xl px-4">
-          <h2 className="text-3xl font-extrabold sm:text-4xl">A jornada do estudante</h2>
+          <h2 className="text-2xl font-extrabold sm:text-4xl">A jornada do estudante</h2>
           <p className="mt-3 max-w-2xl text-slate-400">
             O aluno não recebe todo o conteúdo de uma vez. Ele progride gradualmente e desbloqueia
             novas etapas — cada módulo só abre quando o anterior é concluído.
@@ -194,7 +194,7 @@ export default function LandingPage() {
       {/* GAMIFICACAO ----------------------------------------------------- */}
       <section className="border-y border-white/5 bg-night-900/30 py-16">
         <div className="mx-auto max-w-6xl px-4">
-          <h2 className="text-3xl font-extrabold sm:text-4xl">
+          <h2 className="text-2xl font-extrabold sm:text-4xl">
             Transformando aprendizado em progressão
           </h2>
 
@@ -223,9 +223,9 @@ export default function LandingPage() {
 
       {/* CONCEITO PRIMEIRO ------------------------------------------------ */}
       <section className="py-16">
-        <div className="mx-auto grid max-w-6xl gap-8 px-4 lg:grid-cols-2 lg:items-center">
-          <div>
-            <h2 className="text-3xl font-extrabold sm:text-4xl">Mais do que decorar sintaxe</h2>
+        <div className="mx-auto grid max-w-6xl gap-8 px-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-center">
+          <div className="min-w-0">
+            <h2 className="text-2xl font-extrabold sm:text-4xl">Mais do que decorar sintaxe</h2>
             <p className="mt-4 leading-relaxed text-slate-300">
               O CodeQuest propõe que o estudante compreenda{' '}
               <strong className="text-white">o que é uma condicional</strong> antes de memorizar
@@ -240,13 +240,13 @@ export default function LandingPage() {
             </div>
           </div>
 
-          <div className="grid gap-3">
+          <div className="grid min-w-0 gap-3">
             {[
               { nome: 'Python', codigo: 'if idade >= 18:\n    print("Maior de idade")' },
               { nome: 'JavaScript', codigo: 'if (idade >= 18) {\n  console.log("Maior de idade");\n}' },
               { nome: 'Java', codigo: 'if (idade >= 18) {\n  System.out.println("Maior de idade");\n}' },
             ].map((amostra) => (
-              <div key={amostra.nome}>
+              <div key={amostra.nome} className="min-w-0">
                 <p className="mb-1.5 text-xs font-semibold uppercase tracking-widest text-slate-500">
                   {amostra.nome}
                 </p>
@@ -260,7 +260,7 @@ export default function LandingPage() {
       {/* LINGUAGENS ------------------------------------------------------- */}
       <section className="border-t border-white/5 bg-night-900/30 py-16">
         <div className="mx-auto max-w-6xl px-4">
-          <h2 className="text-3xl font-extrabold sm:text-4xl">Linguagens</h2>
+          <h2 className="text-2xl font-extrabold sm:text-4xl">Linguagens</h2>
           <p className="mt-3 text-slate-400">
             Python está completo no MVP. As demais trilhas já existem na estrutura da plataforma e
             recebem conteúdo nas próximas versões.
@@ -293,7 +293,7 @@ export default function LandingPage() {
       {/* CTA -------------------------------------------------------------- */}
       <section className="py-20">
         <div className="mx-auto max-w-3xl px-4 text-center">
-          <h2 className="text-3xl font-extrabold sm:text-4xl">
+          <h2 className="text-2xl font-extrabold sm:text-4xl">
             Sua primeira linha de código começa hoje
           </h2>
           <p className="mt-4 text-slate-400">
@@ -312,10 +312,8 @@ export default function LandingPage() {
       <footer className="border-t border-white/5 py-8">
         <div className="mx-auto flex max-w-6xl flex-col items-center gap-3 px-4 text-center text-sm text-slate-500 sm:flex-row sm:justify-between sm:text-left">
           <Logo compact className="opacity-70" />
-          <p>
-            CodeQuest — Projeto Integrador · Davi B. Tarquinio, Luiz A. S. P. Jr, Kauan F. Arruda
-          </p>
-          <Link href="/login" className="hover:text-mint-300">
+          <p>CodeQuest — Projeto Integrador</p>
+          <Link href="/login" className="cq-tap px-2 hover:text-mint-300">
             Entrar
           </Link>
         </div>

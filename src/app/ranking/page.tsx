@@ -96,7 +96,7 @@ function RankingContent() {
               type="button"
               onClick={() => setAba(item.id)}
               className={cn(
-                'flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition',
+                'flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold transition',
                 ativa
                   ? 'bg-gradient-to-r from-mint-500 to-aqua-400 text-night-950 shadow-glow'
                   : 'text-slate-400 hover:bg-white/5 hover:text-white',
@@ -144,7 +144,7 @@ function RankingContent() {
             <button
               type="button"
               onClick={() => setAba('global')}
-              className="rounded-xl border border-white/15 bg-white/5 px-5 py-2.5 text-sm font-semibold text-slate-100 transition hover:border-mint-400/50 hover:bg-white/10"
+              className="min-h-[44px] rounded-xl border border-white/15 bg-white/5 px-5 py-2.5 text-sm font-semibold text-slate-100 transition hover:border-mint-400/50 hover:bg-white/10"
             >
               Ver o ranking global
             </button>
@@ -170,7 +170,7 @@ function RankingContent() {
               <li key={linha.id}>
                 <div
                   className={cn(
-                    'flex items-center gap-4 rounded-xl border px-4 py-3 transition',
+                    'flex items-center gap-3 rounded-xl border px-3 py-3 transition sm:gap-4 sm:px-4',
                     euMesmo
                       ? 'border-mint-500/50 bg-mint-500/[0.08] shadow-glow'
                       : 'border-white/10 bg-white/[0.03]',

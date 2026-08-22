@@ -220,7 +220,7 @@ function AmigosContent() {
             autoComplete="off"
             spellCheck={false}
             aria-label="Buscar por nome de usuário"
-            className="w-full bg-transparent py-2.5 font-mono text-sm text-white placeholder:text-slate-600 focus:outline-none"
+            className="w-full bg-transparent py-3 font-mono text-base text-white placeholder:text-slate-600 focus:outline-none sm:text-sm"
           />
           {buscando && <Loader2 className="h-4 w-4 shrink-0 animate-spin text-slate-500" />}
         </div>

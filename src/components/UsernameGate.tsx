@@ -168,7 +168,7 @@ export function UsernameGate({ children }: { children: React.ReactNode }) {
                     setErroSalvar(null);
                   }}
                   placeholder="davi123"
-                  className="w-full bg-transparent py-2.5 font-mono text-sm text-white placeholder:text-slate-600 focus:outline-none"
+                  className="w-full bg-transparent py-3 font-mono text-base text-white placeholder:text-slate-600 focus:outline-none sm:text-sm"
                 />
 
                 <span className="shrink-0">
@@ -209,7 +209,7 @@ export function UsernameGate({ children }: { children: React.ReactNode }) {
             <button
               type="button"
               onClick={sugerirOutro}
-              className="w-full text-center text-xs text-slate-500 transition hover:text-mint-300"
+              className="min-h-[44px] w-full text-center text-xs text-slate-500 transition hover:text-mint-300"
             >
               sugerir outro nome para mim
             </button>

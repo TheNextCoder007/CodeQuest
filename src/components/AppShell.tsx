@@ -58,14 +58,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     // Enquanto o perfil nao tiver @username, o UsernameGate assume a tela
     // inteira e pede para escolher um - inclusive para contas antigas.
     <UsernameGate>
-      <div className="min-h-dvh pb-20 md:pb-0">
+      <div className="min-h-dvh pb-24 lg:pb-0">
       <header className="sticky top-0 z-40 border-b border-white/5 bg-night-950/85 backdrop-blur cq-safe-top">
-        <div className="mx-auto flex h-16 max-w-6xl items-center gap-4 px-4">
+        <div className="mx-auto flex h-16 max-w-6xl items-center gap-2 px-3 sm:gap-4 sm:px-4">
           <Link href="/dashboard" className="shrink-0">
             <Logo />
           </Link>
 
-          <nav className="ml-4 hidden items-center gap-1 md:flex">
+          <nav className="ml-2 hidden items-center gap-1 lg:flex">
             {navItems.map((item) => (
               <Link
                 key={item.href}
@@ -91,7 +91,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <Star className="h-3.5 w-3.5" aria-hidden />
               {xp} XP
             </span>
-            <span className="hidden rounded-full border border-electric-400/30 bg-electric-400/10 px-3 py-1.5 text-xs font-bold text-aqua-300 sm:inline-flex">
+            <span className="hidden rounded-full border border-electric-400/30 bg-electric-400/10 px-3 py-1.5 text-xs font-bold text-aqua-300 lg:inline-flex">
               Nv {level}
             </span>
 
@@ -100,7 +100,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               onClick={() => {
                 void signOut().then(() => router.replace('/'));
               }}
-              className="rounded-lg p-2 text-slate-400 transition hover:bg-white/5 hover:text-rose-300"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-white/5 hover:text-rose-300"
               aria-label="Sair da conta"
               title="Sair"
             >
@@ -120,7 +120,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:py-8">{children}</main>
 
       {/* Barra inferior: e a navegacao principal no celular / .apk */}
-      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-night-950/95 backdrop-blur md:hidden cq-safe-bottom">
+      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-night-950/95 backdrop-blur lg:hidden cq-safe-bottom">
         <div className="mx-auto flex max-w-lg">
           {navItems.map((item) => {
             const Icon = item.icon;

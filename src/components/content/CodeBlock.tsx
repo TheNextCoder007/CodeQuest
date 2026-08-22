@@ -126,7 +126,7 @@ export function CodeBlock({
   return (
     <div
       className={cn(
-        'group relative overflow-hidden rounded-xl border',
+        'group relative min-w-0 overflow-hidden rounded-xl border',
         isTerminal ? 'border-white/10 bg-black/50' : 'border-white/10 bg-night-950/80',
         className,
       )}
@@ -144,14 +144,14 @@ export function CodeBlock({
         <button
           type="button"
           onClick={copy}
-          className="absolute right-2 top-2 rounded-lg border border-white/10 bg-night-900/80 p-1.5 text-slate-400 opacity-0 transition hover:text-mint-300 focus:opacity-100 group-hover:opacity-100"
+          className="absolute right-2 top-2 flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 bg-night-900/80 text-slate-400 transition hover:text-mint-300 focus:opacity-100 md:opacity-0 md:group-hover:opacity-100"
           aria-label="Copiar código"
         >
           {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
         </button>
       )}
 
-      <pre className="cq-editor overflow-x-auto p-4 text-[13px] leading-relaxed">
+      <pre className="cq-editor overflow-x-auto p-3 text-[12px] leading-relaxed sm:p-4 sm:text-[13px]">
         <code className="font-mono">
           <HighlightedCode code={code} language={language} />
         </code>

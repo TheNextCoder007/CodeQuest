@@ -125,7 +125,7 @@ function LessonContent({ lessonId }: { lessonId: string }) {
       <div>
         <Link
           href={`/trilha/${language.slug}`}
-          className="inline-flex items-center gap-1.5 text-sm text-slate-400 transition hover:text-mint-300"
+          className="cq-tap text-sm text-slate-400 transition hover:text-mint-300"
         >
           <ArrowLeft className="h-4 w-4" />
           {module.icon} {module.title}
@@ -133,7 +133,7 @@ function LessonContent({ lessonId }: { lessonId: string }) {
 
         <div className="mt-3 flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-extrabold text-white sm:text-3xl">{lesson.title}</h1>
+            <h1 className="text-xl font-extrabold leading-snug text-white sm:text-3xl">{lesson.title}</h1>
             <p className="mt-1 text-slate-400">{lesson.subtitle}</p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -157,7 +157,11 @@ function LessonContent({ lessonId }: { lessonId: string }) {
           {lesson.polyglot && <PolyglotTabs samples={lesson.polyglot} />}
 
           <div className="flex flex-wrap items-center gap-3">
-            <Button size="lg" onClick={() => setPhase('exercises')}>
+            <Button
+              size="lg"
+              className="w-full sm:w-auto"
+              onClick={() => setPhase('exercises')}
+            >
               Ir para os desafios ({lesson.exercises.length})
               <ArrowRight className="h-5 w-5" />
             </Button>
@@ -190,7 +194,7 @@ function LessonContent({ lessonId }: { lessonId: string }) {
           <button
             type="button"
             onClick={() => setPhase('theory')}
-            className="text-sm text-slate-500 hover:text-slate-300"
+            className="cq-tap text-sm text-slate-500 hover:text-slate-300"
             disabled={finishing}
           >
             ← revisar a teoria desta lição
@@ -205,7 +209,7 @@ function LessonContent({ lessonId }: { lessonId: string }) {
           <Label className="mt-4">Lição concluída</Label>
           <h2 className="mt-2 text-2xl font-extrabold text-white">{lesson.title}</h2>
 
-          <div className="mt-6 flex flex-wrap justify-center gap-3">
+          <div className="mt-6 grid grid-cols-1 gap-3 sm:flex sm:flex-wrap sm:justify-center">
             <div className="rounded-xl border border-mint-500/40 bg-mint-500/10 px-6 py-4">
               <p className="text-2xl font-extrabold text-mint-300">
                 {completion.xpEarned > 0 ? `+${completion.xpEarned}` : '0'} XP
@@ -239,18 +243,18 @@ function LessonContent({ lessonId }: { lessonId: string }) {
             </div>
           )}
 
-          <div className="mt-8 flex flex-wrap justify-center gap-3">
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-center">
             {proxima ? (
-              <LinkButton href={`/licao/${proxima.id}`} size="lg">
+              <LinkButton href={`/licao/${proxima.id}`} size="lg" className="w-full sm:w-auto">
                 Próxima lição: {proxima.title}
                 <ArrowRight className="h-5 w-5" />
               </LinkButton>
             ) : (
-              <LinkButton href="/perfil" size="lg">
+              <LinkButton href="/perfil" size="lg" className="w-full sm:w-auto">
                 Ver minhas conquistas
               </LinkButton>
             )}
-            <LinkButton href={`/trilha/${language.slug}`} variant="secondary" size="lg">
+            <LinkButton href={`/trilha/${language.slug}`} variant="secondary" size="lg" className="w-full sm:w-auto">
               Voltar para a trilha
             </LinkButton>
           </div>

@@ -19,10 +19,12 @@ const variants: Record<Variant, string> = {
   danger: 'border border-rose-500/40 bg-rose-500/10 text-rose-200 hover:bg-rose-500/20',
 };
 
+// `min-h` garante alvo de toque confortavel no celular (o piso recomendado
+// para toque e ~44px; 40px e o minimo aceitavel para botoes secundarios).
 const sizes: Record<Size, string> = {
-  sm: 'px-3 py-1.5 text-sm',
-  md: 'px-5 py-2.5 text-sm',
-  lg: 'px-7 py-3.5 text-base',
+  sm: 'min-h-[40px] px-3.5 py-2 text-sm',
+  md: 'min-h-[44px] px-5 py-2.5 text-sm',
+  lg: 'min-h-[52px] px-6 py-3.5 text-base sm:px-7',
 };
 
 interface CommonProps {

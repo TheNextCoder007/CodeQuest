@@ -27,7 +27,7 @@ export function PolyglotTabs({ samples }: { samples: PolyglotSample[] }) {
             type="button"
             onClick={() => setActive(index)}
             className={cn(
-              'rounded-lg border px-3 py-1.5 text-xs font-semibold transition',
+              'inline-flex min-h-[40px] items-center rounded-lg border px-3.5 py-2 text-xs font-semibold transition',
               index === active
                 ? 'border-mint-500/50 bg-mint-500/15 text-mint-200'
                 : 'border-white/10 bg-white/[0.03] text-slate-400 hover:text-white',

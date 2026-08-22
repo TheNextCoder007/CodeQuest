@@ -54,7 +54,7 @@ export default function LoginPage() {
       footer={
         <>
           Ainda não tem conta?{' '}
-          <Link href="/cadastro" className="font-semibold text-mint-300 hover:underline">
+          <Link href="/cadastro" className="cq-tap font-semibold text-mint-300 hover:underline">
             Criar conta grátis
           </Link>
         </>

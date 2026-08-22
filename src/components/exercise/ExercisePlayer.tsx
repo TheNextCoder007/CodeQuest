@@ -142,7 +142,7 @@ export function ExercisePlayer({
                   setResult(null);
                 }}
                 className={cn(
-                  'flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left text-sm transition',
+                  'flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left text-sm transition min-h-[52px]',
                   isCorrectOption
                     ? 'border-mint-500/60 bg-mint-500/10 text-mint-100'
                     : selected
@@ -221,7 +221,7 @@ export function ExercisePlayer({
             <button
               type="button"
               onClick={() => setShowHint(true)}
-              className="inline-flex items-center gap-2 text-sm font-medium text-amber-300 hover:underline"
+              className="cq-tap text-sm font-medium text-amber-300 hover:underline"
             >
               <Lightbulb className="h-4 w-4" />
               Preciso de uma dica
@@ -280,24 +280,36 @@ export function ExercisePlayer({
       {/* Acoes -------------------------------------------------------- */}
       <div className="flex flex-wrap items-center gap-3">
         {solved ? (
-          <Button onClick={onNext} size="lg">
+          <Button onClick={onNext} size="lg" className="w-full sm:w-auto">
             {isLast ? 'Concluir lição' : 'Próximo desafio'}
           </Button>
         ) : (
           <>
-            <Button onClick={handleCheck} loading={busy} disabled={!canSubmit} size="lg">
+            <Button
+              onClick={handleCheck}
+              loading={busy}
+              disabled={!canSubmit}
+              size="lg"
+              className="w-full sm:w-auto"
+            >
               Verificar resposta
             </Button>
 
             {isCode && (
-              <Button variant="secondary" onClick={handleRun} loading={running} disabled={busy}>
+              <Button
+                variant="secondary"
+                onClick={handleRun}
+                loading={running}
+                disabled={busy}
+                className="flex-1 sm:flex-none"
+              >
                 <Play className="h-4 w-4" />
                 Executar
               </Button>
             )}
 
             {result && !result.correct && (
-              <Button variant="ghost" onClick={handleRetry}>
+              <Button variant="ghost" onClick={handleRetry} className="flex-1 sm:flex-none">
                 <RotateCcw className="h-4 w-4" />
                 Tentar de novo
               </Button>
@@ -307,7 +319,7 @@ export function ExercisePlayer({
               <button
                 type="button"
                 onClick={() => setCode(exercise.starterCode ?? '')}
-                className="text-xs text-slate-500 hover:text-slate-300"
+                className="cq-tap text-xs text-slate-500 hover:text-slate-300"
               >
                 restaurar código inicial
               </button>

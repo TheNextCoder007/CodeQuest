@@ -59,7 +59,7 @@ function DashboardContent() {
       {/* Saudacao + proxima licao ------------------------------------- */}
       <section className="cq-card overflow-hidden bg-gradient-to-br from-mint-600/15 via-night-900/60 to-electric-500/10 p-6 sm:p-8">
         <Label>Bem-vindo de volta</Label>
-        <h1 className="mt-2 text-2xl font-extrabold text-white sm:text-3xl">
+        <h1 className="mt-2 text-xl font-extrabold text-white sm:text-3xl">
           Olá, {primeiroNome} 👋
         </h1>
 
@@ -156,7 +156,7 @@ function DashboardContent() {
             </div>
             <Link
               href={`/trilha/${language.slug}`}
-              className="shrink-0 text-sm font-semibold text-mint-300 hover:underline"
+              className="cq-tap shrink-0 text-sm font-semibold text-mint-300 hover:underline"
             >
               Ver mapa
             </Link>
@@ -171,7 +171,7 @@ function DashboardContent() {
                   href={item.status === 'locked' ? '#' : `/trilha/${language.slug}`}
                   aria-disabled={item.status === 'locked'}
                   className={cn(
-                    'flex items-center gap-3 rounded-xl border px-3 py-2.5 transition',
+                    'flex min-h-[56px] items-center gap-3 rounded-xl border px-3 py-2.5 transition',
                     item.status === 'locked'
                       ? 'cursor-not-allowed border-white/5 bg-white/[0.02] opacity-50'
                       : 'border-white/10 bg-white/[0.03] hover:border-mint-500/40',
@@ -238,7 +238,7 @@ function DashboardContent() {
           <Card>
             <div className="flex items-center justify-between">
               <CardTitle>🏆 Conquistas</CardTitle>
-              <Link href="/perfil" className="text-sm font-semibold text-mint-300 hover:underline">
+              <Link href="/perfil" className="cq-tap text-sm font-semibold text-mint-300 hover:underline">
                 Ver todas
               </Link>
             </div>

@@ -105,7 +105,7 @@ function TrilhaContent({ slug }: { slug: string }) {
               {/* linha vertical ligando os modulos */}
               {index < modules.length - 1 && (
                 <span
-                  className="absolute left-[27px] top-[68px] h-[calc(100%-52px)] w-px bg-gradient-to-b from-white/15 to-transparent"
+                  className="absolute left-[41px] top-[74px] hidden h-[calc(100%-58px)] w-px bg-gradient-to-b from-white/15 to-transparent sm:block"
                   aria-hidden
                 />
               )}
@@ -117,10 +117,10 @@ function TrilhaContent({ slug }: { slug: string }) {
                   item.status === 'completed' && 'border-mint-500/30',
                 )}
               >
-                <div className="flex gap-4">
+                <div className="flex gap-3 sm:gap-4">
                   <div
                     className={cn(
-                      'flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border text-2xl',
+                      'flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border text-xl sm:h-14 sm:w-14 sm:text-2xl',
                       item.status === 'completed'
                         ? 'border-mint-500/50 bg-mint-500/15'
                         : bloqueado
@@ -183,7 +183,7 @@ function TrilhaContent({ slug }: { slug: string }) {
                                   )}
                                 </span>
                                 <span className="min-w-0 flex-1">
-                                  <span className="block truncate text-sm font-medium text-slate-200">
+                                  <span className="block text-sm font-medium leading-snug text-slate-200">
                                     {lesson.title}
                                   </span>
                                   <span className="block truncate text-xs text-slate-500">
@@ -201,13 +201,13 @@ function TrilhaContent({ slug }: { slug: string }) {
                             return (
                               <li key={lesson.id}>
                                 {licaoBloqueada ? (
-                                  <div className="flex cursor-not-allowed items-center gap-3 rounded-lg px-2 py-2 opacity-50">
+                                  <div className="flex min-h-[52px] cursor-not-allowed items-center gap-3 rounded-lg px-2 py-2 opacity-50">
                                     {conteudo}
                                   </div>
                                 ) : (
                                   <Link
                                     href={`/licao/${lesson.id}`}
-                                    className="flex items-center gap-3 rounded-lg px-2 py-2 transition hover:bg-white/5"
+                                    className="flex min-h-[52px] items-center gap-3 rounded-lg px-2 py-2 transition hover:bg-white/5"
                                   >
                                     {conteudo}
                                   </Link>
