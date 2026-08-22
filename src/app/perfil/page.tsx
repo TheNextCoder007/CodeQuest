@@ -1,14 +1,22 @@
 'use client';
 
 import { useState } from 'react';
-import { Check, LogOut, Pencil } from 'lucide-react';
+import { AtSign, Check, LogOut, Pencil } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { AppShell } from '@/components/AppShell';
+import { Avatar } from '@/components/social/Avatar';
 import { Button, LinkButton } from '@/components/ui/Button';
 import { Card, CardTitle, Label, Pill, ProgressBar, StatCard } from '@/components/ui/Card';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { usePlayer } from '@/lib/player/PlayerProvider';
 import { languageBySlug } from '@/content';
+import { isUsernameAvailable } from '@/lib/friends';
+import {
+  USERNAME_MAX,
+  displayUsername,
+  normalizeUsername,
+  validateUsername,
+} from '@/lib/username';
 import {
   achievementsWithStatus,
   displayStreak,
@@ -21,11 +29,18 @@ import { cn } from '@/lib/cn';
 
 function PerfilContent() {
   const { user, signOut, demoMode } = useAuth();
-  const { state, loading, updateName } = usePlayer();
+  const { state, loading, updateName, updateUsername } = usePlayer();
   const router = useRouter();
 
   const [editing, setEditing] = useState(false);
   const [nameDraft, setNameDraft] = useState('');
+
+  // O @username tem edicao propria: precisa validar formato e conferir se
+  // ainda esta livre antes de gravar.
+  const [editingUsername, setEditingUsername] = useState(false);
+  const [usernameDraft, setUsernameDraft] = useState('');
+  const [usernameErro, setUsernameErro] = useState<string | null>(null);
+  const [salvandoUsername, setSalvandoUsername] = useState(false);
 
   if (loading || !state) {
     return <div className="h-64 animate-pulse rounded-2xl bg-white/5" />;
@@ -45,23 +60,47 @@ function PerfilContent() {
     setEditing(false);
   };
 
+  const abrirEdicaoUsername = () => {
+    setUsernameDraft(profile.username ?? '');
+    setUsernameErro(null);
+    setEditingUsername(true);
+  };
+
+  const salvarUsername = async () => {
+    const limpo = normalizeUsername(usernameDraft);
+    const problema = validateUsername(limpo);
+    if (problema) {
+      setUsernameErro(problema);
+      return;
+    }
+
+    if (limpo === profile.username) {
+      setEditingUsername(false);
+      return;
+    }
+
+    setSalvandoUsername(true);
+    setUsernameErro(null);
+    try {
+      if (!(await isUsernameAvailable(limpo, profile.id))) {
+        setUsernameErro('Esse nome de usuário já está em uso.');
+        return;
+      }
+      await updateUsername(limpo);
+      setEditingUsername(false);
+    } catch (falha) {
+      setUsernameErro(falha instanceof Error ? falha.message : 'Não foi possível salvar.');
+    } finally {
+      setSalvandoUsername(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Identidade --------------------------------------------------- */}
       <section className="cq-card bg-gradient-to-br from-mint-600/15 via-night-900/60 to-electric-500/10 p-6">
         <div className="flex flex-wrap items-center gap-5">
-          {profile.avatar_url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={profile.avatar_url}
-              alt=""
-              className="h-20 w-20 rounded-2xl border border-white/10 object-cover"
-            />
-          ) : (
-            <span className="flex h-20 w-20 items-center justify-center rounded-2xl border border-white/10 bg-gradient-to-br from-mint-500/30 to-electric-500/30 text-3xl font-extrabold text-white">
-              {profile.name.trim().charAt(0).toUpperCase() || '?'}
-            </span>
-          )}
+          <Avatar name={profile.name} url={profile.avatar_url} size="lg" />
 
           <div className="min-w-0 flex-1">
             <Label>Perfil do estudante</Label>
@@ -100,6 +139,63 @@ function PerfilContent() {
                   <Pencil className="h-4 w-4" />
                 </button>
               </h1>
+            )}
+
+            {/* @username: campo novo, separado do nome de exibicao acima */}
+            {editingUsername ? (
+              <div className="mt-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex min-w-0 flex-1 items-center gap-2 rounded-xl border border-white/10 bg-night-950/70 px-3 focus-within:border-mint-400/60">
+                    <AtSign className="h-4 w-4 shrink-0 text-slate-500" aria-hidden />
+                    <input
+                      autoFocus
+                      value={usernameDraft}
+                      maxLength={USERNAME_MAX}
+                      autoCapitalize="off"
+                      autoComplete="off"
+                      spellCheck={false}
+                      aria-label="Nome de usuário"
+                      onChange={(event) => {
+                        setUsernameDraft(normalizeUsername(event.target.value));
+                        setUsernameErro(null);
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter') void salvarUsername();
+                        if (event.key === 'Escape') setEditingUsername(false);
+                      }}
+                      className="w-full bg-transparent py-2 font-mono text-sm text-white focus:outline-none"
+                    />
+                  </div>
+                  <Button size="sm" loading={salvandoUsername} onClick={salvarUsername}>
+                    <Check className="h-4 w-4" /> Salvar
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    disabled={salvandoUsername}
+                    onClick={() => setEditingUsername(false)}
+                  >
+                    Cancelar
+                  </Button>
+                </div>
+                <p className={cn('mt-1.5 text-xs', usernameErro ? 'text-rose-300' : 'text-slate-500')}>
+                  {usernameErro ?? 'Letras minúsculas, números e _ — é assim que seus amigos te encontram.'}
+                </p>
+              </div>
+            ) : (
+              <p className="mt-1 flex items-center gap-1.5">
+                <span className="font-mono text-sm text-aqua-300">
+                  {profile.username ? displayUsername(profile.username) : 'sem nome de usuário'}
+                </span>
+                <button
+                  type="button"
+                  onClick={abrirEdicaoUsername}
+                  className="rounded-lg p-1 text-slate-500 transition hover:bg-white/5 hover:text-mint-300"
+                  aria-label="Editar nome de usuário"
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                </button>
+              </p>
             )}
 
             <p className="mt-1 text-sm text-slate-400">{user?.email}</p>

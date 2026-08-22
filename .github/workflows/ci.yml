@@ -37,6 +37,11 @@ jobs:
         # a saida gravada no curriculo.
         run: npm run content:verify-python
 
+      - name: Testar o sistema de amigos
+        # Simula o localStorage e roda o fluxo completo: busca, pedido,
+        # aceite, recusa, remocao e o ranking filtrado por amigos.
+        run: npm run test:amigos
+
       - name: Checagem de tipos
         run: npm run typecheck
 

@@ -13,6 +13,7 @@
     "seed:gen": "tsx scripts/generate-seed.ts",
     "content:check": "tsx scripts/validar-conteudo.ts",
     "content:verify-python": "tsx scripts/dump-exercises.ts > .exercises.json && python scripts/verificar_saidas.py .exercises.json",
+    "test:amigos": "tsx scripts/testar-amigos.mts",
     "cap:sync": "npm run build:static && npx cap sync android",
     "cap:open": "npx cap open android",
     "android:apk": "npm run cap:sync && cd android && gradlew.bat assembleDebug",

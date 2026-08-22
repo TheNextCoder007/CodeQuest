@@ -3,16 +3,18 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import { Flame, Home, LogOut, Map, Star, Trophy, User } from 'lucide-react';
+import { Flame, Home, LogOut, Map, Star, Trophy, User, Users } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { usePlayer } from '@/lib/player/PlayerProvider';
 import { displayStreak, levelFromXp } from '@/lib/gamification';
 import { cn } from '@/lib/cn';
+import { UsernameGate } from './UsernameGate';
 import { Logo } from './Logo';
 
 const navItems = [
   { href: '/dashboard', label: 'Início', icon: Home },
   { href: '/trilha/python', label: 'Trilha', icon: Map },
+  { href: '/amigos', label: 'Amigos', icon: Users },
   { href: '/ranking', label: 'Ranking', icon: Trophy },
   { href: '/perfil', label: 'Perfil', icon: User },
 ];
@@ -53,7 +55,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     (href === '/trilha/python' && pathname.startsWith('/licao'));
 
   return (
-    <div className="min-h-dvh pb-20 md:pb-0">
+    // Enquanto o perfil nao tiver @username, o UsernameGate assume a tela
+    // inteira e pede para escolher um - inclusive para contas antigas.
+    <UsernameGate>
+      <div className="min-h-dvh pb-20 md:pb-0">
       <header className="sticky top-0 z-40 border-b border-white/5 bg-night-950/85 backdrop-blur cq-safe-top">
         <div className="mx-auto flex h-16 max-w-6xl items-center gap-4 px-4">
           <Link href="/dashboard" className="shrink-0">
@@ -136,6 +141,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           })}
         </div>
       </nav>
-    </div>
+      </div>
+    </UsernameGate>
   );
 }

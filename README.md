@@ -32,9 +32,10 @@ Play ou na Microsoft Store (que cobram taxa de desenvolvedor).
 7. [Gerar o app Windows (.exe) e Linux](#7-gerar-o-app-windows-exe-e-linux)
 8. [Builds automáticos com GitHub Actions](#8-builds-automáticos-com-github-actions)
 9. [Como a gamificação funciona](#9-como-a-gamificação-funciona)
-10. [Editar e criar conteúdo](#10-editar-e-criar-conteúdo)
-11. [Decisões técnicas](#11-decisões-técnicas)
-12. [Problemas comuns](#12-problemas-comuns)
+10. [Amigos e @username](#10-amigos-e-username)
+11. [Editar e criar conteúdo](#11-editar-e-criar-conteúdo)
+12. [Decisões técnicas](#12-decisões-técnicas)
+13. [Problemas comuns](#13-problemas-comuns)
 
 ---
 
@@ -67,6 +68,7 @@ Para ligar a nuvem (contas reais, progresso sincronizado entre celular/PC/site),
 | `npm run typecheck` | Confere os tipos do TypeScript |
 | `npm run content:check` | Valida a estrutura do currículo (ids, ordens, alternativas) |
 | `npm run content:verify-python` | Roda as soluções de referência no Python real e compara com as saídas esperadas |
+| `npm run test:amigos` | Testa o fluxo de amizades (busca, pedido, aceite, remoção, ranking) |
 | `npm run seed:gen` | Regera `supabase/seed.sql` a partir do currículo |
 | `npm run cap:sync` | Prepara o projeto Android com a versão mais recente |
 | `npm run android:apk` | Compila o `.apk` (Windows) |
@@ -88,14 +90,17 @@ CodeQuest/
 │   │   ├── dashboard/            # /dashboard ..... visão geral do aluno
 │   │   ├── trilha/[linguagem]/   # /trilha/python . mapa de módulos
 │   │   ├── licao/[id]/           # /licao/py-cond-02 teoria + exercícios
-│   │   ├── perfil/               # /perfil ........ dados e conquistas
-│   │   └── ranking/              # /ranking ....... leaderboard
+│   │   ├── perfil/               # /perfil ........ dados, @username e conquistas
+│   │   ├── amigos/               # /amigos ........ busca, pedidos e lista
+│   │   └── ranking/              # /ranking ....... leaderboard global e de amigos
 │   ├── components/               # UI reutilizável (cards, editor, toasts…)
 │   ├── content/                  # 📚 O CURRÍCULO (fonte da verdade)
 │   │   ├── python/01-fundamentos.ts … 07-projeto-final.ts
 │   │   └── achievements.ts
 │   └── lib/                      # regras de negócio
 │       ├── auth/                 # sessão, Google OAuth, deep link
+│       ├── friends.ts            # amizades, busca e ranking entre amigos
+│       ├── username.ts           # regras do @username
 │       ├── player/               # XP, progresso, conquistas
 │       ├── python/               # ponte com o Pyodide
 │       ├── exercises/            # validação das respostas
@@ -104,6 +109,7 @@ CodeQuest/
 ├── public/pyodide-worker.js      # executa o Python do aluno (Web Worker)
 ├── supabase/
 │   ├── migrations/0001_init.sql  # tabelas + RLS + gatilhos
+│   ├── migrations/0002_amigos.sql # @username + amizades + RLS
 │   └── seed.sql                  # conteúdo das trilhas (GERADO)
 ├── android/                      # projeto Android (Capacitor)
 ├── src-tauri/                    # projeto desktop (Tauri)
@@ -147,14 +153,16 @@ O Supabase dá um Postgres gerenciado + autenticação no plano gratuito, **sem 
 
 1. No menu lateral, abra **SQL Editor** → **New query**.
 2. Copie **todo** o conteúdo de [`supabase/migrations/0001_init.sql`](supabase/migrations/0001_init.sql), cole e clique em **Run**.
-3. Abra outra query, cole **todo** o conteúdo de [`supabase/seed.sql`](supabase/seed.sql) e rode também.
+3. Abra outra query, cole **todo** o conteúdo de [`supabase/migrations/0002_amigos.sql`](supabase/migrations/0002_amigos.sql) e rode.
+   Esse arquivo cria o campo `@username` e o sistema de amigos (ver [seção 10](#10-amigos-e-username)).
+4. Abra mais uma query, cole **todo** o conteúdo de [`supabase/seed.sql`](supabase/seed.sql) e rode também.
    Esse arquivo popula as 5 linguagens, 24 lições, 46 exercícios e 16 conquistas.
 
-> Os dois scripts podem ser executados quantas vezes você quiser: eles usam
+> Os três scripts podem ser executados quantas vezes você quiser: eles usam
 > `if not exists` / `on conflict do update` e não duplicam nada.
 
 Confira em **Table Editor** que apareceram as tabelas `profiles`, `languages`, `modules`,
-`lessons`, `exercises`, `user_progress`, `achievements` e `user_achievements`.
+`lessons`, `exercises`, `user_progress`, `achievements`, `user_achievements` e `friendships`.
 
 ### 3.3 Pegar as chaves
 
@@ -546,12 +554,105 @@ desbloqueio aparece como um cartão animado na tela.
 
 ### Ranking
 
-Leaderboard por XP lendo `profiles`. A política de RLS libera a **leitura** dos campos públicos
-para qualquer usuário autenticado, mas a **escrita** continua restrita ao dono da linha.
+Leaderboard por XP lendo `profiles`, com duas abas: **Global** (todos os estudantes) e **Amigos**
+(só quem está na sua lista confirmada — ver [seção 10](#10-amigos-e-username)). A política de RLS
+libera a **leitura** dos campos públicos para qualquer usuário autenticado, mas a **escrita**
+continua restrita ao dono da linha.
 
 ---
 
-## 10. Editar e criar conteúdo
+## 10. Amigos e @username
+
+### 10.1 Os dois nomes do perfil
+
+O CodeQuest tem **dois campos de identidade, independentes**:
+
+| Campo | Para que serve | Regras |
+| --- | --- | --- |
+| **Nome de exibição** (`name`) | é o nome que aparece em destaque no perfil e no ranking | livre — pode ter espaços, acentos e maiúsculas (ex.: `TheNextOne`) |
+| **Nome de usuário** (`username`) | identifica você na busca de amigos, mostrado como `@davi123` | único, sem espaços; de 3 a 20 caracteres, apenas `a-z`, `0-9` e `_` |
+
+Os dois são editáveis a qualquer momento na tela de **Perfil**.
+
+### 10.2 Quando o app pede o @username
+
+O componente [`UsernameGate`](src/components/UsernameGate.tsx) envolve todas as telas autenticadas
+e assume a tela inteira sempre que o perfil está sem `username`. Isso resolve os três casos com um
+mecanismo só:
+
+1. quem se cadastrou agora por e-mail e senha;
+2. quem entrou pela primeira vez com o Google;
+3. **quem já tinha conta antes deste recurso existir** — como a coluna nasce nula, essas contas
+   caem na mesma tela no próximo login, sem precisar de nenhuma migração de dados.
+
+A sugestão inicial vem do nome de exibição (`Davi Tarquinio` → `davitarquinio`), mas o campo fica
+editável: a pessoa confirma o que quiser. Enquanto digita, o app consulta se o nome está livre e
+mostra ✓ ou ✗ — e a garantia final é o índice único do banco, que devolve erro se duas pessoas
+tentarem o mesmo nome ao mesmo tempo.
+
+### 10.3 Como as amizades funcionam
+
+A tabela `friendships` guarda **uma linha por par de pessoas**:
+
+| Coluna | Significado |
+| --- | --- |
+| `user_id` | quem **enviou** o pedido |
+| `friend_id` | quem **recebeu** o pedido |
+| `status` | `pending` até ser aceito, depois `accepted` |
+
+Um índice único sobre `(least(user_id, friend_id), greatest(user_id, friend_id))` impede duas
+linhas para o mesmo par, inclusive em direções opostas.
+
+O fluxo na tela **Amigos** (`/amigos`):
+
+1. **buscar** pelo `@usuario` do colega (a busca ignora maiúsculas e o `@` inicial);
+2. **enviar o pedido** — a amizade *não* é criada na hora, fica `pending`;
+3. o colega vê o pedido em **Pedidos recebidos** e escolhe **Aceitar** ou **Recusar**;
+4. depois de aceito, os dois aparecem em **Meus amigos**, com opção de **Remover**.
+
+Detalhe de conveniência: se você enviar um pedido para alguém que **já tinha te convidado**, o app
+aceita o pedido existente em vez de criar outro — como em qualquer rede social.
+
+Recusar um pedido, cancelar um envio e desfazer uma amizade são a **mesma** operação: apagar a
+linha. Assim a pessoa pode ser convidada de novo depois.
+
+### 10.4 Ranking entre amigos
+
+A tela de **Ranking** tem duas abas:
+
+- **Global** — todos os estudantes da plataforma, por XP;
+- **Amigos** — só você e seus amigos confirmados.
+
+Quem ainda não tem amigos vê um convite para adicionar alguém, com atalho para `/amigos`, em vez de
+uma lista vazia sem explicação.
+
+### 10.5 Segurança (RLS)
+
+As políticas estão em [`supabase/migrations/0002_amigos.sql`](supabase/migrations/0002_amigos.sql):
+
+| Operação | Quem pode |
+| --- | --- |
+| `SELECT` | apenas as linhas em que você aparece (como remetente **ou** destinatário) |
+| `INSERT` | só em nome próprio (`auth.uid() = user_id`) e sempre com `status = 'pending'` |
+| `UPDATE` | **somente quem recebeu** o pedido, e apenas para `accepted` — o remetente não consegue aceitar o próprio pedido |
+| `DELETE` | qualquer um dos dois lados |
+
+Ou seja: ninguém enxerga nem mexe nas amizades alheias, mesmo chamando a API do Supabase por fora
+do aplicativo.
+
+### 10.6 No modo demonstração
+
+Sem Supabase configurado, as amizades ficam no `localStorage` e funcionam entre as contas locais
+criadas no mesmo dispositivo. Além delas existem três perfis de exemplo — `@ana_dev`, `@kauanfa` e
+`@luizjr` — que **aceitam pedidos automaticamente** (não há ninguém do outro lado para responder),
+e um deles envia um convite para a conta nova. Isso permite demonstrar os dois lados do fluxo na
+apresentação, com um aparelho só.
+
+O comando `npm run test:amigos` roda esse fluxo inteiro de forma automatizada.
+
+---
+
+## 11. Editar e criar conteúdo
 
 O currículo é **TypeScript**, não banco de dados — por isso funciona offline no `.apk` e no `.exe`,
 e por isso um erro de digitação aparece na hora, com autocompletar.
@@ -592,7 +693,7 @@ O campo opcional `polyglot` gera as abas "o conceito é o mesmo, a sintaxe muda"
 
 ---
 
-## 11. Decisões técnicas
+## 12. Decisões técnicas
 
 ### Por que esta stack
 
@@ -644,7 +745,7 @@ limites do plano gratuito. A execução de código não custa nada porque aconte
 
 ---
 
-## 12. Problemas comuns
+## 13. Problemas comuns
 
 **O app mostra "modo demonstração" mesmo com o `.env.local` preenchido**
 Reinicie o `npm run dev` — variáveis `NEXT_PUBLIC_*` são lidas na inicialização. Confira também se
@@ -674,6 +775,22 @@ Plugin. O JDK que vem com o Android Studio já é o correto:
 **`npm run tauri:build` reclama de `link.exe` não encontrado (Windows)**
 Faltam as Visual Studio Build Tools com a carga **"Desenvolvimento para desktop com C++"**.
 Veja a [seção 7.1](#71-o-que-instalar-uma-vez-só).
+
+**Já tinha conta e agora o app pede um nome de usuário**
+É o esperado: o campo `username` nasce vazio para contas antigas, e a tela aparece uma única vez
+para você escolher. Se ela não aparecer, confirme que rodou o `0002_amigos.sql` no SQL Editor.
+
+**"column profiles.username does not exist"**
+A migration `0002_amigos.sql` ainda não foi aplicada nesse projeto do Supabase. Rode-a e recarregue
+a página.
+
+**A busca não encontra meu colega**
+A busca é pelo `@usuario`, não pelo nome de exibição — e só encontra quem já escolheu um. Peça para
+o colega abrir o app uma vez e confirmar o nome de usuário dele.
+
+**O pedido de amizade sumiu sozinho**
+Recusar, cancelar e desfazer apagam a mesma linha. Se o colega recusou, o pedido desaparece dos
+dois lados e você pode enviar de novo mais tarde.
 
 **As lições não aparecem depois de configurar o Supabase**
 As lições **não** vêm do banco — elas estão no aplicativo. Se a tela estiver vazia, o problema é

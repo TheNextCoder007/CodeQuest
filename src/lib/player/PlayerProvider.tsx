@@ -31,6 +31,8 @@ interface PlayerContextValue {
   completeLesson: (lessonId: string, xp: number, flawless: boolean) => Promise<CompletionResult>;
   setCurrentLanguage: (slug: string) => Promise<void>;
   updateName: (name: string) => Promise<void>;
+  /** Grava o @username. Lanca erro se ja estiver em uso. */
+  updateUsername: (username: string) => Promise<void>;
 }
 
 const PlayerContext = createContext<PlayerContextValue | null>(null);
@@ -77,6 +79,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         const seed: ProfileRow = {
           id: user.id,
           name: user.name,
+          username: null,
           avatar_url: user.avatarUrl,
           xp_total: 0,
           level: 1,
@@ -280,6 +283,52 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     [user, state],
   );
 
+  /**
+   * Define o @username.
+   *
+   * A unicidade real e do banco (indice unico em lower(username)); se dois
+   * alunos escolherem o mesmo nome ao mesmo tempo, o segundo recebe o erro
+   * 23505 e a interface pede outro. Por isso o estado local so e atualizado
+   * depois que o banco confirma.
+   */
+  const updateUsername = useCallback(
+    async (username: string) => {
+      const clean = username.trim().toLowerCase();
+      if (!user || !state || !clean || clean === state.profile.username) return;
+
+      if (!isSupabaseConfigured) {
+        if (localState.usernameTaken(clean, user.id)) {
+          throw new Error('Esse nome de usuário já está em uso.');
+        }
+        const nextState: PlayerState = {
+          ...state,
+          profile: { ...state.profile, username: clean },
+        };
+        setState(nextState);
+        localState.save(user.id, nextState);
+        return;
+      }
+
+      const { error: saveError } = await getSupabase()!
+        .from('profiles')
+        .update({ username: clean })
+        .eq('id', user.id);
+
+      if (saveError) {
+        const duplicado =
+          saveError.code === '23505' || saveError.message.includes('profiles_username_key');
+        throw new Error(
+          duplicado
+            ? 'Esse nome de usuário já está em uso. Tente outro.'
+            : saveError.message,
+        );
+      }
+
+      setState({ ...state, profile: { ...state.profile, username: clean } });
+    },
+    [user, state],
+  );
+
   const value = useMemo<PlayerContextValue>(
     () => ({
       state,
@@ -289,8 +338,18 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       completeLesson,
       setCurrentLanguage,
       updateName,
+      updateUsername,
     }),
-    [state, loading, error, load, completeLesson, setCurrentLanguage, updateName],
+    [
+      state,
+      loading,
+      error,
+      load,
+      completeLesson,
+      setCurrentLanguage,
+      updateName,
+      updateUsername,
+    ],
   );
 
   return <PlayerContext.Provider value={value}>{children}</PlayerContext.Provider>;

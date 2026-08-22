@@ -1,92 +1,158 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Flame, Trophy } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { Flame, Globe, Trophy, UserPlus, Users } from 'lucide-react';
 import { AppShell } from '@/components/AppShell';
+import { Avatar } from '@/components/social/Avatar';
+import { LinkButton } from '@/components/ui/Button';
 import { Card, CardTitle, Label, Pill } from '@/components/ui/Card';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { fetchLeaderboard } from '@/lib/leaderboard';
+import { fetchFriendsLeaderboard } from '@/lib/friends';
+import { displayUsername } from '@/lib/username';
 import { levelTitle } from '@/lib/gamification';
 import type { LeaderboardRow } from '@/types/db';
 import { cn } from '@/lib/cn';
 
 const medalhas = ['🥇', '🥈', '🥉'];
 
-function Avatar({ row }: { row: LeaderboardRow }) {
-  if (row.avatar_url) {
-    // eslint-disable-next-line @next/next/no-img-element
-    return (
-      <img
-        src={row.avatar_url}
-        alt=""
-        className="h-10 w-10 rounded-full border border-white/10 object-cover"
-      />
-    );
-  }
-  return (
-    <span className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-gradient-to-br from-mint-500/25 to-electric-500/25 text-sm font-bold text-white">
-      {row.name.trim().charAt(0).toUpperCase() || '?'}
-    </span>
-  );
-}
+type Aba = 'global' | 'amigos';
+
+const abas = [
+  { id: 'global' as const, label: 'Global', icon: Globe },
+  { id: 'amigos' as const, label: 'Amigos', icon: Users },
+];
 
 function RankingContent() {
   const { user } = useAuth();
+
+  const [aba, setAba] = useState<Aba>('global');
   const [rows, setRows] = useState<LeaderboardRow[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [erro, setErro] = useState<string | null>(null);
+
+  const carregar = useCallback(
+    async (alvo: Aba) => {
+      setRows(null);
+      setErro(null);
+      try {
+        const dados =
+          alvo === 'global' ? await fetchLeaderboard() : await fetchFriendsLeaderboard(user?.id ?? '');
+        setRows(dados);
+      } catch (falha) {
+        setErro(falha instanceof Error ? falha.message : 'Não foi possível carregar o ranking.');
+      }
+    },
+    [user?.id],
+  );
 
   useEffect(() => {
-    let active = true;
-    fetchLeaderboard()
-      .then((data) => {
-        if (active) setRows(data);
-      })
-      .catch((fetchError: Error) => {
-        if (active) setError(fetchError.message);
-      });
-    return () => {
-      active = false;
-    };
-  }, []);
+    void carregar(aba);
+  }, [aba, carregar]);
 
-  const minhaPosicao = rows?.findIndex((row) => row.id === user?.id) ?? -1;
+  const minhaPosicao = rows?.findIndex((linha) => linha.id === user?.id) ?? -1;
+
+  // Na aba de amigos, o proprio usuario sempre aparece - entao "sozinho na
+  // lista" significa que ele ainda nao tem nenhum amigo confirmado.
+  const semAmigos = aba === 'amigos' && rows !== null && rows.length <= 1;
 
   return (
     <div className="space-y-6">
+      {/* Cabecalho ---------------------------------------------------- */}
       <section className="cq-card bg-gradient-to-br from-electric-500/15 via-night-900/60 to-mint-600/10 p-6">
         <Label>Comparação amigável</Label>
         <h1 className="mt-1.5 flex items-center gap-2 text-2xl font-extrabold text-white sm:text-3xl">
           🥇 Ranking
         </h1>
         <p className="mt-2 max-w-xl text-sm text-slate-400">
-          Todos os estudantes do CodeQuest ordenados por XP acumulado. Cada lição concluída muda
-          essa lista.
+          {aba === 'global'
+            ? 'Todos os estudantes do CodeQuest ordenados por XP acumulado. Cada lição concluída muda essa lista.'
+            : 'Só você e seus amigos confirmados. Uma disputa mais justa — e bem mais divertida.'}
         </p>
-        {minhaPosicao >= 0 && (
+
+        {minhaPosicao >= 0 && !semAmigos && (
           <div className="mt-4">
             <Pill tone="mint">
               <Trophy className="h-3.5 w-3.5" /> Você está em {minhaPosicao + 1}º lugar
+              {aba === 'amigos' ? ' entre seus amigos' : ''}
             </Pill>
           </div>
         )}
       </section>
 
-      {error && (
+      {/* Abas ---------------------------------------------------------- */}
+      <div
+        role="tablist"
+        aria-label="Tipo de ranking"
+        className="flex gap-1 rounded-xl border border-white/10 bg-night-900/60 p-1"
+      >
+        {abas.map((item) => {
+          const Icon = item.icon;
+          const ativa = aba === item.id;
+          return (
+            <button
+              key={item.id}
+              role="tab"
+              aria-selected={ativa}
+              type="button"
+              onClick={() => setAba(item.id)}
+              className={cn(
+                'flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition',
+                ativa
+                  ? 'bg-gradient-to-r from-mint-500 to-aqua-400 text-night-950 shadow-glow'
+                  : 'text-slate-400 hover:bg-white/5 hover:text-white',
+              )}
+            >
+              <Icon className="h-4 w-4" aria-hidden />
+              {item.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {erro && (
         <Card className="border-rose-500/40">
           <CardTitle>Não foi possível carregar o ranking</CardTitle>
-          <p className="mt-2 text-sm text-slate-400">{error}</p>
+          <p className="mt-2 text-sm text-slate-400">{erro}</p>
         </Card>
       )}
 
-      {!rows && !error && (
+      {!rows && !erro && (
         <div className="space-y-2">
-          {[0, 1, 2, 3, 4].map((index) => (
-            <div key={index} className="h-16 animate-pulse rounded-xl bg-white/5" />
+          {[0, 1, 2, 3, 4].map((indice) => (
+            <div key={indice} className="h-16 animate-pulse rounded-xl bg-white/5" />
           ))}
         </div>
       )}
 
-      {rows && rows.length === 0 && (
+      {/* Aba de amigos sem ninguem ------------------------------------- */}
+      {semAmigos && (
+        <Card className="border-mint-500/30 bg-gradient-to-br from-mint-600/10 to-transparent text-center">
+          <span className="text-4xl" aria-hidden>
+            🤝
+          </span>
+          <CardTitle className="mt-4">Seu ranking de amigos está te esperando</CardTitle>
+          <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-slate-400">
+            Você ainda não tem amigos confirmados, então só aparece você aqui. Adicione um colega
+            pelo <span className="font-mono text-aqua-300">@usuario</span> dele e acompanhem o
+            progresso um do outro — estudar com alguém é o jeito mais fácil de manter o streak.
+          </p>
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+            <LinkButton href="/amigos">
+              <UserPlus className="h-4 w-4" />
+              Adicionar amigos
+            </LinkButton>
+            <button
+              type="button"
+              onClick={() => setAba('global')}
+              className="rounded-xl border border-white/15 bg-white/5 px-5 py-2.5 text-sm font-semibold text-slate-100 transition hover:border-mint-400/50 hover:bg-white/10"
+            >
+              Ver o ranking global
+            </button>
+          </div>
+        </Card>
+      )}
+
+      {rows && rows.length === 0 && aba === 'global' && (
         <Card>
           <CardTitle>Ranking vazio</CardTitle>
           <p className="mt-2 text-sm text-slate-400">
@@ -95,46 +161,53 @@ function RankingContent() {
         </Card>
       )}
 
-      {rows && rows.length > 0 && (
+      {/* Lista ---------------------------------------------------------- */}
+      {rows && rows.length > 0 && !semAmigos && (
         <ul className="space-y-2">
-          {rows.map((row, index) => {
-            const euMesmo = row.id === user?.id;
+          {rows.map((linha, indice) => {
+            const euMesmo = linha.id === user?.id;
             return (
-              <li key={row.id}>
+              <li key={linha.id}>
                 <div
                   className={cn(
                     'flex items-center gap-4 rounded-xl border px-4 py-3 transition',
                     euMesmo
                       ? 'border-mint-500/50 bg-mint-500/[0.08] shadow-glow'
                       : 'border-white/10 bg-white/[0.03]',
-                    index < 3 && !euMesmo && 'border-amber-400/25 bg-amber-400/[0.04]',
+                    indice < 3 && !euMesmo && 'border-amber-400/25 bg-amber-400/[0.04]',
                   )}
                 >
                   <span className="w-8 shrink-0 text-center text-lg font-bold">
-                    {index < 3 ? (
-                      <span aria-label={`${index + 1}º lugar`}>{medalhas[index]}</span>
+                    {indice < 3 ? (
+                      <span aria-label={`${indice + 1}º lugar`}>{medalhas[indice]}</span>
                     ) : (
-                      <span className="text-sm text-slate-500">{index + 1}</span>
+                      <span className="text-sm text-slate-500">{indice + 1}</span>
                     )}
                   </span>
 
-                  <Avatar row={row} />
+                  <Avatar name={linha.name} url={linha.avatar_url} />
 
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-semibold text-white">
-                      {row.name}
+                      {linha.name}
                       {euMesmo && <span className="ml-2 text-xs text-mint-300">(você)</span>}
                     </p>
-                    <p className="text-xs text-slate-500">
-                      Nível {row.level} · {levelTitle(row.level)}
+                    <p className="truncate text-xs text-slate-500">
+                      {linha.username && (
+                        <span className="font-mono text-aqua-300">
+                          {displayUsername(linha.username)}
+                          {' · '}
+                        </span>
+                      )}
+                      Nível {linha.level} · {levelTitle(linha.level)}
                     </p>
                   </div>
 
                   <div className="shrink-0 text-right">
-                    <p className="font-bold text-mint-300">{row.xp_total} XP</p>
+                    <p className="font-bold text-mint-300">{linha.xp_total} XP</p>
                     <p className="flex items-center justify-end gap-1 text-xs text-slate-500">
                       <Flame className="h-3 w-3 text-amber-400" />
-                      {row.streak_count}
+                      {linha.streak_count}
                     </p>
                   </div>
                 </div>
@@ -142,6 +215,15 @@ function RankingContent() {
             );
           })}
         </ul>
+      )}
+
+      {/* Atalho para quem ja tem amigos --------------------------------- */}
+      {aba === 'amigos' && !semAmigos && rows && rows.length > 1 && (
+        <div className="text-center">
+          <LinkButton href="/amigos" variant="ghost" size="sm">
+            Gerenciar amigos
+          </LinkButton>
+        </div>
       )}
     </div>
   );
