@@ -61,7 +61,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <div className="min-h-dvh pb-24 lg:pb-0">
       <header className="sticky top-0 z-40 border-b border-white/5 bg-night-950/85 backdrop-blur cq-safe-top">
         <div className="mx-auto flex h-16 max-w-6xl items-center gap-2 px-3 sm:gap-4 sm:px-4">
-          <Link href="/dashboard" className="shrink-0">
+          <Link href="/dashboard" className="flex min-h-[44px] min-w-0 items-center">
             <Logo />
           </Link>
 
@@ -82,16 +82,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             ))}
           </nav>
 
-          <div className="ml-auto flex items-center gap-2">
-            <span className="hidden items-center gap-1.5 rounded-full border border-amber-400/30 bg-amber-400/10 px-3 py-1.5 text-xs font-bold text-amber-200 sm:inline-flex">
-              <Flame className="h-3.5 w-3.5" aria-hidden />
+          {/* O bloco da direita nao encolhe: quem cede espaco e o nome escrito
+              do logo. Se ele encolhesse, o botao de sair sairia da tela. */}
+          <div className="ml-auto flex shrink-0 items-center gap-2">
+            <span className="hidden shrink-0 items-center gap-1.5 rounded-full border border-amber-400/30 bg-amber-400/10 px-3 py-1.5 text-xs font-bold text-amber-200 sm:inline-flex">
+              <Flame className="h-3.5 w-3.5 shrink-0" aria-hidden />
               {streak}
             </span>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-mint-500/30 bg-mint-500/10 px-3 py-1.5 text-xs font-bold text-mint-300">
-              <Star className="h-3.5 w-3.5" aria-hidden />
+            {/* O XP nunca encolhe: com a fonte ampliada quem cede espaco e o
+                nome escrito do logo (que vira so o simbolo), nao o numero. */}
+            <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-mint-500/30 bg-mint-500/10 px-3 py-1.5 text-xs font-bold text-mint-300">
+              <Star className="h-3.5 w-3.5 shrink-0" aria-hidden />
               {xp} XP
             </span>
-            <span className="hidden rounded-full border border-electric-400/30 bg-electric-400/10 px-3 py-1.5 text-xs font-bold text-aqua-300 lg:inline-flex">
+            <span className="hidden shrink-0 rounded-full border border-electric-400/30 bg-electric-400/10 px-3 py-1.5 text-xs font-bold text-aqua-300 lg:inline-flex">
               Nv {level}
             </span>
 
@@ -100,7 +104,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               onClick={() => {
                 void signOut().then(() => router.replace('/'));
               }}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-white/5 hover:text-rose-300"
+              className="flex h-[40px] w-[40px] shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-white/5 hover:text-rose-300"
               aria-label="Sair da conta"
               title="Sair"
             >
@@ -121,7 +125,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* Barra inferior: e a navegacao principal no celular / .apk */}
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-night-950/95 backdrop-blur lg:hidden cq-safe-bottom">
-        <div className="mx-auto flex max-w-lg">
+        <div className="mx-auto flex w-full max-w-lg">
           {navItems.map((item) => {
             const Icon = item.icon;
             const active = isActive(item.href);
@@ -130,12 +134,21 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  'flex flex-1 flex-col items-center gap-1 py-3 text-[11px] font-medium transition',
+                  // `min-w-0` + `basis-0`: sem isso cada item fica do tamanho do
+                  // proprio rotulo e, com a fonte ampliada do Android, os cinco
+                  // somados passam da largura da tela - o ultimo ("Perfil")
+                  // simplesmente some da borda.
+                  'flex min-w-0 flex-1 basis-0 flex-col items-center gap-1 px-1 py-3 text-[11px] font-medium transition',
                   active ? 'text-mint-300' : 'text-slate-500',
                 )}
               >
-                <Icon className={cn('h-5 w-5', active && 'drop-shadow-[0_0_6px_rgba(0,227,148,0.6)]')} />
-                {item.label}
+                <Icon
+                  className={cn(
+                    'h-5 w-5 shrink-0',
+                    active && 'drop-shadow-[0_0_6px_rgba(0,227,148,0.6)]',
+                  )}
+                />
+                <span className="w-full truncate text-center">{item.label}</span>
               </Link>
             );
           })}

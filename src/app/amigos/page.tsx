@@ -52,7 +52,9 @@ function PessoaRow({
         </p>
       </div>
 
-      {children && <div className="flex shrink-0 gap-2">{children}</div>}
+      {children && (
+        <div className="flex w-full flex-wrap gap-2 sm:w-auto sm:shrink-0">{children}</div>
+      )}
     </div>
   );
 }

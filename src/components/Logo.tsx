@@ -16,7 +16,12 @@ export function LogoMark({ className }: { className?: string }) {
       viewBox="0 0 512 512"
       role="img"
       aria-label="CodeQuest"
-      className={cn('h-9 w-9 shrink-0', className)}
+      className={cn(
+        // Medida em px de proposito: `h-9` e rem e incharia junto com a
+        // escala de fonte do Android, espremendo o resto do cabecalho.
+        'h-[36px] w-[36px] shrink-0',
+        className,
+      )}
     >
       <defs>
         {/* id fixo: se houver mais de um logo na pagina, todos apontam para o
@@ -62,10 +67,10 @@ export function Logo({
   compact?: boolean;
 }) {
   return (
-    <span className={cn('inline-flex items-center gap-2', className)}>
+    <span className={cn('inline-flex min-w-0 items-center gap-2', className)}>
       <LogoMark />
       {!compact && (
-        <span className="text-base font-extrabold tracking-tight text-white sm:text-lg">
+        <span className="min-w-0 truncate text-base font-extrabold tracking-tight text-white sm:text-lg">
           Code<span className="cq-gradient-text">Quest</span>
         </span>
       )}

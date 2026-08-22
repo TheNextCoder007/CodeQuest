@@ -96,14 +96,14 @@ function RankingContent() {
               type="button"
               onClick={() => setAba(item.id)}
               className={cn(
-                'flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold transition',
+                'flex min-h-[44px] min-w-0 flex-1 basis-0 items-center justify-center gap-2 rounded-lg px-2 py-2.5 text-sm font-semibold transition sm:px-3',
                 ativa
                   ? 'bg-gradient-to-r from-mint-500 to-aqua-400 text-night-950 shadow-glow'
                   : 'text-slate-400 hover:bg-white/5 hover:text-white',
               )}
             >
-              <Icon className="h-4 w-4" aria-hidden />
-              {item.label}
+              <Icon className="h-4 w-4 shrink-0" aria-hidden />
+              <span className="truncate">{item.label}</span>
             </button>
           );
         })}
@@ -177,7 +177,7 @@ function RankingContent() {
                     indice < 3 && !euMesmo && 'border-amber-400/25 bg-amber-400/[0.04]',
                   )}
                 >
-                  <span className="w-8 shrink-0 text-center text-lg font-bold">
+                  <span className="w-7 shrink-0 text-center text-lg font-bold sm:w-8">
                     {indice < 3 ? (
                       <span aria-label={`${indice + 1}º lugar`}>{medalhas[indice]}</span>
                     ) : (
@@ -203,7 +203,7 @@ function RankingContent() {
                     </p>
                   </div>
 
-                  <div className="shrink-0 text-right">
+                  <div className="min-w-0 text-right">
                     <p className="font-bold text-mint-300">{linha.xp_total} XP</p>
                     <p className="flex items-center justify-end gap-1 text-xs text-slate-500">
                       <Flame className="h-3 w-3 text-amber-400" />

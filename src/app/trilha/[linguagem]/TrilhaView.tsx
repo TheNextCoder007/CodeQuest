@@ -137,7 +137,7 @@ function TrilhaContent({ slug }: { slug: string }) {
                       <span className="font-mono text-xs text-slate-500">
                         {String(item.module.orderIndex).padStart(2, '0')}
                       </span>
-                      <h2 className="text-lg font-bold text-white">{item.module.title}</h2>
+                      <h2 className="min-w-0 text-lg font-bold text-white">{item.module.title}</h2>
                       {item.status === 'completed' && <Pill tone="mint">Concluído</Pill>}
                       {bloqueado && <Pill>Bloqueado</Pill>}
                     </div>
@@ -253,9 +253,11 @@ function OutrasLinguagens({ atual }: { atual: string }) {
             <span className="text-xl" aria-hidden>
               {language.icon}
             </span>
-            <span className="text-sm font-semibold text-white">{language.name}</span>
+            <span className="min-w-0 truncate text-sm font-semibold text-white">
+              {language.name}
+            </span>
             {!language.available && (
-              <span className="ml-auto text-[10px] uppercase tracking-wider text-slate-500">
+              <span className="ml-auto shrink-0 text-[10px] uppercase tracking-wider text-slate-500">
                 em breve
               </span>
             )}

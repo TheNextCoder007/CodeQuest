@@ -80,7 +80,7 @@ export function Pill({
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold',
+        'inline-flex max-w-full items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold',
         tones[tone],
         className,
       )}

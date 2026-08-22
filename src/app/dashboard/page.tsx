@@ -129,8 +129,8 @@ function DashboardContent() {
 
       {/* Progresso do nivel ------------------------------------------- */}
       <Card>
-        <div className="flex items-center justify-between gap-4">
-          <div>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="min-w-0">
             <CardTitle>Nível {state.profile.level}</CardTitle>
             <p className="mt-0.5 text-sm text-slate-400">{levelTitle(state.profile.level)}</p>
           </div>
@@ -143,7 +143,7 @@ function DashboardContent() {
         {/* Trilha ------------------------------------------------------ */}
         <Card>
           <div className="flex items-center justify-between gap-3">
-            <div>
+            <div className="min-w-0">
               <CardTitle>
                 <span className="mr-2" aria-hidden>
                   {language.icon}
@@ -188,10 +188,12 @@ function DashboardContent() {
                       {item.completedLessons}/{item.totalLessons} lições
                     </span>
                   </span>
-                  {item.status === 'completed' && <Check className="h-4 w-4 text-mint-400" />}
-                  {item.status === 'locked' && <Lock className="h-4 w-4 text-slate-600" />}
+                  {item.status === 'completed' && (
+                    <Check className="h-4 w-4 shrink-0 text-mint-400" />
+                  )}
+                  {item.status === 'locked' && <Lock className="h-4 w-4 shrink-0 text-slate-600" />}
                   {item.status === 'available' && (
-                    <span className="text-xs font-bold text-mint-300">
+                    <span className="shrink-0 text-xs font-bold text-mint-300">
                       {Math.round(item.ratio * 100)}%
                     </span>
                   )}
@@ -201,7 +203,7 @@ function DashboardContent() {
           </ul>
         </Card>
 
-        <div className="space-y-6">
+        <div className="min-w-0 space-y-6">
           {/* Missoes -------------------------------------------------- */}
           <Card>
             <CardTitle>🎯 Missões de hoje</CardTitle>

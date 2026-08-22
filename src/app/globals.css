@@ -14,6 +14,13 @@
   html,
   body {
     @apply bg-night-950 text-slate-200 antialiased;
+    /* Rede de seguranca: se algum elemento teimar em ficar mais largo que a
+       tela (fonte ampliada do Android, nome muito comprido, XP de 6 digitos),
+       a pagina inteira NAO sai deslizando para o lado - o que no celular faz
+       parecer que o conteudo esta cortado.
+       `clip` em vez de `hidden` porque `hidden` cria um contexto de rolagem e
+       quebraria o `position: sticky` do cabecalho. */
+    overflow-x: clip;
   }
 
   body {
@@ -30,6 +37,18 @@
   h3,
   h4 {
     @apply font-bold tracking-tight text-white;
+    /* Palavra comprida ("Condicionais" com a fonte ampliada do Android) quebra
+       em vez de esticar a coluna inteira. */
+    overflow-wrap: break-word;
+  }
+
+  /* Item de grade encolhe junto com a tela.
+     Por padrao `min-width: auto` faz a coluna nascer do tamanho do conteudo
+     mais largo - um card de codigo ou um titulo grande empurra a pagina toda
+     para fora do celular. `:where()` mantem especificidade zero, entao
+     qualquer `min-w-*` do Tailwind continua vencendo. */
+  :where(.grid) > * {
+    min-width: 0;
   }
 
   ::selection {
