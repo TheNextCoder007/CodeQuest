@@ -1,0 +1,96 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* As fontes vem do Google Fonts via <link> no layout. Se nao carregarem
+     (app offline, por exemplo), o stack do sistema assume sem quebrar nada. */
+  --font-sans: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'Cascadia Code', 'Consolas', monospace;
+  color-scheme: dark;
+}
+
+@layer base {
+  html,
+  body {
+    @apply bg-night-950 text-slate-200 antialiased;
+  }
+
+  body {
+    background-image:
+      radial-gradient(circle at 12% 8%, rgba(0, 227, 148, 0.13), transparent 42%),
+      radial-gradient(circle at 88% 4%, rgba(56, 214, 245, 0.12), transparent 40%),
+      radial-gradient(circle at 70% 96%, rgba(37, 99, 235, 0.16), transparent 45%);
+    background-attachment: fixed;
+    min-height: 100dvh;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-bold tracking-tight text-white;
+  }
+
+  ::selection {
+    @apply bg-mint-500/30 text-white;
+  }
+
+  /* Barra de rolagem discreta, combinando com o tema escuro. */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-night-600;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-night-700;
+  }
+
+  /* Respeita quem desativou animacoes no sistema. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  .cq-card {
+    @apply rounded-2xl border border-white/10 bg-night-900/70 backdrop-blur-sm shadow-card;
+  }
+
+  .cq-card-hover {
+    @apply transition duration-200 hover:border-mint-500/40 hover:shadow-glow;
+  }
+
+  .cq-gradient-text {
+    @apply bg-gradient-to-r from-mint-400 via-aqua-300 to-electric-400 bg-clip-text text-transparent;
+  }
+
+  .cq-label {
+    @apply text-xs font-semibold uppercase tracking-[0.18em] text-slate-400;
+  }
+
+  /* Area segura para o notch/gestos do Android no build Capacitor. */
+  .cq-safe-top {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+  .cq-safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+}
+
+/* Editor de codigo: textarea monoespacada com tabulacao de 4 espacos. */
+.cq-editor {
+  tab-size: 4;
+  -moz-tab-size: 4;
+}

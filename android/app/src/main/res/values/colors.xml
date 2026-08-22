@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Paleta do CodeQuest no Android.
+    O template do Capacitor referencia estas cores em styles.xml mas nao cria
+    o arquivo, entao ele faz parte do projeto.
+-->
+<resources>
+    <color name="colorPrimary">#04070F</color>
+    <color name="colorPrimaryDark">#04070F</color>
+    <color name="colorAccent">#00E394</color>
+    <color name="splashBackground">#04070F</color>
+</resources>

@@ -1,0 +1,53 @@
+# dependencias
+node_modules/
+.pnp
+.pnp.js
+
+# build Next.js
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+
+# ambiente
+.env
+.env.local
+.env*.local
+
+# Tauri
+src-tauri/target/
+src-tauri/gen/
+
+# Capacitor / Android
+# A pasta `android/` E VERSIONADA de proposito (recomendacao oficial do
+# Capacitor): ela guarda o AndroidManifest com o deep link do login Google e
+# os icones do app. Aqui ignoramos apenas o que o Gradle gera.
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/app/src/main/assets/public/
+android/app/src/main/assets/capacitor.config.json
+android/app/src/main/assets/capacitor.plugins.json
+android/capacitor-cordova-android-plugins/
+ios/
+.gradle/
+local.properties
+*.apk
+*.aab
+*.keystore
+!android-release.keystore.example
+
+# arquivo temporario do verificador de exercicios
+.exercises.json
+
+# sistema
+.DS_Store
+Thumbs.db
+*.log
+npm-debug.log*
+
+# editores
+.vscode/*
+!.vscode/extensions.json
+.idea/

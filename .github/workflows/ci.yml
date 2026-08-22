@@ -1,0 +1,56 @@
+name: CI
+
+# Verificacao rapida a cada push: o conteudo das licoes esta consistente, os
+# tipos batem e o site compila. Roda em minutos e e gratuito em repositorios
+# publicos.
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  verificar:
+    name: Tipos, conteúdo e build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Validar estrutura do currículo
+        run: npm run content:check
+
+      - name: Conferir as saídas esperadas dos exercícios
+        # Executa as solucoes de referencia no Python de verdade e compara com
+        # a saida gravada no curriculo.
+        run: npm run content:verify-python
+
+      - name: Checagem de tipos
+        run: npm run typecheck
+
+      - name: Build do site
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+
+      - name: Conferir que o seed está sincronizado com o currículo
+        run: |
+          npm run seed:gen
+          if ! git diff --quiet -- supabase/seed.sql; then
+            echo "::error::supabase/seed.sql está desatualizado. Rode 'npm run seed:gen' e faça commit."
+            git --no-pager diff --stat -- supabase/seed.sql
+            exit 1
+          fi

@@ -1,0 +1,18 @@
+{
+  "name": "CodeQuest — aprenda programação jogando",
+  "short_name": "CodeQuest",
+  "description": "Plataforma gamificada para aprender programação: trilhas progressivas, exercícios com feedback imediato, XP, streak, conquistas e ranking.",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#04070f",
+  "theme_color": "#04070f",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

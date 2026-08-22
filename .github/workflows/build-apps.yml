@@ -1,0 +1,182 @@
+name: Gerar instaladores (Windows, Linux e Android)
+
+# Compila os tres aplicativos em maquinas do proprio GitHub - de graca e sem
+# precisar ter Windows, Linux e Android Studio nas maquinas do grupo.
+#
+# COMO USAR
+#   Opcao A (recomendada): crie uma tag de versao e faca push dela.
+#       git tag v1.0.0
+#       git push origin v1.0.0
+#     Os tres arquivos aparecem em Releases, prontos para download.
+#
+#   Opcao B: aba Actions > "Gerar instaladores" > Run workflow.
+#     Os arquivos ficam em "Artifacts", no final da execucao.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+# Necessario para o job de release conseguir publicar os arquivos.
+permissions:
+  contents: write
+
+env:
+  # Preenchidos em Settings > Secrets and variables > Actions > Variables.
+  # Se ficarem vazios, os apps sao gerados em modo demonstracao (progresso
+  # salvo apenas no dispositivo), o que ainda funciona para apresentar.
+  NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+  NEXT_PUBLIC_SITE_URL: ${{ vars.NEXT_PUBLIC_SITE_URL }}
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Windows (.exe) e Linux (.AppImage / .deb) - ambos via Tauri
+  # ---------------------------------------------------------------------------
+  desktop:
+    name: Desktop (${{ matrix.nome }})
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            nome: Windows
+            artefato: codequest-windows
+          - os: ubuntu-22.04
+            nome: Linux
+            artefato: codequest-linux
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Dependências de sistema do Tauri (Linux)
+        if: matrix.os == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            librsvg2-dev \
+            patchelf \
+            build-essential \
+            file \
+            libssl-dev \
+            libgtk-3-dev
+
+      - name: Instalar Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache do Cargo
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+
+      - name: Instalar dependências do projeto
+        run: npm ci
+
+      - name: Compilar o aplicativo
+        run: npm run tauri:build
+
+      - name: Publicar artefatos
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artefato }}
+          if-no-files-found: error
+          path: |
+            src-tauri/target/release/bundle/nsis/*.exe
+            src-tauri/target/release/bundle/msi/*.msi
+            src-tauri/target/release/bundle/appimage/*.AppImage
+            src-tauri/target/release/bundle/deb/*.deb
+
+  # ---------------------------------------------------------------------------
+  # Android (.apk) - via Capacitor
+  # ---------------------------------------------------------------------------
+  android:
+    name: Android (.apk)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      # O Gradle do Capacitor 6 roda com JDK 17 (JDK 21+ ainda quebra em
+      # algumas versoes do Android Gradle Plugin).
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Instalar dependências do projeto
+        run: npm ci
+
+      - name: Gerar o export estático e sincronizar o Capacitor
+        run: npm run cap:sync
+
+      - name: Compilar o APK
+        working-directory: android
+        run: |
+          chmod +x ./gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Renomear o APK
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk codequest.apk
+
+      - name: Publicar artefato
+        uses: actions/upload-artifact@v4
+        with:
+          name: codequest-android
+          if-no-files-found: error
+          path: codequest.apk
+
+  # ---------------------------------------------------------------------------
+  # Junta tudo em uma Release do GitHub (apenas quando ha uma tag v*)
+  # ---------------------------------------------------------------------------
+  release:
+    name: Publicar release
+    needs: [desktop, android]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixar todos os artefatos
+        uses: actions/download-artifact@v4
+        with:
+          path: artefatos
+
+      - name: Listar o que foi gerado
+        run: find artefatos -type f | sort
+
+      - name: Criar a release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: CodeQuest ${{ github.ref_name }}
+          generate_release_notes: true
+          files: artefatos/**/*
+          body: |
+            ## CodeQuest ${{ github.ref_name }}
+
+            Baixe o aplicativo para a sua plataforma:
+
+            | Plataforma | Arquivo |
+            | --- | --- |
+            | 🪟 Windows | `.exe` (instalador) ou `.msi` |
+            | 🐧 Linux | `.AppImage` (basta dar permissão de execução) ou `.deb` |
+            | 🤖 Android | `.apk` (permita "instalar de fontes desconhecidas") |
+            | 🌐 Navegador | acesse o site publicado na Vercel |
+
+            > O `.apk` é assinado com a chave de depuração e o `.exe` não tem
+            > certificado pago, então o Android e o Windows exibem um aviso de
+            > "origem desconhecida" na primeira instalação. Isso é esperado em
+            > distribuição direta, fora das lojas.
