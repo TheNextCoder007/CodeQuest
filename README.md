@@ -69,6 +69,8 @@ Para ligar a nuvem (contas reais, progresso sincronizado entre celular/PC/site),
 | `npm run content:check` | Valida a estrutura do currículo (ids, ordens, alternativas) |
 | `npm run content:verify-python` | Roda as soluções de referência no Python real e compara com as saídas esperadas |
 | `npm run test:amigos` | Testa o fluxo de amizades (busca, pedido, aceite, remoção, ranking) |
+| `npm run test:progresso` | Garante que falha de leitura nunca vira progresso zerado |
+| `npm run test:migrations` | Aplica as migrations 3× num Postgres real e confere que nada é apagado |
 | `npm run seed:gen` | Regera `supabase/seed.sql` a partir do currículo |
 | `npm run cap:sync` | Prepara o projeto Android com a versão mais recente |
 | `npm run android:apk` | Compila o `.apk` (Windows) |
@@ -110,6 +112,8 @@ CodeQuest/
 ├── supabase/
 │   ├── migrations/0001_init.sql  # tabelas + RLS + gatilhos
 │   ├── migrations/0002_amigos.sql # @username + amizades + RLS
+│   ├── migrations/0003_protecao_progresso.sql # travas contra perda de XP
+│   ├── diagnostico.sql           # consultas de conferência (só leitura)
 │   └── seed.sql                  # conteúdo das trilhas (GERADO)
 ├── android/                      # projeto Android (Capacitor)
 ├── src-tauri/                    # projeto desktop (Tauri)
@@ -155,11 +159,21 @@ O Supabase dá um Postgres gerenciado + autenticação no plano gratuito, **sem 
 2. Copie **todo** o conteúdo de [`supabase/migrations/0001_init.sql`](supabase/migrations/0001_init.sql), cole e clique em **Run**.
 3. Abra outra query, cole **todo** o conteúdo de [`supabase/migrations/0002_amigos.sql`](supabase/migrations/0002_amigos.sql) e rode.
    Esse arquivo cria o campo `@username` e o sistema de amigos (ver [seção 10](#10-amigos-e-username)).
-4. Abra mais uma query, cole **todo** o conteúdo de [`supabase/seed.sql`](supabase/seed.sql) e rode também.
+4. Abra outra query, cole **todo** o conteúdo de [`supabase/migrations/0003_protecao_progresso.sql`](supabase/migrations/0003_protecao_progresso.sql) e rode.
+   Esse arquivo adiciona as travas que impedem XP e progresso de serem rebaixados,
+   além da função `reconciliar_xp()` que reconstrói o XP a partir das lições concluídas.
+5. Abra mais uma query, cole **todo** o conteúdo de [`supabase/seed.sql`](supabase/seed.sql) e rode também.
    Esse arquivo popula as 5 linguagens, 24 lições, 46 exercícios e 16 conquistas.
 
-> Os três scripts podem ser executados quantas vezes você quiser: eles usam
-> `if not exists` / `on conflict do update` e não duplicam nada.
+> Os quatro scripts podem ser executados quantas vezes você quiser: eles usam
+> `if not exists` / `on conflict do update` e não duplicam nem apagam nada.
+> Isso não é só promessa: `npm run test:migrations` aplica os quatro **três vezes
+> seguidas** num PostgreSQL de verdade e confere que o progresso de um aluno
+> continua intacto.
+
+Se em algum momento você desconfiar de que perdeu progresso, rode
+[`supabase/diagnostico.sql`](supabase/diagnostico.sql) — ele só lê, e mostra
+quantas lições e quanto XP cada conta tem registrado no banco.
 
 Confira em **Table Editor** que apareceram as tabelas `profiles`, `languages`, `modules`,
 `lessons`, `exercises`, `user_progress`, `achievements`, `user_achievements` e `friendships`.

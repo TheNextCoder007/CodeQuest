@@ -42,6 +42,16 @@ jobs:
         # aceite, recusa, remocao e o ranking filtrado por amigos.
         run: npm run test:amigos
 
+      - name: Testar a leitura do progresso
+        # Trava a regra que ja causou "progresso zerado" na tela: falha de
+        # leitura nunca pode virar estado vazio.
+        run: npm run test:progresso
+
+      - name: Testar as migrations num Postgres real
+        # Aplica 0001+0002+0003+seed tres vezes seguidas e confere que o
+        # progresso de um aluno continua intacto.
+        run: npm run test:migrations
+
       - name: Checagem de tipos
         run: npm run typecheck
 

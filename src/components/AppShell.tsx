@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import { Flame, Home, LogOut, Map, Star, Trophy, User, Users } from 'lucide-react';
+import { CloudOff, Flame, Home, LogOut, Map, RefreshCw, Star, Trophy, User, Users } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { usePlayer } from '@/lib/player/PlayerProvider';
 import { displayStreak, levelFromXp } from '@/lib/gamification';
@@ -18,6 +18,33 @@ const navItems = [
   { href: '/ranking', label: 'Ranking', icon: Trophy },
   { href: '/perfil', label: 'Perfil', icon: User },
 ];
+
+/**
+ * Servidor fora do ar e a pessoa ainda sem nada carregado.
+ *
+ * Existe para nao cair no caso antigo: antes, uma leitura que falhava virava
+ * um perfil zerado e a pessoa via "0 XP / 0 licoes" - parecia que o progresso
+ * tinha sido apagado. Nada foi apagado; so nao deu para ler.
+ */
+function OfflineScreen({ message, onRetry }: { message: string; onRetry: () => void }) {
+  return (
+    <div className="flex min-h-dvh flex-col items-center justify-center gap-5 px-6 text-center">
+      <CloudOff className="h-10 w-10 text-slate-500" aria-hidden />
+      <div>
+        <h1 className="text-lg font-bold text-white">Sem conexão com o servidor</h1>
+        <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-slate-400">{message}</p>
+      </div>
+      <button
+        type="button"
+        onClick={onRetry}
+        className="inline-flex min-h-[44px] items-center gap-2 rounded-xl border border-mint-500/40 bg-mint-500/10 px-5 text-sm font-semibold text-mint-300 transition hover:bg-mint-500/20"
+      >
+        <RefreshCw className="h-4 w-4" aria-hidden />
+        Tentar de novo
+      </button>
+    </div>
+  );
+}
 
 function LoadingScreen({ message }: { message: string }) {
   return (
@@ -35,7 +62,7 @@ function LoadingScreen({ message }: { message: string }) {
  */
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { user, loading, signOut, demoMode } = useAuth();
-  const { state } = usePlayer();
+  const { state, loading: carregandoProgresso, error: erroProgresso, refresh } = usePlayer();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -45,6 +72,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   if (loading) return <LoadingScreen message="Carregando seu progresso..." />;
   if (!user) return <LoadingScreen message="Redirecionando para o login..." />;
+
+  // Nada carregado + erro = nao da para mostrar numero nenhum sem mentir.
+  if (!state && !carregandoProgresso && erroProgresso) {
+    return <OfflineScreen message={erroProgresso} onRetry={() => void refresh()} />;
+  }
 
   const xp = state?.profile.xp_total ?? 0;
   const streak = displayStreak(state?.profile.last_study_date ?? null, state?.profile.streak_count ?? 0);

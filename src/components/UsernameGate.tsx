@@ -34,7 +34,7 @@ type Disponibilidade = 'idle' | 'checking' | 'free' | 'taken' | 'error';
  */
 export function UsernameGate({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
-  const { state, loading, updateUsername } = usePlayer();
+  const { state, loading, origem, updateUsername } = usePlayer();
 
   const [valor, setValor] = useState('');
   const [tocado, setTocado] = useState(false);
@@ -43,7 +43,11 @@ export function UsernameGate({ children }: { children: React.ReactNode }) {
   const [erroSalvar, setErroSalvar] = useState<string | null>(null);
   const preenchido = useRef(false);
 
-  const precisaEscolher = Boolean(user) && !loading && Boolean(state) && !state?.profile.username;
+  // `origem !== 'nenhum'` e o que impede o loop relatado: sem essa checagem,
+  // qualquer leitura que falhasse virava um perfil com `username: null` e
+  // esta tela reaparecia para quem ja tinha escolhido um nome ha semanas.
+  const precisaEscolher =
+    Boolean(user) && !loading && origem !== 'nenhum' && Boolean(state) && !state?.profile.username;
 
   // Sugestao inicial, so na primeira vez que a tela aparece.
   useEffect(() => {

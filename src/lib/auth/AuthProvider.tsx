@@ -53,8 +53,27 @@ const fromSession = (session: Session): AuthUser => {
   };
 };
 
+/** Dois usuarios sao "o mesmo" quando nada que o app usa mudou. */
+const mesmoUsuario = (a: AuthUser | null, b: AuthUser | null): boolean => {
+  if (a === b) return true;
+  if (!a || !b) return false;
+  return (
+    a.id === b.id && a.email === b.email && a.name === b.name && a.avatarUrl === b.avatarUrl
+  );
+};
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(null);
+  /**
+   * `onAuthStateChange` dispara a cada renovacao de token (e ao voltar para a
+   * aba). Se cada disparo criasse um objeto novo, o PlayerProvider recarregaria
+   * o progresso inteiro toda vez - multiplicando as chances de pegar uma
+   * leitura ruim e, com ela, a tela zerada. Por isso trocamos o objeto so
+   * quando algum campo realmente mudou.
+   */
+  const [user, setUserState] = useState<AuthUser | null>(null);
+  const setUser = useCallback((proximo: AuthUser | null) => {
+    setUserState((atual) => (mesmoUsuario(atual, proximo) ? atual : proximo));
+  }, []);
   const [loading, setLoading] = useState(true);
   const deepLinkReady = useRef(false);
 

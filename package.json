@@ -20,7 +20,9 @@
     "android:apk:unix": "npm run cap:sync && cd android && ./gradlew assembleDebug",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
-    "tauri:build": "tauri build"
+    "tauri:build": "tauri build",
+    "test:progresso": "tsx scripts/testar-progresso.mts",
+    "test:migrations": "tsx scripts/testar-migrations.mts"
   },
   "dependencies": {
     "@capacitor/android": "^6.2.0",
@@ -41,6 +43,7 @@
   },
   "devDependencies": {
     "@capacitor/cli": "^6.2.0",
+    "@electric-sql/pglite": "^0.5.7",
     "@tauri-apps/cli": "^2.2.7",
     "@types/node": "^22.13.0",
     "@types/react": "^19.0.8",
