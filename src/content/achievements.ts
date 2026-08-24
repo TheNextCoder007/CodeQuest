@@ -7,6 +7,8 @@
  * recem-desbloqueados.
  */
 
+import type { SegredoId } from './tags';
+
 export type AchievementCriteria =
   | { kind: 'first_lesson' }
   | { kind: 'lessons_completed'; count: number }
@@ -14,7 +16,12 @@ export type AchievementCriteria =
   | { kind: 'language_completed'; languageSlug: string }
   | { kind: 'streak'; days: number }
   | { kind: 'xp'; amount: number }
-  | { kind: 'flawless' };
+  | { kind: 'flawless' }
+  /**
+   * Espelha uma tag secreta: a conquista e concedida junto com a tag.
+   * O que desbloqueia cada segredo esta em `src/content/tags.ts` (SEGREDOS).
+   */
+  | { kind: 'secret'; segredo: SegredoId };
 
 export interface AchievementDefinition {
   id: string;
@@ -136,6 +143,38 @@ export const achievements: AchievementDefinition[] = [
     description: 'Você concluiu uma lição acertando todos os exercícios de primeira.',
     icon: '🥇',
     criteria: { kind: 'flawless' },
+  },
+
+  /* ---------------------------------------------------------------------
+   * Espelhos das tags secretas (ver src/content/tags.ts)
+   * ------------------------------------------------------------------ */
+  {
+    id: 'segredo-curioso',
+    title: 'Achou o botão secreto',
+    description: 'Dez cliques no logo depois, algo apareceu.',
+    icon: '🕵️',
+    criteria: { kind: 'secret', segredo: 'logo-10-cliques' },
+  },
+  {
+    id: 'segredo-relampago',
+    title: 'Rápido no gatilho',
+    description: 'Uma lição inteira em menos de 30 segundos, sem errar nada.',
+    icon: '⚡',
+    criteria: { kind: 'secret', segredo: 'licao-relampago' },
+  },
+  {
+    id: 'segredo-madrugada',
+    title: 'Turno da madrugada',
+    description: 'Concluiu uma lição entre meia-noite e cinco da manhã.',
+    icon: '🦉',
+    criteria: { kind: 'secret', segredo: 'madrugada' },
+  },
+  {
+    id: 'segredo-impecavel',
+    title: 'Série impecável',
+    description: 'Cinco lições sem errar um único exercício.',
+    icon: '💎',
+    criteria: { kind: 'secret', segredo: 'serie-impecavel' },
   },
 ];
 

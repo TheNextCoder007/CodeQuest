@@ -33,9 +33,10 @@ Play ou na Microsoft Store (que cobram taxa de desenvolvedor).
 8. [Builds automáticos com GitHub Actions](#8-builds-automáticos-com-github-actions)
 9. [Como a gamificação funciona](#9-como-a-gamificação-funciona)
 10. [Amigos e @username](#10-amigos-e-username)
-11. [Editar e criar conteúdo](#11-editar-e-criar-conteúdo)
-12. [Decisões técnicas](#12-decisões-técnicas)
-13. [Problemas comuns](#13-problemas-comuns)
+11. [Tags, perfil público e foto](#11-tags-perfil-público-e-foto)
+12. [Editar e criar conteúdo](#12-editar-e-criar-conteúdo)
+13. [Decisões técnicas](#13-decisões-técnicas)
+14. [Problemas comuns](#14-problemas-comuns)
 
 ---
 
@@ -69,6 +70,7 @@ Para ligar a nuvem (contas reais, progresso sincronizado entre celular/PC/site),
 | `npm run content:check` | Valida a estrutura do currículo (ids, ordens, alternativas) |
 | `npm run content:verify-python` | Roda as soluções de referência no Python real e compara com as saídas esperadas |
 | `npm run test:amigos` | Testa o fluxo de amizades (busca, pedido, aceite, remoção, ranking) |
+| `npm run test:tags` | Testa as tags, os segredos e as regras do @username |
 | `npm run test:progresso` | Garante que falha de leitura nunca vira progresso zerado |
 | `npm run test:migrations` | Aplica as migrations 3× num Postgres real e confere que nada é apagado |
 | `npm run seed:gen` | Regera `supabase/seed.sql` a partir do currículo |
@@ -113,6 +115,7 @@ CodeQuest/
 │   ├── migrations/0001_init.sql  # tabelas + RLS + gatilhos
 │   ├── migrations/0002_amigos.sql # @username + amizades + RLS
 │   ├── migrations/0003_protecao_progresso.sql # travas contra perda de XP
+│   ├── migrations/0004_perfis_publicos.sql # tags, perfil público, avatar
 │   ├── diagnostico.sql           # consultas de conferência (só leitura)
 │   └── seed.sql                  # conteúdo das trilhas (GERADO)
 ├── android/                      # projeto Android (Capacitor)
@@ -162,12 +165,14 @@ O Supabase dá um Postgres gerenciado + autenticação no plano gratuito, **sem 
 4. Abra outra query, cole **todo** o conteúdo de [`supabase/migrations/0003_protecao_progresso.sql`](supabase/migrations/0003_protecao_progresso.sql) e rode.
    Esse arquivo adiciona as travas que impedem XP e progresso de serem rebaixados,
    além da função `reconciliar_xp()` que reconstrói o XP a partir das lições concluídas.
-5. Abra mais uma query, cole **todo** o conteúdo de [`supabase/seed.sql`](supabase/seed.sql) e rode também.
-   Esse arquivo popula as 5 linguagens, 24 lições, 46 exercícios e 16 conquistas.
+5. Abra outra query, cole **todo** o conteúdo de [`supabase/migrations/0004_perfis_publicos.sql`](supabase/migrations/0004_perfis_publicos.sql) e rode.
+   Esse arquivo cria as tags de perfil, o bucket de fotos e as regras do @username (ver [seção 11](#11-tags-perfil-público-e-foto)).
+6. Abra mais uma query, cole **todo** o conteúdo de [`supabase/seed.sql`](supabase/seed.sql) e rode também.
+   Esse arquivo popula as 5 linguagens, 24 lições, 46 exercícios, 20 conquistas e 11 tags.
 
-> Os quatro scripts podem ser executados quantas vezes você quiser: eles usam
+> Os cinco scripts podem ser executados quantas vezes você quiser: eles usam
 > `if not exists` / `on conflict do update` e não duplicam nem apagam nada.
-> Isso não é só promessa: `npm run test:migrations` aplica os quatro **três vezes
+> Isso não é só promessa: `npm run test:migrations` aplica os cinco **três vezes
 > seguidas** num PostgreSQL de verdade e confere que o progresso de um aluno
 > continua intacto.
 
@@ -666,7 +671,101 @@ O comando `npm run test:amigos` roda esse fluxo inteiro de forma automatizada.
 
 ---
 
-## 11. Editar e criar conteúdo
+## 11. Tags, perfil público e foto
+
+### 11.1 Tags e raridade
+
+Uma **tag** é um título exibido ao lado do nome. Diferente das conquistas (que são um checklist),
+só uma tag fica visível por vez — e você escolhe qual, na tela de Perfil.
+
+| Raridade | Cor | Vem de |
+| --- | --- | --- |
+| Comum | cinza | nível 5 |
+| Raro | azul elétrico | nível 10, e duas secretas |
+| Épico | violeta | nível 20, trilha de Python concluída, uma secreta |
+| Mítico | rosa | nível 30, uma secreta |
+| Lendário | dourado com brilho | nível 50 |
+| **Desenvolvedor** | gradiente da marca | concedida à mão no banco |
+
+As definições estão em [`src/content/tags.ts`](src/content/tags.ts) e vão para o banco pelo
+`supabase/seed.sql` (gerado por `npm run seed:gen`).
+
+### 11.2 Tags secretas — o que desbloqueia cada uma
+
+Estão documentadas em código (constante `SEGREDOS`) e aqui, de propósito: segredo que ninguém
+consegue descobrir vira bug, não surpresa. **Cada uma também concede uma conquista.**
+
+| Tag | Raridade | Como desbloquear |
+| --- | --- | --- |
+| 🕵️ Curioso | Raro | Clicar **10 vezes no logo** do cabeçalho, com menos de 1,5 s entre um clique e outro |
+| ⚡ Relâmpago | Épico | Concluir uma lição em **menos de 30 segundos** a partir do momento em que a tela de desafios abre — e sem errar nenhum exercício |
+| 🦉 Coruja | Raro | Concluir uma lição **entre 00h00 e 04h59** no horário do próprio aparelho |
+| 💎 Impecável | Mítico | Concluir **5 lições** sem errar nenhum exercício em nenhuma delas |
+
+Enquanto não são descobertas, elas aparecem mascaradas na galeria ("Tag secreta") e as conquistas
+correspondentes também — mostrar a descrição entregaria a solução.
+
+### 11.3 A tag de Desenvolvedor
+
+Ela **não pode ser conquistada jogando**: depende da coluna `profiles.is_developer`, e o gatilho
+`guard_profile_update` recusa qualquer tentativa de ligá-la pelo aplicativo. Para conceder à sua
+conta, rode no **SQL Editor** do Supabase:
+
+```sql
+select public.definir_desenvolvedor('seu_username', true);
+```
+
+Isso liga o selo e já entrega a tag. Para tirar, use `false`. A função tem `revoke` para `public` e
+`authenticated`: só funciona pelo painel do Supabase.
+
+### 11.4 Perfil público
+
+Qualquer pessoa logada pode ver o perfil de outra, de duas formas:
+
+- clicando no nome na tela de **Ranking**;
+- pela busca da tela de **Amigos** (o nome no resultado leva ao perfil).
+
+O endereço é `/usuario/?u=<username>`. A busca vai na *query string*, e não em `/u/<username>`,
+porque o app é exportado como site estático para caber no `.apk` e no `.exe` — e nesse modo o Next
+precisa conhecer todos os caminhos no build, o que é impossível com nome de usuário.
+
+O perfil público mostra nome, @username, avatar, nível, XP, streak, a tag exibida, as tags
+conquistadas, as conquistas e a posição no ranking global. **Não mostra e-mail** — ele nem existe na
+tabela `profiles`, mora só em `auth.users`, que nenhum cliente consegue ler.
+
+### 11.5 Pódio do ranking global
+
+A posição é calculada na hora (`count(*) where xp_total > o meu`), então o pódio se ajusta sozinho
+conforme entra gente nova — nada é fixado à mão. Quem está em 1º, 2º ou 3º ganha uma moldura no
+avatar (ouro, prata, bronze) com a medalha correspondente.
+
+### 11.6 Foto de perfil
+
+A imagem é cortada em quadrado, reduzida para **256×256** e recomprimida em WebP **no navegador**,
+antes de subir — uma foto de celular tem 3-6 MB e viraria poucos milhares de fotos no limite
+gratuito de 1 GB do Supabase Storage; depois do tratamento cada uma fica em 20-40 KB.
+
+O caminho no bucket é sempre `avatars/<seu-id>/avatar.webp`, e a policy do Storage exige que a
+primeira pasta seja o id de quem está enviando — ninguém sobrescreve a foto de outra pessoa. Sem
+foto, continua valendo a inicial do nome sobre o gradiente da marca.
+
+### 11.7 Regras do @username
+
+- **Troca a cada 24 horas.** A primeira escolha é livre e *não* inicia a contagem (dá para corrigir
+  um erro de digitação na hora); o relógio começa na primeira troca de verdade.
+- **A regra é do banco**, não da tela: o gatilho `guard_profile_update` recusa a troca antecipada
+  mesmo que alguém chame a API do Supabase por fora.
+- **Filtro de palavrão**, deliberadamente curto e direto
+  ([`src/content/palavras-bloqueadas.ts`](src/content/palavras-bloqueadas.ts), espelhado na função
+  `username_proibido` do banco). Palavra curta só bloqueia quando é o nome inteiro ou um pedaço
+  separado — senão `cu` barraria `curioso`, `escuro` e `documento`, e `puta` barraria `disputa` e
+  `reputacao`. Disfarce com número (`s3x0`) **passa de propósito**: filtro agressivo erra mais do
+  que acerta. O teste `npm run test:tags` compara a lista do código com a do banco e falha se elas
+  saírem de sincronia.
+
+---
+
+## 12. Editar e criar conteúdo
 
 O currículo é **TypeScript**, não banco de dados — por isso funciona offline no `.apk` e no `.exe`,
 e por isso um erro de digitação aparece na hora, com autocompletar.
@@ -707,7 +806,7 @@ O campo opcional `polyglot` gera as abas "o conceito é o mesmo, a sintaxe muda"
 
 ---
 
-## 12. Decisões técnicas
+## 13. Decisões técnicas
 
 ### Por que esta stack
 
@@ -759,7 +858,7 @@ limites do plano gratuito. A execução de código não custa nada porque aconte
 
 ---
 
-## 13. Problemas comuns
+## 14. Problemas comuns
 
 **O app mostra "modo demonstração" mesmo com o `.env.local` preenchido**
 Reinicie o `npm run dev` — variáveis `NEXT_PUBLIC_*` são lidas na inicialização. Confira também se

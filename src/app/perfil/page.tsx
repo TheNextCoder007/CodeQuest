@@ -1,10 +1,12 @@
 'use client';
 
-import { useState } from 'react';
-import { AtSign, Check, LogOut, Pencil } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { AtSign, Check, LogOut, Pencil, Trophy } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { AppShell } from '@/components/AppShell';
-import { Avatar } from '@/components/social/Avatar';
+import { AvatarEditavel } from '@/components/social/AvatarEditavel';
+import { GaleriaTags } from '@/components/social/GaleriaTags';
+import { TagBadge } from '@/components/social/TagBadge';
 import { Button, LinkButton } from '@/components/ui/Button';
 import { Card, CardTitle, Label, Pill, ProgressBar, StatCard } from '@/components/ui/Card';
 import { useAuth } from '@/lib/auth/AuthProvider';
@@ -14,9 +16,14 @@ import { isUsernameAvailable } from '@/lib/friends';
 import {
   USERNAME_MAX,
   displayUsername,
+  esperaRestanteMs,
+  formatarEspera,
   normalizeUsername,
   validateUsername,
 } from '@/lib/username';
+import { tagById } from '@/content/tags';
+import { enviarAvatar } from '@/lib/avatar';
+import { fetchPosicaoRanking } from '@/lib/perfil-publico';
 import {
   achievementsWithStatus,
   displayStreak,
@@ -29,7 +36,7 @@ import { cn } from '@/lib/cn';
 
 function PerfilContent() {
   const { user, signOut, demoMode } = useAuth();
-  const { state, loading, updateName, updateUsername } = usePlayer();
+  const { state, loading, updateName, updateUsername, updateAvatar, equipTag } = usePlayer();
   const router = useRouter();
 
   const [editing, setEditing] = useState(false);
@@ -41,6 +48,36 @@ function PerfilContent() {
   const [usernameDraft, setUsernameDraft] = useState('');
   const [usernameErro, setUsernameErro] = useState<string | null>(null);
   const [salvandoUsername, setSalvandoUsername] = useState(false);
+
+  // Posicao no ranking global. E recalculada a cada visita, entao o pódio
+  // acompanha sozinho a entrada de gente nova.
+  const [posicao, setPosicao] = useState<number | null>(null);
+  const xpAtual = state?.profile.xp_total;
+  const idAtual = state?.profile.id;
+
+  useEffect(() => {
+    if (!idAtual || xpAtual === undefined) return;
+    let ativo = true;
+    fetchPosicaoRanking(idAtual, xpAtual)
+      .then((lugar) => {
+        if (ativo) setPosicao(lugar);
+      })
+      .catch(() => {
+        if (ativo) setPosicao(null);
+      });
+    return () => {
+      ativo = false;
+    };
+  }, [idAtual, xpAtual]);
+
+  const trocarFoto = useCallback(
+    async (arquivo: File) => {
+      if (!idAtual) return;
+      const url = await enviarAvatar(idAtual, arquivo);
+      await updateAvatar(url);
+    },
+    [idAtual, updateAvatar],
+  );
 
   if (loading || !state) {
     return <div className="h-64 animate-pulse rounded-2xl bg-white/5" />;
@@ -54,6 +91,8 @@ function PerfilContent() {
   const streak = displayStreak(profile.last_study_date, profile.streak_count);
   const conquistas = achievementsWithStatus(state.unlockedAchievementIds);
   const desbloqueadas = conquistas.filter((item) => item.unlocked).length;
+  const tagEquipada = profile.equipped_tag_id ? tagById(profile.equipped_tag_id) : undefined;
+  const esperaUsername = esperaRestanteMs(profile.username_changed_at);
 
   const salvarNome = async () => {
     await updateName(nameDraft);
@@ -100,7 +139,13 @@ function PerfilContent() {
       {/* Identidade --------------------------------------------------- */}
       <section className="cq-card bg-gradient-to-br from-mint-600/15 via-night-900/60 to-electric-500/10 p-6">
         <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:gap-5">
-          <Avatar name={profile.name} url={profile.avatar_url} size="lg" />
+          <AvatarEditavel
+            name={profile.name}
+            url={profile.avatar_url}
+            posicao={posicao}
+            onEscolher={trocarFoto}
+            onRemover={() => updateAvatar(null)}
+          />
 
           <div className="w-full min-w-0 flex-1">
             <Label>Perfil do estudante</Label>
@@ -179,7 +224,10 @@ function PerfilContent() {
                   </Button>
                 </div>
                 <p className={cn('mt-1.5 text-xs', usernameErro ? 'text-rose-300' : 'text-slate-500')}>
-                  {usernameErro ?? 'Letras minúsculas, números e _ — é assim que seus amigos te encontram.'}
+                  {usernameErro ??
+                    (esperaUsername > 0
+                      ? `Você trocou faz pouco tempo. Poderá trocar de novo em ${formatarEspera(esperaUsername)}.`
+                      : 'Letras minúsculas, números e _ — você pode trocar uma vez a cada 24 horas.')}
                 </p>
               </div>
             ) : (
@@ -198,9 +246,21 @@ function PerfilContent() {
               </p>
             )}
 
-            <p className="mt-1 break-all text-sm text-slate-400">{user?.email}</p>
+            {tagEquipada && (
+              <div className="mt-2">
+                <TagBadge tag={tagEquipada} />
+              </div>
+            )}
+
+            <p className="mt-2 break-all text-sm text-slate-400">{user?.email}</p>
 
             <div className="mt-3 flex flex-wrap gap-2">
+              {posicao !== null && (
+                <Pill tone={posicao <= 3 ? 'amber' : 'neutral'}>
+                  <Trophy className="h-3.5 w-3.5" aria-hidden />
+                  {posicao}º no ranking global
+                </Pill>
+              )}
               <Pill tone="blue">
                 Nível {profile.level} · {levelTitle(profile.level)}
               </Pill>
@@ -265,6 +325,14 @@ function PerfilContent() {
           ))}
         </div>
       </Card>
+
+      {/* Tags --------------------------------------------------------- */}
+      <GaleriaTags
+        desbloqueadas={state.unlockedTagIds}
+        equipada={profile.equipped_tag_id}
+        isDeveloper={profile.is_developer}
+        onEquipar={equipTag}
+      />
 
       {/* Conquistas --------------------------------------------------- */}
       <Card>

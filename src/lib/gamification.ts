@@ -1,4 +1,5 @@
 import { achievements, type AchievementDefinition } from '@/content/achievements';
+import { tagDoSegredo } from '@/content/tags';
 import { languageLessonSequence, moduleById } from '@/content';
 
 /* -------------------------------------------------------------------------
@@ -102,6 +103,8 @@ export interface AchievementState {
   streak: number;
   /** true quando a licao recem-concluida foi acertada sem nenhum erro. */
   flawlessLesson?: boolean;
+  /** Tags ja desbloqueadas - as conquistas secretas espelham as tags. */
+  unlockedTagIds?: string[];
 }
 
 const moduleIsComplete = (moduleId: string, completed: Set<string>): boolean => {
@@ -135,6 +138,12 @@ const meetsCriteria = (achievement: AchievementDefinition, state: AchievementSta
       return state.xpTotal >= criteria.amount;
     case 'flawless':
       return state.flawlessLesson === true;
+    case 'secret': {
+      // A conquista secreta acompanha a tag secreta: se a tag ja foi
+      // desbloqueada, a medalha vem junto.
+      const tag = tagDoSegredo(criteria.segredo);
+      return Boolean(tag && state.unlockedTagIds?.includes(tag.id));
+    }
     default:
       return false;
   }
@@ -154,11 +163,28 @@ export const evaluateAchievements = (
   );
 };
 
-/** Todas as conquistas com o estado de desbloqueio, para a tela de perfil. */
+/**
+ * Todas as conquistas com o estado de desbloqueio, para a tela de perfil.
+ *
+ * As que espelham uma tag secreta aparecem MASCARADAS enquanto nao forem
+ * conquistadas: mostrar "Concluiu uma licao entre meia-noite e cinco da
+ * manha" na lista entregaria o segredo inteiro de graca.
+ */
 export const achievementsWithStatus = (unlockedIds: string[]) => {
   const unlocked = new Set(unlockedIds);
-  return achievements.map((achievement) => ({
-    ...achievement,
-    unlocked: unlocked.has(achievement.id),
-  }));
+  return achievements.map((achievement) => {
+    const conquistada = unlocked.has(achievement.id);
+    const mascarar = !conquistada && achievement.criteria.kind === 'secret';
+
+    return {
+      ...achievement,
+      title: mascarar ? 'Conquista secreta' : achievement.title,
+      description: mascarar
+        ? 'Existe, mas você ainda não descobriu como. Continue explorando.'
+        : achievement.description,
+      icon: mascarar ? '❔' : achievement.icon,
+      unlocked: conquistada,
+      secreta: mascarar,
+    };
+  });
 };

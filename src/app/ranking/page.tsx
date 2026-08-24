@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
 import { Flame, Globe, Trophy, UserPlus, Users } from 'lucide-react';
 import { AppShell } from '@/components/AppShell';
 import { Avatar } from '@/components/social/Avatar';
@@ -10,11 +11,35 @@ import { useAuth } from '@/lib/auth/AuthProvider';
 import { fetchLeaderboard } from '@/lib/leaderboard';
 import { fetchFriendsLeaderboard } from '@/lib/friends';
 import { displayUsername } from '@/lib/username';
+import { TagBadge } from '@/components/social/TagBadge';
+import { tagById } from '@/content/tags';
 import { levelTitle } from '@/lib/gamification';
 import type { LeaderboardRow } from '@/types/db';
 import { cn } from '@/lib/cn';
 
 const medalhas = ['🥇', '🥈', '🥉'];
+
+/**
+ * Bloco do nome no ranking. Vira link para o perfil publico quando a pessoa
+ * tem @username; sem username nao ha perfil para abrir.
+ */
+function LinhaDoRanking({
+  username,
+  children,
+}: {
+  username: string | null;
+  children: React.ReactNode;
+}) {
+  if (!username) return <div className="min-w-0 flex-1">{children}</div>;
+  return (
+    <Link
+      href={`/usuario/?u=${encodeURIComponent(username)}`}
+      className="min-w-0 flex-1 transition hover:opacity-80"
+    >
+      {children}
+    </Link>
+  );
+}
 
 type Aba = 'global' | 'amigos';
 
@@ -166,6 +191,7 @@ function RankingContent() {
         <ul className="space-y-2">
           {rows.map((linha, indice) => {
             const euMesmo = linha.id === user?.id;
+            const tag = linha.equipped_tag_id ? tagById(linha.equipped_tag_id) : undefined;
             return (
               <li key={linha.id}>
                 <div
@@ -187,7 +213,8 @@ function RankingContent() {
 
                   <Avatar name={linha.name} url={linha.avatar_url} />
 
-                  <div className="min-w-0 flex-1">
+                  {/* O nome leva ao perfil publico de quem estiver na linha. */}
+                  <LinhaDoRanking username={linha.username}>
                     <p className="truncate font-semibold text-white">
                       {linha.name}
                       {euMesmo && <span className="ml-2 text-xs text-mint-300">(você)</span>}
@@ -201,7 +228,12 @@ function RankingContent() {
                       )}
                       Nível {linha.level} · {levelTitle(linha.level)}
                     </p>
-                  </div>
+                    {tag && (
+                      <span className="mt-1 flex">
+                        <TagBadge tag={tag} tamanho="sm" />
+                      </span>
+                    )}
+                  </LinhaDoRanking>
 
                   <div className="min-w-0 text-right">
                     <p className="font-bold text-mint-300">{linha.xp_total} XP</p>

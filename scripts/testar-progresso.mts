@@ -41,6 +41,7 @@ interface Resposta {
 interface Config {
   /** Resposta do primeiro SELECT em profiles. */
   profiles?: Resposta;
+  tags?: Resposta;
   /** Resposta do SELECT em profiles feito DEPOIS de um insert conflitante. */
   profilesRelido?: Resposta;
   progress?: Resposta;
@@ -81,6 +82,7 @@ const criarCliente = (config: Config) => {
       if (tabela === 'user_achievements') {
         return Promise.resolve(config.achievements ?? { data: [], error: null });
       }
+      if (tabela === 'user_tags') return Promise.resolve(config.tags ?? { data: [], error: null });
       return Promise.resolve({ data: null, error: null });
     };
 
@@ -264,6 +266,33 @@ secao('corrida com o gatilho do banco');
   });
   const r = await lerEstadoDoServidor(cliente, usuario);
   ok(r.tipo === 'erro', 'se nem o insert nem a releitura funcionam, e erro');
+}
+
+/* -------------------------------------------------------------------------
+ * 5b. Tolerancia a migration ainda nao aplicada
+ * ---------------------------------------------------------------------- */
+secao('migration 0004 ainda nao aplicada');
+{
+  const { cliente } = criarCliente({
+    profiles: { data: perfilReal, error: null },
+    progress: { data: oitoLicoes, error: null },
+    tags: { data: null, error: { code: '42P01', message: 'relation "user_tags" does not exist' } },
+  });
+  const r = await lerEstadoDoServidor(cliente, usuario);
+  ok(r.tipo === 'ok', 'sem a tabela user_tags o app continua funcionando');
+  if (r.tipo === 'ok') {
+    ok(r.state.profile.xp_total === 445, 'o XP continua sendo lido normalmente');
+    ok(r.state.unlockedTagIds.length === 0, 'a lista de tags fica vazia ate a migration rodar');
+    ok(r.state.completedLessonIds.length === 8, 'e o progresso continua completo');
+  }
+}
+{
+  const { cliente } = criarCliente({
+    profiles: { data: perfilReal, error: null },
+    tags: { data: null, error: { message: 'network error' } },
+  });
+  const r = await lerEstadoDoServidor(cliente, usuario);
+  ok(r.tipo === 'erro', 'mas falha de REDE ao ler tags continua sendo erro de verdade');
 }
 
 /* -------------------------------------------------------------------------

@@ -11,6 +11,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { languages } from '../src/content/index';
 import { achievements } from '../src/content/achievements';
+import { tags } from '../src/content/tags';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const outputPath = resolve(here, '..', 'supabase', 'seed.sql');
@@ -126,6 +127,29 @@ achievements.forEach((achievement) => {
   );
 });
 
+/* --------------------------------------------------------------------------
+ * Tags de perfil
+ *
+ * Depende da migration 0004 (tabela `public.tags`). O bloco fica dentro de um
+ * `if` para o seed continuar rodando em bancos que ainda nao aplicaram a 0004.
+ * ----------------------------------------------------------------------- */
+lines.push('', '-- Tags de perfil -----------------------------------------------------------');
+lines.push("do $seed$", 'begin', "  if to_regclass('public.tags') is null then",
+  "    raise notice 'tabela public.tags ausente - rode a migration 0004 antes';", '    return;', '  end if;', '');
+tags.forEach((tag) => {
+  lines.push(
+    `  insert into public.tags (id, name, description, icon, rarity, criteria, secret, order_index) values (${sql(
+      tag.id,
+    )}, ${sql(tag.name)}, ${sql(tag.description)}, ${sql(tag.icon)}, ${sql(tag.rarity)}, ${json(
+      tag.criteria,
+    )}, ${tag.secret}, ${tag.orderIndex})`,
+    '    on conflict (id) do update set name = excluded.name, description = excluded.description,',
+    '    icon = excluded.icon, rarity = excluded.rarity, criteria = excluded.criteria,',
+    '    secret = excluded.secret, order_index = excluded.order_index;',
+  );
+});
+lines.push('end', '$seed$;');
+
 lines.push('', 'commit;', '');
 
 mkdirSync(dirname(outputPath), { recursive: true });
@@ -148,5 +172,5 @@ const totalExercises = languages.reduce(
 );
 
 console.log(
-  `seed.sql gerado: ${languages.length} linguagens, ${totalLessons} licoes, ${totalExercises} exercicios, ${achievements.length} conquistas.`,
+  `seed.sql gerado: ${languages.length} linguagens, ${totalLessons} licoes, ${totalExercises} exercicios, ${achievements.length} conquistas, ${tags.length} tags.`,
 );

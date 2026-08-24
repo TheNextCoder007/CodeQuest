@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { Check, Loader2, Search, UserMinus, UserPlus, Users, X } from 'lucide-react';
 import { AppShell } from '@/components/AppShell';
 import { Avatar } from '@/components/social/Avatar';
@@ -16,11 +17,32 @@ import {
   sendFriendRequest,
 } from '@/lib/friends';
 import { displayUsername } from '@/lib/username';
+import { TagBadge } from '@/components/social/TagBadge';
+import { tagById } from '@/content/tags';
 import { levelTitle } from '@/lib/gamification';
 import type { FriendsData, PublicProfile, SearchResult } from '@/types/db';
 import { cn } from '@/lib/cn';
 
 const vazio: FriendsData = { friends: [], incoming: [], outgoing: [] };
+
+/** O nome leva ao perfil publico; sem @username nao ha perfil para abrir. */
+function LinkDoPerfil({
+  username,
+  children,
+}: {
+  username: string | null;
+  children: React.ReactNode;
+}) {
+  if (!username) return <div className="min-w-0 flex-1">{children}</div>;
+  return (
+    <Link
+      href={`/usuario/?u=${encodeURIComponent(username)}`}
+      className="min-w-0 flex-1 transition hover:opacity-80"
+    >
+      {children}
+    </Link>
+  );
+}
 
 /** Linha de pessoa reutilizada nas quatro listas da tela. */
 function PessoaRow({
@@ -43,14 +65,19 @@ function PessoaRow({
     >
       <Avatar name={perfil.name} url={perfil.avatar_url} />
 
-      <div className="min-w-0 flex-1">
+      <LinkDoPerfil username={perfil.username}>
         <p className="truncate font-semibold text-white">{perfil.name}</p>
         <p className="truncate text-xs text-slate-500">
           <span className="font-mono text-aqua-300">{displayUsername(perfil.username)}</span>
           {' · '}
           Nível {perfil.level} · {perfil.xp_total} XP
         </p>
-      </div>
+        {perfil.equipped_tag_id && tagById(perfil.equipped_tag_id) && (
+          <span className="mt-1 flex">
+            <TagBadge tag={tagById(perfil.equipped_tag_id)!} tamanho="sm" />
+          </span>
+        )}
+      </LinkDoPerfil>
 
       {children && (
         <div className="flex w-full flex-wrap gap-2 sm:w-auto sm:shrink-0">{children}</div>

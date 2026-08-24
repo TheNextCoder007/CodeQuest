@@ -14,8 +14,31 @@ export interface ProfileRow {
   streak_count: number;
   last_study_date: string | null;
   current_language: string | null;
+  /** Tag exibida no perfil (precisa estar em `user_tags`). */
+  equipped_tag_id: string | null;
+  /** Quando o @username foi trocado pela ultima vez (regra de 24h). */
+  username_changed_at: string | null;
+  /** Selo concedido a mao no banco. Ver `definir_desenvolvedor()`. */
+  is_developer: boolean;
   created_at?: string;
   updated_at?: string;
+}
+
+export interface TagRow {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  rarity: string;
+  criteria: Record<string, unknown>;
+  secret: boolean;
+  order_index: number;
+}
+
+export interface UserTagRow {
+  user_id: string;
+  tag_id: string;
+  unlocked_at: string;
 }
 
 export interface UserProgressRow {
@@ -40,6 +63,8 @@ export interface LeaderboardRow {
   xp_total: number;
   level: number;
   streak_count: number;
+  equipped_tag_id?: string | null;
+  is_developer?: boolean;
 }
 
 /* -------------------------------------------------------------------------
@@ -66,6 +91,22 @@ export interface PublicProfile {
   xp_total: number;
   level: number;
   streak_count: number;
+  equipped_tag_id?: string | null;
+  is_developer?: boolean;
+}
+
+/**
+ * Tudo que a tela de perfil publico mostra de outra pessoa.
+ *
+ * Repare no que NAO esta aqui: e-mail, data de cadastro e qualquer coisa que
+ * so interesse ao dono da conta.
+ */
+export interface PerfilPublico extends PublicProfile {
+  /** Posicao no ranking global (1 = primeiro lugar). */
+  posicao: number;
+  unlockedTagIds: string[];
+  unlockedAchievementIds: string[];
+  completedLessonIds: string[];
 }
 
 /**
@@ -95,4 +136,5 @@ export interface PlayerState {
   completedLessonIds: string[];
   flawlessLessonIds: string[];
   unlockedAchievementIds: string[];
+  unlockedTagIds: string[];
 }

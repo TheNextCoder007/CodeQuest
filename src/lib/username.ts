@@ -8,6 +8,11 @@
  * mesmo se alguem chamar a API por fora.
  */
 
+import { usernameProibido } from '@/content/palavras-bloqueadas';
+
+/** Quanto tempo e preciso esperar entre uma troca de username e a proxima. */
+export const USERNAME_COOLDOWN_HORAS = 24;
+
 export const USERNAME_MIN = 3;
 export const USERNAME_MAX = 20;
 export const USERNAME_PATTERN = /^[a-z0-9_]{3,20}$/;
@@ -33,7 +38,37 @@ export const validateUsername = (value: string): string | null => {
   if (!USERNAME_PATTERN.test(clean)) {
     return 'Use apenas letras minúsculas, números e _ (underline).';
   }
+  if (usernameProibido(clean)) {
+    return 'Esse nome de usuário não é permitido. Escolha outro.';
+  }
   return null;
+};
+
+/**
+ * Quanto falta do periodo de espera de 24h, em milissegundos (0 = liberado).
+ *
+ * Isto e so para a interface avisar antes. Quem manda de verdade e o gatilho
+ * `guard_profile_update` no banco - a checagem aqui pode ser burlada, a do
+ * servidor nao.
+ */
+export const esperaRestanteMs = (
+  trocadoEm: string | null | undefined,
+  agora: Date = new Date(),
+): number => {
+  if (!trocadoEm) return 0;
+  const quando = new Date(trocadoEm).getTime();
+  if (Number.isNaN(quando)) return 0;
+  const liberaEm = quando + USERNAME_COOLDOWN_HORAS * 3_600_000;
+  return Math.max(0, liberaEm - agora.getTime());
+};
+
+/** "faltam 3 h" / "faltam 12 min" - texto curto para a tela de perfil. */
+export const formatarEspera = (restanteMs: number): string => {
+  if (restanteMs <= 0) return '';
+  const minutos = Math.ceil(restanteMs / 60_000);
+  if (minutos < 60) return `${minutos} min`;
+  const horas = Math.ceil(minutos / 60);
+  return `${horas} h`;
 };
 
 /**

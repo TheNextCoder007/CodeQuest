@@ -24,7 +24,8 @@ import type {
  * sao apenas para deixar a intencao explicita na consulta.
  */
 
-const CAMPOS_PUBLICOS = 'id, name, username, avatar_url, xp_total, level, streak_count';
+const CAMPOS_PUBLICOS =
+  'id, name, username, avatar_url, xp_total, level, streak_count, equipped_tag_id, is_developer';
 
 /* -------------------------------------------------------------------------
  * Username

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight, Lock, PartyPopper } from 'lucide-react';
 import { AppShell } from '@/components/AppShell';
 import { Button, LinkButton } from '@/components/ui/Button';
@@ -31,6 +31,10 @@ function LessonContent({ lessonId }: { lessonId: string }) {
   const [completion, setCompletion] = useState<CompletionResult | null>(null);
   const [finishing, setFinishing] = useState(false);
 
+  // Marca quando a tela de desafios abriu: e o cronometro da tag secreta
+  // "Relâmpago" (lição inteira em menos de 30 segundos, sem errar nada).
+  const inicioDosDesafios = useRef<number | null>(null);
+
   const proxima = useMemo(
     () =>
       language && state
@@ -49,7 +53,10 @@ function LessonContent({ lessonId }: { lessonId: string }) {
       setFinishing(true);
 
       const flawless = attempts === lesson.exercises.length;
-      const result = await completeLesson(lesson.id, lessonXp(lesson), flawless);
+      const duracaoMs = inicioDosDesafios.current
+        ? Date.now() - inicioDosDesafios.current
+        : undefined;
+      const result = await completeLesson(lesson.id, lessonXp(lesson), flawless, duracaoMs);
 
       setCompletion(result);
       setPhase('done');
@@ -75,6 +82,18 @@ function LessonContent({ lessonId }: { lessonId: string }) {
             tone: 'mint',
           });
         }, 400 * (index + 1));
+      });
+
+      const atraso = 400 * (result.newAchievements.length + 1);
+      result.newTags.forEach((tag, index) => {
+        window.setTimeout(() => {
+          showToast({
+            icon: tag.icon,
+            title: `Nova tag: ${tag.name}`,
+            description: `${tag.description} Escolha ela no seu perfil.`,
+            tone: 'blue',
+          });
+        }, atraso + 400 * index);
       });
     },
     [lesson, completeLesson, showXp, showToast],
@@ -160,7 +179,10 @@ function LessonContent({ lessonId }: { lessonId: string }) {
             <Button
               size="lg"
               className="w-full sm:w-auto"
-              onClick={() => setPhase('exercises')}
+              onClick={() => {
+                inicioDosDesafios.current = Date.now();
+                setPhase('exercises');
+              }}
             >
               Ir para os desafios ({lesson.exercises.length})
               <ArrowRight className="h-5 w-5" />

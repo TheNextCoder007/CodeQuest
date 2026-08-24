@@ -42,6 +42,12 @@ jobs:
         # aceite, recusa, remocao e o ranking filtrado por amigos.
         run: npm run test:amigos
 
+      - name: Testar tags e regras do @username
+        # Catalogo de tags, segredos documentados, filtro de palavrao e a
+        # espera de 24h. Confere tambem se a lista de palavras do codigo e a
+        # do banco continuam iguais.
+        run: npm run test:tags
+
       - name: Testar a leitura do progresso
         # Trava a regra que ja causou "progresso zerado" na tela: falha de
         # leitura nunca pode virar estado vazio.

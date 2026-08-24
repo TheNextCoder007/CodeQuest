@@ -4,12 +4,26 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { CloudOff, Flame, Home, LogOut, Map, RefreshCw, Star, Trophy, User, Users } from 'lucide-react';
+import { useToast } from '@/components/ui/Toast';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { usePlayer } from '@/lib/player/PlayerProvider';
 import { displayStreak, levelFromXp } from '@/lib/gamification';
 import { cn } from '@/lib/cn';
 import { UsernameGate } from './UsernameGate';
 import { Logo } from './Logo';
+
+/**
+ * Contador da tag secreta "Curioso": 10 cliques no logo, com menos de 1,5 s
+ * entre um e outro.
+ *
+ * Fica no modulo, e nao num `useRef`, porque clicar no logo navega para o
+ * dashboard - e a cada troca de rota o AppShell e remontado, o que zeraria um
+ * ref. O modulo continua carregado, entao a contagem sobrevive.
+ */
+let cliquesNoLogo = 0;
+let ultimoCliqueNoLogo = 0;
+const INTERVALO_MAXIMO_MS = 1500;
+const CLIQUES_NECESSARIOS = 10;
 
 const navItems = [
   { href: '/dashboard', label: 'Início', icon: Home },
@@ -62,7 +76,14 @@ function LoadingScreen({ message }: { message: string }) {
  */
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { user, loading, signOut, demoMode } = useAuth();
-  const { state, loading: carregandoProgresso, error: erroProgresso, refresh } = usePlayer();
+  const {
+    state,
+    loading: carregandoProgresso,
+    error: erroProgresso,
+    refresh,
+    registrarSegredo,
+  } = usePlayer();
+  const { showToast } = useToast();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -82,6 +103,25 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const streak = displayStreak(state?.profile.last_study_date ?? null, state?.profile.streak_count ?? 0);
   const level = state?.profile.level ?? levelFromXp(xp);
 
+  const contarCliqueNoLogo = () => {
+    const agora = Date.now();
+    cliquesNoLogo = agora - ultimoCliqueNoLogo > INTERVALO_MAXIMO_MS ? 1 : cliquesNoLogo + 1;
+    ultimoCliqueNoLogo = agora;
+
+    if (cliquesNoLogo < CLIQUES_NECESSARIOS) return;
+    cliquesNoLogo = 0;
+
+    void registrarSegredo('logo-10-cliques').then((tag) => {
+      if (!tag) return;
+      showToast({
+        icon: tag.icon,
+        title: `Tag secreta: ${tag.name}`,
+        description: `${tag.description} Escolha ela no seu perfil.`,
+        tone: 'blue',
+      });
+    });
+  };
+
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(`${href}/`) ||
     (href === '/trilha/python' && pathname.startsWith('/licao'));
@@ -93,7 +133,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <div className="min-h-dvh pb-24 lg:pb-0">
       <header className="sticky top-0 z-40 border-b border-white/5 bg-night-950/85 backdrop-blur cq-safe-top">
         <div className="mx-auto flex h-16 max-w-6xl items-center gap-2 px-3 sm:gap-4 sm:px-4">
-          <Link href="/dashboard" className="flex min-h-[44px] min-w-0 items-center">
+          <Link
+            href="/dashboard"
+            onClick={contarCliqueNoLogo}
+            className="flex min-h-[44px] min-w-0 items-center"
+          >
             <Logo />
           </Link>
 

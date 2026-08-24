@@ -5,7 +5,10 @@ import { useAuth } from '@/lib/auth/AuthProvider';
 import { getSupabase, isSupabaseConfigured } from '@/lib/supabase/client';
 import { localState } from '@/lib/local-store';
 import { lerEstadoDoServidor } from './loadPlayerState';
+import { esperaRestanteMs, formatarEspera, validateUsername } from '@/lib/username';
 import type { AchievementDefinition } from '@/content/achievements';
+import type { SegredoId, TagDefinition } from '@/content/tags';
+import { evaluateTags, tagPendenteDoSegredo } from '@/lib/tags';
 import type { PlayerState, ProfileRow } from '@/types/db';
 import {
   advanceStreak,
@@ -22,6 +25,7 @@ export interface CompletionResult {
   newLevel: number;
   streak: number;
   newAchievements: AchievementDefinition[];
+  newTags: TagDefinition[];
 }
 
 /**
@@ -43,9 +47,24 @@ interface PlayerContextValue {
    */
   origem: OrigemDoEstado;
   refresh: () => Promise<void>;
-  completeLesson: (lessonId: string, xp: number, flawless: boolean) => Promise<CompletionResult>;
+  completeLesson: (
+    lessonId: string,
+    xp: number,
+    flawless: boolean,
+    /** Tempo entre abrir os desafios e concluir (para a tag secreta). */
+    duracaoMs?: number,
+  ) => Promise<CompletionResult>;
+  /** Escolhe qual tag aparece no perfil. Lanca erro se nao estiver liberada. */
+  equipTag: (tagId: string | null) => Promise<void>;
+  /**
+   * Registra uma acao secreta. Devolve a tag desbloqueada, ou `null` se o
+   * segredo ja tinha sido descoberto antes.
+   */
+  registrarSegredo: (segredo: SegredoId) => Promise<TagDefinition | null>;
   setCurrentLanguage: (slug: string) => Promise<void>;
   updateName: (name: string) => Promise<void>;
+  /** Troca a foto de perfil (ja redimensionada e enviada por `enviarAvatar`). */
+  updateAvatar: (url: string | null) => Promise<void>;
   /** Grava o @username. Lanca erro se ja estiver em uso. */
   updateUsername: (username: string) => Promise<void>;
 }
@@ -59,16 +78,47 @@ const PlayerContext = createContext<PlayerContextValue | null>(null);
  * gravacao falhasse ali (rede caiu), a medalha ficava perdida para sempre.
  * Reavaliar a cada carregamento fecha esse buraco.
  */
-function conquistasFaltando(state: PlayerState): AchievementDefinition[] {
-  return evaluateAchievements(
+function pendencias(state: PlayerState): {
+  conquistas: AchievementDefinition[];
+  tags: TagDefinition[];
+} {
+  const tagsFaltando = evaluateTags(
+    {
+      level: state.profile.level,
+      completedLessonIds: state.completedLessonIds,
+      isDeveloper: state.profile.is_developer,
+    },
+    state.unlockedTagIds,
+  );
+
+  const conquistas = evaluateAchievements(
     {
       completedLessonIds: state.completedLessonIds,
       xpTotal: state.profile.xp_total,
       streak: displayStreak(state.profile.last_study_date, state.profile.streak_count),
       flawlessLesson: state.flawlessLessonIds.length > 0,
+      unlockedTagIds: [...state.unlockedTagIds, ...tagsFaltando.map((tag) => tag.id)],
     },
     state.unlockedAchievementIds,
   );
+
+  return { conquistas, tags: tagsFaltando };
+}
+
+/** Aplica as pendencias ao estado (sem tocar no servidor). */
+function comPendencias(
+  state: PlayerState,
+  faltando: { conquistas: AchievementDefinition[]; tags: TagDefinition[] },
+): PlayerState {
+  if (faltando.conquistas.length === 0 && faltando.tags.length === 0) return state;
+  return {
+    ...state,
+    unlockedAchievementIds: [
+      ...state.unlockedAchievementIds,
+      ...faltando.conquistas.map((conquista) => conquista.id),
+    ],
+    unlockedTagIds: [...state.unlockedTagIds, ...faltando.tags.map((tag) => tag.id)],
+  };
 }
 
 /** Repete uma operacao de rede algumas vezes antes de desistir. */
@@ -113,18 +163,9 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 
     if (!isSupabaseConfigured) {
       const local = localState.load(user.id, user.name);
-      const faltando = conquistasFaltando(local);
-      const ajustado =
-        faltando.length === 0
-          ? local
-          : {
-              ...local,
-              unlockedAchievementIds: [
-                ...local.unlockedAchievementIds,
-                ...faltando.map((conquista) => conquista.id),
-              ],
-            };
-      if (faltando.length > 0) localState.save(user.id, ajustado);
+      const faltando = pendencias(local);
+      const ajustado = comPendencias(local, faltando);
+      if (ajustado !== local) localState.save(user.id, ajustado);
       setState(ajustado);
       setOrigem('local');
       setLoading(false);
@@ -145,35 +186,37 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 
       const resultado = await lerEstadoDoServidor(supabase, dados);
       if (resultado.tipo === 'ok') {
-        const faltando = conquistasFaltando(resultado.state);
+        const faltando = pendencias(resultado.state);
 
-        setState(
-          faltando.length === 0
-            ? resultado.state
-            : {
-                ...resultado.state,
-                unlockedAchievementIds: [
-                  ...resultado.state.unlockedAchievementIds,
-                  ...faltando.map((conquista) => conquista.id),
-                ],
-              },
-        );
+        setState(comPendencias(resultado.state, faltando));
         setOrigem('servidor');
         setError(null);
         setLoading(false);
 
-        if (faltando.length > 0) {
+        if (faltando.conquistas.length > 0 || faltando.tags.length > 0) {
           void comRetentativas(async () => {
-            await supabase.from('user_achievements').upsert(
-              faltando.map((conquista) => ({
-                user_id: user.id,
-                achievement_id: conquista.id,
-                unlocked_at: new Date().toISOString(),
-              })),
-              { onConflict: 'user_id,achievement_id' },
-            );
+            if (faltando.conquistas.length > 0) {
+              await supabase.from('user_achievements').upsert(
+                faltando.conquistas.map((conquista) => ({
+                  user_id: user.id,
+                  achievement_id: conquista.id,
+                  unlocked_at: new Date().toISOString(),
+                })),
+                { onConflict: 'user_id,achievement_id' },
+              );
+            }
+            if (faltando.tags.length > 0) {
+              await supabase.from('user_tags').upsert(
+                faltando.tags.map((tag) => ({
+                  user_id: user.id,
+                  tag_id: tag.id,
+                  unlocked_at: new Date().toISOString(),
+                })),
+                { onConflict: 'user_id,tag_id' },
+              );
+            }
           }).catch((falha) =>
-            console.error('[CodeQuest] falha ao gravar conquistas atrasadas', falha),
+            console.error('[CodeQuest] falha ao gravar conquistas/tags atrasadas', falha),
           );
         }
         return;
@@ -197,7 +240,12 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
    * Conclusao de licao: XP, nivel, streak e conquistas
    * ------------------------------------------------------------------ */
   const completeLesson = useCallback(
-    async (lessonId: string, xp: number, flawless: boolean): Promise<CompletionResult> => {
+    async (
+      lessonId: string,
+      xp: number,
+      flawless: boolean,
+      duracaoMs?: number,
+    ): Promise<CompletionResult> => {
       if (!user || !state) {
         return {
           xpEarned: 0,
@@ -206,6 +254,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
           newLevel: 1,
           streak: 0,
           newAchievements: [],
+          newTags: [],
         };
       }
 
@@ -232,12 +281,51 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
           ? [...state.flawlessLessonIds, lessonId]
           : state.flawlessLessonIds;
 
+      /* --- tags -----------------------------------------------------------
+       * Tres tipos entram aqui:
+       *   1. as de nivel/trilha, por avaliacao;
+       *   2. as secretas que dependem de COMO a licao foi concluida
+       *      (velocidade, horario, serie sem erros);
+       * A do logo e registrada de outro lugar (`registrarSegredo`).
+       * ------------------------------------------------------------------ */
+      const novasTags: TagDefinition[] = [
+        ...evaluateTags(
+          {
+            level: newLevel,
+            completedLessonIds,
+            isDeveloper: state.profile.is_developer,
+          },
+          state.unlockedTagIds,
+        ),
+      ];
+
+      const registrarSecreta = (segredo: SegredoId) => {
+        const tag = tagPendenteDoSegredo(segredo, [
+          ...state.unlockedTagIds,
+          ...novasTags.map((item) => item.id),
+        ]);
+        if (tag) novasTags.push(tag);
+      };
+
+      // Relampago: menos de 30 segundos, e sem errar nada.
+      if (!alreadyCompleted && flawless && typeof duracaoMs === 'number' && duracaoMs < 30_000) {
+        registrarSecreta('licao-relampago');
+      }
+      // Coruja: concluiu entre 00h e 04h59 no horario do proprio aparelho.
+      const hora = new Date().getHours();
+      if (!alreadyCompleted && hora < 5) registrarSecreta('madrugada');
+      // Serie impecavel: 5 licoes diferentes sem nenhum erro.
+      if (flawlessLessonIds.length >= 5) registrarSecreta('serie-impecavel');
+
+      const unlockedTagIds = [...state.unlockedTagIds, ...novasTags.map((tag) => tag.id)];
+
       const newAchievements = evaluateAchievements(
         {
           completedLessonIds,
           xpTotal,
           streak,
           flawlessLesson: flawlessLessonIds.length > 0,
+          unlockedTagIds,
         },
         state.unlockedAchievementIds,
       );
@@ -258,6 +346,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
           ...state.unlockedAchievementIds,
           ...newAchievements.map((achievement) => achievement.id),
         ],
+        unlockedTagIds,
       };
 
       // Atualiza a interface imediatamente e persiste em seguida.
@@ -313,6 +402,16 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
                   { onConflict: 'user_id,achievement_id' },
                 )
               : Promise.resolve(),
+            novasTags.length > 0
+              ? supabase.from('user_tags').upsert(
+                  novasTags.map((tag) => ({
+                    user_id: user.id,
+                    tag_id: tag.id,
+                    unlocked_at: new Date().toISOString(),
+                  })),
+                  { onConflict: 'user_id,tag_id' },
+                )
+              : Promise.resolve(),
           ]));
         } catch (saveError) {
           console.error('[CodeQuest] falha ao salvar progresso', saveError);
@@ -327,6 +426,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         newLevel,
         streak,
         newAchievements,
+        newTags: novasTags,
       };
     },
     [user, state],
@@ -384,13 +484,37 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       const clean = username.trim().toLowerCase();
       if (!user || !state || !clean || clean === state.profile.username) return;
 
+      const erroFormato = validateUsername(clean);
+      if (erroFormato) throw new Error(erroFormato);
+
+      // A primeira escolha e livre e nao inicia a contagem (quem acabou de se
+      // cadastrar precisa poder corrigir um erro de digitacao). O relogio so
+      // comeca na primeira troca de verdade.
+      // Quem manda e o gatilho no banco - isto aqui so evita a ida ate o
+      // servidor para receber a mesma negativa.
+      const primeiraEscolha = !state.profile.username;
+      if (!primeiraEscolha) {
+        const restante = esperaRestanteMs(state.profile.username_changed_at);
+        if (restante > 0) {
+          throw new Error(
+            `Você só pode trocar o nome de usuário a cada 24 horas. Faltam ${formatarEspera(restante)}.`,
+          );
+        }
+      }
+
       if (!isSupabaseConfigured) {
         if (localState.usernameTaken(clean, user.id)) {
           throw new Error('Esse nome de usuário já está em uso.');
         }
         const nextState: PlayerState = {
           ...state,
-          profile: { ...state.profile, username: clean },
+          profile: {
+            ...state.profile,
+            username: clean,
+            username_changed_at: primeiraEscolha
+              ? state.profile.username_changed_at
+              : new Date().toISOString(),
+          },
         };
         setState(nextState);
         localState.save(user.id, nextState);
@@ -405,14 +529,160 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       if (saveError) {
         const duplicado =
           saveError.code === '23505' || saveError.message.includes('profiles_username_key');
-        throw new Error(
-          duplicado
-            ? 'Esse nome de usuário já está em uso. Tente outro.'
-            : saveError.message,
-        );
+        if (duplicado) throw new Error('Esse nome de usuário já está em uso. Tente outro.');
+
+        // Mensagens que o gatilho `guard_profile_update` levanta.
+        if (/24 horas/i.test(saveError.message)) {
+          throw new Error('Você só pode trocar o nome de usuário a cada 24 horas.');
+        }
+        if (/nao e permitido|não é permitido|username_limpo/i.test(saveError.message)) {
+          throw new Error('Esse nome de usuário não é permitido. Escolha outro.');
+        }
+        throw new Error(saveError.message);
       }
 
-      setState({ ...state, profile: { ...state.profile, username: clean } });
+      setState({
+        ...state,
+        profile: {
+          ...state.profile,
+          username: clean,
+          username_changed_at: primeiraEscolha
+            ? state.profile.username_changed_at
+            : new Date().toISOString(),
+        },
+      });
+    },
+    [user, state],
+  );
+
+  const updateAvatar = useCallback(
+    async (url: string | null) => {
+      if (!user || !state) return;
+
+      const nextState: PlayerState = {
+        ...state,
+        profile: { ...state.profile, avatar_url: url },
+      };
+      setState(nextState);
+
+      if (!isSupabaseConfigured) {
+        localState.save(user.id, nextState);
+        return;
+      }
+
+      const { error: falha } = await getSupabase()!
+        .from('profiles')
+        .update({ avatar_url: url })
+        .eq('id', user.id);
+
+      if (falha) {
+        setState(state);
+        throw new Error(falha.message);
+      }
+    },
+    [user, state],
+  );
+
+  /**
+   * Escolhe a tag exibida no perfil.
+   *
+   * O banco tambem confere (gatilho `guard_profile_update`): so passa tag que
+   * esta em `user_tags`. A checagem daqui e para dar erro imediato.
+   */
+  const equipTag = useCallback(
+    async (tagId: string | null) => {
+      if (!user || !state) return;
+      if (tagId && !state.unlockedTagIds.includes(tagId)) {
+        throw new Error('Você ainda não desbloqueou essa tag.');
+      }
+
+      const nextState: PlayerState = {
+        ...state,
+        profile: { ...state.profile, equipped_tag_id: tagId },
+      };
+      setState(nextState);
+
+      if (!isSupabaseConfigured) {
+        localState.save(user.id, nextState);
+        return;
+      }
+
+      const { error: falha } = await getSupabase()!
+        .from('profiles')
+        .update({ equipped_tag_id: tagId })
+        .eq('id', user.id);
+
+      if (falha) {
+        setState(state); // desfaz
+        throw new Error(falha.message);
+      }
+    },
+    [user, state],
+  );
+
+  /**
+   * Registra uma acao secreta (ver `SEGREDOS` em src/content/tags.ts).
+   * Idempotente: chamar de novo depois de descoberto nao faz nada.
+   */
+  const registrarSegredo = useCallback(
+    async (segredo: SegredoId): Promise<TagDefinition | null> => {
+      if (!user || !state) return null;
+
+      const tag = tagPendenteDoSegredo(segredo, state.unlockedTagIds);
+      if (!tag) return null;
+
+      const unlockedTagIds = [...state.unlockedTagIds, tag.id];
+      const novasConquistas = evaluateAchievements(
+        {
+          completedLessonIds: state.completedLessonIds,
+          xpTotal: state.profile.xp_total,
+          streak: displayStreak(state.profile.last_study_date, state.profile.streak_count),
+          flawlessLesson: state.flawlessLessonIds.length > 0,
+          unlockedTagIds,
+        },
+        state.unlockedAchievementIds,
+      );
+
+      const nextState: PlayerState = {
+        ...state,
+        unlockedTagIds,
+        unlockedAchievementIds: [
+          ...state.unlockedAchievementIds,
+          ...novasConquistas.map((conquista) => conquista.id),
+        ],
+      };
+      setState(nextState);
+
+      if (!isSupabaseConfigured) {
+        localState.save(user.id, nextState);
+        return tag;
+      }
+
+      const supabase = getSupabase()!;
+      try {
+        await comRetentativas(async () => {
+          await supabase
+            .from('user_tags')
+            .upsert(
+              { user_id: user.id, tag_id: tag.id, unlocked_at: new Date().toISOString() },
+              { onConflict: 'user_id,tag_id' },
+            );
+          if (novasConquistas.length > 0) {
+            await supabase.from('user_achievements').upsert(
+              novasConquistas.map((conquista) => ({
+                user_id: user.id,
+                achievement_id: conquista.id,
+                unlocked_at: new Date().toISOString(),
+              })),
+              { onConflict: 'user_id,achievement_id' },
+            );
+          }
+        });
+      } catch (falha) {
+        console.error('[CodeQuest] falha ao gravar tag secreta', falha);
+      }
+
+      return tag;
     },
     [user, state],
   );
@@ -425,8 +695,11 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       origem,
       refresh: load,
       completeLesson,
+      equipTag,
+      registrarSegredo,
       setCurrentLanguage,
       updateName,
+      updateAvatar,
       updateUsername,
     }),
     [
@@ -436,8 +709,11 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       origem,
       load,
       completeLesson,
+      equipTag,
+      registrarSegredo,
       setCurrentLanguage,
       updateName,
+      updateAvatar,
       updateUsername,
     ],
   );

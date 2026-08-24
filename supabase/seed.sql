@@ -2091,5 +2091,72 @@ insert into public.achievements (id, title, description, icon, criteria) values 
 insert into public.achievements (id, title, description, icon, criteria) values ('sem-erros', 'Impecável', 'Você concluiu uma lição acertando todos os exercícios de primeira.', '🥇', '{"kind":"flawless"}'::jsonb)
   on conflict (id) do update set title = excluded.title, description = excluded.description,
   icon = excluded.icon, criteria = excluded.criteria;
+insert into public.achievements (id, title, description, icon, criteria) values ('segredo-curioso', 'Achou o botão secreto', 'Dez cliques no logo depois, algo apareceu.', '🕵️', '{"kind":"secret","segredo":"logo-10-cliques"}'::jsonb)
+  on conflict (id) do update set title = excluded.title, description = excluded.description,
+  icon = excluded.icon, criteria = excluded.criteria;
+insert into public.achievements (id, title, description, icon, criteria) values ('segredo-relampago', 'Rápido no gatilho', 'Uma lição inteira em menos de 30 segundos, sem errar nada.', '⚡', '{"kind":"secret","segredo":"licao-relampago"}'::jsonb)
+  on conflict (id) do update set title = excluded.title, description = excluded.description,
+  icon = excluded.icon, criteria = excluded.criteria;
+insert into public.achievements (id, title, description, icon, criteria) values ('segredo-madrugada', 'Turno da madrugada', 'Concluiu uma lição entre meia-noite e cinco da manhã.', '🦉', '{"kind":"secret","segredo":"madrugada"}'::jsonb)
+  on conflict (id) do update set title = excluded.title, description = excluded.description,
+  icon = excluded.icon, criteria = excluded.criteria;
+insert into public.achievements (id, title, description, icon, criteria) values ('segredo-impecavel', 'Série impecável', 'Cinco lições sem errar um único exercício.', '💎', '{"kind":"secret","segredo":"serie-impecavel"}'::jsonb)
+  on conflict (id) do update set title = excluded.title, description = excluded.description,
+  icon = excluded.icon, criteria = excluded.criteria;
+
+-- Tags de perfil -----------------------------------------------------------
+do $seed$
+begin
+  if to_regclass('public.tags') is null then
+    raise notice 'tabela public.tags ausente - rode a migration 0004 antes';
+    return;
+  end if;
+
+  insert into public.tags (id, name, description, icon, rarity, criteria, secret, order_index) values ('nivel-05', 'Primeiros Passos', 'Chegou ao nível 5. O começo de tudo.', '🌱', 'comum', '{"kind":"level","level":5}'::jsonb, false, 1)
+    on conflict (id) do update set name = excluded.name, description = excluded.description,
+    icon = excluded.icon, rarity = excluded.rarity, criteria = excluded.criteria,
+    secret = excluded.secret, order_index = excluded.order_index;
+  insert into public.tags (id, name, description, icon, rarity, criteria, secret, order_index) values ('nivel-10', 'Codificador', 'Chegou ao nível 10. Código já não assusta mais.', '⌨️', 'raro', '{"kind":"level","level":10}'::jsonb, false, 2)
+    on conflict (id) do update set name = excluded.name, description = excluded.description,
+    icon = excluded.icon, rarity = excluded.rarity, criteria = excluded.criteria,
+    secret = excluded.secret, order_index = excluded.order_index;
+  insert into public.tags (id, name, description, icon, rarity, criteria, secret, order_index) values ('nivel-20', 'Arquiteto', 'Chegou ao nível 20. Agora você desenha a solução antes de escrever.', '📐', 'epico', '{"kind":"level","level":20}'::jsonb, false, 3)
+    on conflict (id) do update set name = excluded.name, description = excluded.description,
+    icon = excluded.icon, rarity = excluded.rarity, criteria = excluded.criteria,
+    secret = excluded.secret, order_index = excluded.order_index;
+  insert into public.tags (id, name, description, icon, rarity, criteria, secret, order_index) values ('nivel-30', 'Mestre do Código', 'Chegou ao nível 30. Pouca gente chega aqui.', '🔮', 'mitico', '{"kind":"level","level":30}'::jsonb, false, 4)
+    on conflict (id) do update set name = excluded.name, description = excluded.description,
+    icon = excluded.icon, rarity = excluded.rarity, criteria = excluded.criteria,
+    secret = excluded.secret, order_index = excluded.order_index;
+  insert into public.tags (id, name, description, icon, rarity, criteria, secret, order_index) values ('nivel-50', 'Lenda do CodeQuest', 'Chegou ao nível 50. Isso é 5.000 XP.', '👑', 'lendario', '{"kind":"level","level":50}'::jsonb, false, 5)
+    on conflict (id) do update set name = excluded.name, description = excluded.description,
+    icon = excluded.icon, rarity = excluded.rarity, criteria = excluded.criteria,
+    secret = excluded.secret, order_index = excluded.order_index;
+  insert into public.tags (id, name, description, icon, rarity, criteria, secret, order_index) values ('pythonista', 'Pythonista', 'Concluiu a trilha de Python inteira, do primeiro print ao projeto final.', '🐍', 'epico', '{"kind":"language_completed","languageSlug":"python"}'::jsonb, false, 6)
+    on conflict (id) do update set name = excluded.name, description = excluded.description,
+    icon = excluded.icon, rarity = excluded.rarity, criteria = excluded.criteria,
+    secret = excluded.secret, order_index = excluded.order_index;
+  insert into public.tags (id, name, description, icon, rarity, criteria, secret, order_index) values ('secreta-curioso', 'Curioso', 'Você ficou clicando no logo até algo acontecer. Respeito.', '🕵️', 'raro', '{"kind":"secret","segredo":"logo-10-cliques"}'::jsonb, true, 20)
+    on conflict (id) do update set name = excluded.name, description = excluded.description,
+    icon = excluded.icon, rarity = excluded.rarity, criteria = excluded.criteria,
+    secret = excluded.secret, order_index = excluded.order_index;
+  insert into public.tags (id, name, description, icon, rarity, criteria, secret, order_index) values ('secreta-relampago', 'Relâmpago', 'Resolveu uma lição inteira em menos de 30 segundos, sem errar nada.', '⚡', 'epico', '{"kind":"secret","segredo":"licao-relampago"}'::jsonb, true, 21)
+    on conflict (id) do update set name = excluded.name, description = excluded.description,
+    icon = excluded.icon, rarity = excluded.rarity, criteria = excluded.criteria,
+    secret = excluded.secret, order_index = excluded.order_index;
+  insert into public.tags (id, name, description, icon, rarity, criteria, secret, order_index) values ('secreta-madrugada', 'Coruja', 'Estudou de madrugada. O código não dorme.', '🦉', 'raro', '{"kind":"secret","segredo":"madrugada"}'::jsonb, true, 22)
+    on conflict (id) do update set name = excluded.name, description = excluded.description,
+    icon = excluded.icon, rarity = excluded.rarity, criteria = excluded.criteria,
+    secret = excluded.secret, order_index = excluded.order_index;
+  insert into public.tags (id, name, description, icon, rarity, criteria, secret, order_index) values ('secreta-impecavel', 'Impecável', 'Cinco lições seguidas sem errar um único exercício.', '💎', 'mitico', '{"kind":"secret","segredo":"serie-impecavel"}'::jsonb, true, 23)
+    on conflict (id) do update set name = excluded.name, description = excluded.description,
+    icon = excluded.icon, rarity = excluded.rarity, criteria = excluded.criteria,
+    secret = excluded.secret, order_index = excluded.order_index;
+  insert into public.tags (id, name, description, icon, rarity, criteria, secret, order_index) values ('dev', 'Desenvolvedor', 'Quem construiu o CodeQuest.', '🛠️', 'dev', '{"kind":"manual"}'::jsonb, false, 99)
+    on conflict (id) do update set name = excluded.name, description = excluded.description,
+    icon = excluded.icon, rarity = excluded.rarity, criteria = excluded.criteria,
+    secret = excluded.secret, order_index = excluded.order_index;
+end
+$seed$;
 
 commit;

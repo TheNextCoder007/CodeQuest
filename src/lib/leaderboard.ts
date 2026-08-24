@@ -17,7 +17,7 @@ export const fetchLeaderboard = async (limit = 50): Promise<LeaderboardRow[]> =>
 
   const { data, error } = await getSupabase()!
     .from('profiles')
-    .select('id, name, username, avatar_url, xp_total, level, streak_count')
+    .select('id, name, username, avatar_url, xp_total, level, streak_count, equipped_tag_id, is_developer')
     .order('xp_total', { ascending: false })
     .order('name', { ascending: true })
     .limit(limit);

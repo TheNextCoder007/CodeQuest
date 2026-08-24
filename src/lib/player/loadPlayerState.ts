@@ -56,7 +56,19 @@ const perfilNovo = (user: DadosDoUsuario): ProfileRow => ({
   streak_count: 0,
   last_study_date: null,
   current_language: 'python',
+  equipped_tag_id: null,
+  username_changed_at: null,
+  is_developer: false,
 });
+
+/** Erro de "essa tabela nao existe" (migration ainda nao aplicada). */
+const tabelaAusente = (erro: unknown): boolean => {
+  if (!erro || typeof erro !== 'object') return false;
+  const codigo = String((erro as { code?: unknown }).code ?? '');
+  const texto = String((erro as { message?: unknown }).message ?? '');
+  // 42P01 = undefined_table no Postgres; PGRST205 = tabela fora do cache do PostgREST.
+  return codigo === '42P01' || codigo === 'PGRST205' || /does not exist|schema cache/i.test(texto);
+};
 
 const mensagem = (erro: unknown, padrao: string): string => {
   if (erro && typeof erro === 'object' && 'message' in erro) {
@@ -78,12 +90,14 @@ export async function lerEstadoDoServidor(
   let perfilResposta;
   let progressoResposta;
   let conquistasResposta;
+  let tagsResposta;
 
   try {
-    [perfilResposta, progressoResposta, conquistasResposta] = await Promise.all([
+    [perfilResposta, progressoResposta, conquistasResposta, tagsResposta] = await Promise.all([
       supabase.from('profiles').select('*').eq('id', user.id).maybeSingle(),
       supabase.from('user_progress').select('lesson_id, flawless').eq('user_id', user.id),
       supabase.from('user_achievements').select('achievement_id').eq('user_id', user.id),
+      supabase.from('user_tags').select('tag_id').eq('user_id', user.id),
     ]);
   } catch (falha) {
     return { tipo: 'erro', motivo: mensagem(falha, 'falha de rede') };
@@ -93,6 +107,14 @@ export async function lerEstadoDoServidor(
   // isso era exatamente o que transformava uma falha de rede em "0 XP".
   const falha = perfilResposta?.error ?? progressoResposta?.error ?? conquistasResposta?.error;
   if (falha) return { tipo: 'erro', motivo: mensagem(falha, 'falha ao ler o progresso') };
+
+  // `user_tags` nasceu na migration 0004. Se o codigo subir antes de a SQL ser
+  // aplicada, a tabela ainda nao existe - e isso nao pode derrubar o app
+  // inteiro: seguimos sem tags ate a migration rodar.
+  if (tagsResposta?.error && !tabelaAusente(tagsResposta.error)) {
+    return { tipo: 'erro', motivo: mensagem(tagsResposta.error, 'falha ao ler as tags') };
+  }
+  const tagsIndisponiveis = Boolean(tagsResposta?.error);
 
   let profile = (perfilResposta?.data ?? null) as ProfileRow | null;
 
@@ -121,6 +143,9 @@ export async function lerEstadoDoServidor(
       unlockedAchievementIds: ((conquistasResposta?.data ?? []) as {
         achievement_id: string;
       }[]).map((linha) => linha.achievement_id),
+      unlockedTagIds: tagsIndisponiveis
+        ? []
+        : ((tagsResposta?.data ?? []) as { tag_id: string }[]).map((linha) => linha.tag_id),
     },
   };
 }
@@ -150,7 +175,20 @@ async function criarPerfil(
   user: DadosDoUsuario,
 ): Promise<ResultadoCriacao> {
   const seed = perfilNovo(user);
-  const { data, error } = await supabase.from('profiles').insert(seed).select().maybeSingle();
+
+  // O INSERT manda so as colunas do schema original: as que vieram depois
+  // (equipped_tag_id, is_developer...) tem valor padrao no banco, e omiti-las
+  // faz o cadastro continuar funcionando mesmo antes de a 0004 ser aplicada.
+  const { equipped_tag_id, username_changed_at, is_developer, ...colunasBase } = seed;
+  void equipped_tag_id;
+  void username_changed_at;
+  void is_developer;
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .insert(colunasBase)
+    .select()
+    .maybeSingle();
 
   if (!error && data) return { tipo: 'ok', profile: data as ProfileRow };
 

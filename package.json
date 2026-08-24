@@ -22,7 +22,8 @@
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build",
     "test:progresso": "tsx scripts/testar-progresso.mts",
-    "test:migrations": "tsx scripts/testar-migrations.mts"
+    "test:migrations": "tsx scripts/testar-migrations.mts",
+    "test:tags": "tsx scripts/testar-tags.mts"
   },
   "dependencies": {
     "@capacitor/android": "^6.2.0",

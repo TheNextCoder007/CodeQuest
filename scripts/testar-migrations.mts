@@ -72,13 +72,15 @@ await db.exec(BASE_SUPABASE);
 const migration0001 = ler('supabase/migrations/0001_init.sql');
 const migration0002 = ler('supabase/migrations/0002_amigos.sql');
 const migration0003 = ler('supabase/migrations/0003_protecao_progresso.sql');
+const migration0004 = ler('supabase/migrations/0004_perfis_publicos.sql');
 const seed = ler('supabase/seed.sql');
 
 await db.exec(migration0001);
 await db.exec(migration0002);
 await db.exec(migration0003);
+await db.exec(migration0004);
 await db.exec(seed);
-console.log('ok     primeira aplicacao (0001 + 0002 + 0003 + seed)');
+console.log('ok     primeira aplicacao (0001 + 0002 + 0003 + 0004 + seed)');
 
 /* -------------------------------------------------------------------------
  * Um aluno com progresso, igual ao caso relatado
@@ -144,6 +146,7 @@ for (const rodada of [2, 3]) {
   await db.exec(migration0001);
   await db.exec(migration0002);
   await db.exec(migration0003);
+  await db.exec(migration0004);
   await db.exec(seed);
   console.log(`ok     aplicacao ${rodada} concluida sem erro`);
 }
@@ -251,6 +254,156 @@ try {
   aindaBloqueia = true;
 }
 ok(aindaBloqueia, 'depois da 0003 o XP continua sem poder diminuir');
+
+/* -------------------------------------------------------------------------
+ * Migration 0004: tags, @username e perfil publico
+ * ---------------------------------------------------------------------- */
+console.log('\n--- migration 0004 ---');
+
+const catalogo = await db.query<{ n: number }>('select count(*)::int as n from public.tags');
+ok(catalogo.rows[0].n === 11, `o seed populou o catalogo de tags (${catalogo.rows[0].n})`);
+
+// --- palavras bloqueadas ---------------------------------------------------
+const filtro = await db.query<{ alvo: string; proibido: boolean }>(
+  `select alvo, public.username_proibido(alvo) as proibido
+     from unnest(array[
+       'cu','cu_123','puta','puta_99','pornolandia','sexo','xxsexo',
+       'curioso','escuro','documento','disputa','reputacao','davi123','s3x0','thenextone'
+     ]) as alvo`,
+);
+const bloqueado = (alvo: string) =>
+  filtro.rows.find((linha) => linha.alvo === alvo)?.proibido === true;
+
+ok(bloqueado('cu'), 'bloqueia "cu" (nome inteiro)');
+ok(bloqueado('cu_123'), 'bloqueia "cu_123" (pedaco separado)');
+ok(bloqueado('puta'), 'bloqueia "puta"');
+ok(bloqueado('pornolandia'), 'bloqueia palavra longa no meio do nome');
+ok(bloqueado('sexo'), 'bloqueia "sexo"');
+ok(!bloqueado('curioso'), 'NAO bloqueia "curioso" (conteria "cu")');
+ok(!bloqueado('escuro'), 'NAO bloqueia "escuro"');
+ok(!bloqueado('documento'), 'NAO bloqueia "documento"');
+ok(!bloqueado('disputa'), 'NAO bloqueia "disputa" (conteria "puta")');
+ok(!bloqueado('reputacao'), 'NAO bloqueia "reputacao"');
+ok(!bloqueado('s3x0'), 'NAO bloqueia disfarce com numero (decisao deliberada)');
+ok(!bloqueado('thenextone'), 'NAO bloqueia nome comum');
+
+let recusouPalavrao = false;
+try {
+  await db.query(`update public.profiles set username = 'putaria' where id = $1`, [ALUNO]);
+} catch {
+  recusouPalavrao = true;
+}
+ok(recusouPalavrao, 'o banco recusa @username com palavrao');
+
+// --- a primeira escolha do @username nao inicia a contagem -----------------
+const NOVATO = '33333333-3333-3333-3333-333333333333';
+await db.query(
+  `insert into auth.users (id, email, raw_user_meta_data)
+   values ($1, 'novato@codequest.dev', '{"name":"Novato"}'::jsonb)`,
+  [NOVATO],
+);
+await db.query(`update public.profiles set username = 'novato' where id = $1`, [NOVATO]);
+const primeiraEscolha = await db.query<{ username_changed_at: string | null }>(
+  'select username_changed_at from public.profiles where id = $1',
+  [NOVATO],
+);
+ok(
+  primeiraEscolha.rows[0].username_changed_at === null,
+  'a primeira escolha do @username nao inicia a espera de 24h',
+);
+await db.query(`update public.profiles set username = 'novato2' where id = $1`, [NOVATO]);
+const aposCorrecao = await db.query<{ username_changed_at: string | null }>(
+  'select username_changed_at from public.profiles where id = $1',
+  [NOVATO],
+);
+ok(
+  aposCorrecao.rows[0].username_changed_at !== null,
+  'corrigir logo depois e permitido, e AI a contagem comeca',
+);
+let novatoBloqueado = false;
+try {
+  await db.query(`update public.profiles set username = 'novato3' where id = $1`, [NOVATO]);
+} catch {
+  novatoBloqueado = true;
+}
+ok(novatoBloqueado, 'a partir da segunda troca, a espera vale');
+
+// --- espera de 24h ---------------------------------------------------------
+await db.query(
+  `update public.profiles set username_changed_at = now() - interval '48 hours' where id = $1`,
+  [ALUNO],
+);
+await db.query(`update public.profiles set username = 'thenextone2' where id = $1`, [ALUNO]);
+const trocou = await db.query<{ username: string; username_changed_at: string }>(
+  'select username, username_changed_at from public.profiles where id = $1',
+  [ALUNO],
+);
+ok(trocou.rows[0].username === 'thenextone2', 'troca permitida depois de 24h');
+ok(trocou.rows[0].username_changed_at !== null, 'o gatilho carimbou username_changed_at');
+
+let recusouCedo = false;
+try {
+  await db.query(`update public.profiles set username = 'thenextone3' where id = $1`, [ALUNO]);
+} catch {
+  recusouCedo = true;
+}
+ok(recusouCedo, 'segunda troca dentro de 24h e recusada pelo banco');
+
+// --- tag exibida -----------------------------------------------------------
+let recusouTagNaoDesbloqueada = false;
+try {
+  await db.query(`update public.profiles set equipped_tag_id = 'nivel-50' where id = $1`, [ALUNO]);
+} catch {
+  recusouTagNaoDesbloqueada = true;
+}
+ok(recusouTagNaoDesbloqueada, 'nao da para exibir tag que nao foi desbloqueada');
+
+await db.query(`insert into public.user_tags (user_id, tag_id) values ($1, 'nivel-05')`, [ALUNO]);
+await db.query(`update public.profiles set equipped_tag_id = 'nivel-05' where id = $1`, [ALUNO]);
+const equipada = await db.query<{ equipped_tag_id: string }>(
+  'select equipped_tag_id from public.profiles where id = $1',
+  [ALUNO],
+);
+ok(equipada.rows[0].equipped_tag_id === 'nivel-05', 'tag desbloqueada pode ser exibida');
+
+// --- selo de desenvolvedor -------------------------------------------------
+let recusouDev = false;
+try {
+  await db.query('update public.profiles set is_developer = true where id = $1', [ALUNO]);
+} catch {
+  recusouDev = true;
+}
+ok(recusouDev, 'o usuario nao consegue ligar is_developer sozinho');
+
+const concedido = await db.query<{ is_developer: boolean }>(
+  `select is_developer from public.definir_desenvolvedor('thenextone2', true)`,
+);
+ok(concedido.rows[0].is_developer === true, 'definir_desenvolvedor concede o selo');
+const tagDev = await db.query<{ n: number }>(
+  `select count(*)::int as n from public.user_tags where user_id = $1 and tag_id = 'dev'`,
+  [ALUNO],
+);
+ok(tagDev.rows[0].n === 1, 'e entrega a tag Desenvolvedor junto');
+
+// --- posicao no ranking ----------------------------------------------------
+const posicao = await db.query<{ posicao_no_ranking: number }>(
+  'select public.posicao_no_ranking($1)',
+  [ALUNO],
+);
+ok(posicao.rows[0].posicao_no_ranking === 1, 'quem tem mais XP fica em 1o lugar');
+const posicaoOutro = await db.query<{ posicao_no_ranking: number }>(
+  'select public.posicao_no_ranking($1)',
+  [OUTRO],
+);
+ok(posicaoOutro.rows[0].posicao_no_ranking === 2, 'o segundo colocado fica em 2o');
+
+// --- RLS das tabelas novas -------------------------------------------------
+const policiesTags = await db.query<{ cmd: string }>(
+  `select cmd from pg_policies where schemaname = 'public' and tablename = 'user_tags'`,
+);
+const cmdsTags = policiesTags.rows.map((linha) => linha.cmd.toUpperCase());
+ok(cmdsTags.includes('SELECT') && cmdsTags.includes('INSERT'), 'user_tags tem policies de leitura e escrita');
+ok(!cmdsTags.includes('DELETE'), 'user_tags nao tem policy de DELETE (tag nao se perde)');
 
 await db.close();
 

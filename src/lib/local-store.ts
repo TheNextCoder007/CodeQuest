@@ -97,6 +97,9 @@ export const emptyProfile = (id: string, name: string): ProfileRow => ({
   streak_count: 0,
   last_study_date: null,
   current_language: 'python',
+  equipped_tag_id: null,
+  username_changed_at: null,
+  is_developer: false,
 });
 
 export const emptyState = (id: string, name: string): PlayerState => ({
@@ -104,6 +107,7 @@ export const emptyState = (id: string, name: string): PlayerState => ({
   completedLessonIds: [],
   flawlessLessonIds: [],
   unlockedAchievementIds: [],
+  unlockedTagIds: [],
 });
 
 export const localAuth = {
@@ -142,10 +146,20 @@ export const localState = {
       emptyState(userId, fallbackName),
     );
 
-    // Contas locais criadas antes de o campo existir nao tem `username`.
+    // Contas locais criadas antes de os campos existirem.
     if (carregado.profile && carregado.profile.username === undefined) {
       carregado.profile.username = null;
     }
+    if (carregado.profile && carregado.profile.equipped_tag_id === undefined) {
+      carregado.profile.equipped_tag_id = null;
+    }
+    if (carregado.profile && carregado.profile.username_changed_at === undefined) {
+      carregado.profile.username_changed_at = null;
+    }
+    if (carregado.profile && carregado.profile.is_developer === undefined) {
+      carregado.profile.is_developer = false;
+    }
+    if (!carregado.unlockedTagIds) carregado.unlockedTagIds = [];
     return carregado;
   },
 
@@ -178,6 +192,8 @@ export const localState = {
         xp_total: profile.xp_total,
         level: profile.level,
         streak_count: profile.streak_count,
+        equipped_tag_id: profile.equipped_tag_id ?? null,
+        is_developer: profile.is_developer ?? false,
       };
     });
     return [...reais, ...DEMO_PROFILES];
@@ -214,8 +230,27 @@ export const localState = {
         xp_total: profile.xp_total,
         level: profile.level,
         streak_count: profile.streak_count,
+        equipped_tag_id: profile.equipped_tag_id ?? null,
+        is_developer: profile.is_developer ?? false,
       }))
       .sort((a, b) => b.xp_total - a.xp_total);
+  },
+
+  /** Estado completo de outra conta local (usado no perfil publico do modo demo). */
+  byUsername(username: string): PlayerState | undefined {
+    const alvo = username.trim().toLowerCase();
+    const perfil = localState
+      .directory()
+      .find((item) => (item.username ?? '').toLowerCase() === alvo);
+    if (!perfil) return undefined;
+    return localState.load(perfil.id, perfil.name);
+  },
+
+  /** Posicao no ranking local (1 = primeiro). */
+  posicao(userId: string): number {
+    const ordenado = localState.leaderboard();
+    const indice = ordenado.findIndex((linha) => linha.id === userId);
+    return indice < 0 ? ordenado.length + 1 : indice + 1;
   },
 };
 
