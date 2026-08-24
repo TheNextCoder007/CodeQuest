@@ -27,9 +27,6 @@
 --     humano responde a mesma pergunta. O cliente nao sorteia nada.
 --   * `pvp_cancelar` passa a recusar partida ranqueada: sem isso daria para
 --     cancelar toda partida que estivesse perdendo.
---   * A ranqueada NAO deixa escolher o tema (ver `ranked_iniciar`). Isso e uma
---     regra de servidor, e nao um seletor escondido na tela: `ranked_iniciar`
---     nem aceita o parametro, entao nao adianta chamar a funcao na mao.
 --
 -- ---------------------------------------------------------------------------
 -- O QUE ESTE ARQUIVO SUBSTITUI DA 0005
@@ -502,23 +499,7 @@ $$;
 -- 8. Comecar uma partida ranqueada
 -- ---------------------------------------------------------------------------
 
--- Versao antiga aceitava o tema; a de agora nao. O `drop` deixa a troca segura
--- para quem chegou a rodar a versao anterior deste arquivo.
-drop function if exists public.ranked_iniciar(text);
-
-/**
- * Comeca (ou retoma) uma partida ranqueada.
- *
- * Repare que NAO ha parametro de tema. Na ranqueada as perguntas vem de todas
- * as linguagens misturadas, sempre - e isso e decidido aqui, no servidor, e
- * nao escondendo o seletor na tela. Escolher o assunto seria escolher a
- * dificuldade: todo mundo jogaria no que ja domina, e a escada de patamares
- * deixaria de medir o que se propoe a medir.
- *
- * O duelo com amigo (`pvp_convidar`) continua com tema escolhido - la a graca
- * e combinar o assunto com a outra pessoa.
- */
-create or replace function public.ranked_iniciar()
+create or replace function public.ranked_iniciar(tema_escolhido text default 'todas')
 returns uuid
 language plpgsql
 security definer
@@ -567,10 +548,12 @@ begin
     perform public.pvp_finalizar(aberta.id);
   end if;
 
-  select count(*) into disponiveis from public.pvp_questions q;
+  select count(*) into disponiveis
+    from public.pvp_questions q
+   where tema_escolhido = 'todas' or q.language_slug = tema_escolhido;
 
   if disponiveis < quantidade then
-    raise exception 'Nao ha perguntas suficientes para uma partida ranqueada';
+    raise exception 'Nao ha perguntas suficientes para o tema %', tema_escolhido;
   end if;
 
   -- A dificuldade do bot sai do patamar do jogador, decidida AQUI. O cliente
@@ -583,7 +566,7 @@ begin
     bot_nome, bot_acerto, bot_ms_min, bot_ms_max, started_at
   )
   values (
-    'todas', 'ativa', 'ranqueado', eu, null, quantidade, temporada.numero,
+    tema_escolhido, 'ativa', 'ranqueado', eu, null, quantidade, temporada.numero,
     adversario.nome, adversario.acerto, adversario.ms_min, adversario.ms_max, now()
   )
   returning id into nova;
@@ -592,6 +575,7 @@ begin
   select nova, row_number() over (), q.id
     from (
       select id from public.pvp_questions
+       where tema_escolhido = 'todas' or language_slug = tema_escolhido
        order by random()
        limit quantidade
     ) q;
@@ -1002,7 +986,7 @@ revoke all on function public.ranked_bot_completar(uuid, int)           from pub
 revoke all on function public.ranked_bot_completar(uuid, int)           from authenticated;
 
 grant execute on function public.ranked_temporada_atual()          to authenticated;
-grant execute on function public.ranked_iniciar()                  to authenticated;
+grant execute on function public.ranked_iniciar(text)              to authenticated;
 grant execute on function public.ranked_estado(uuid)               to authenticated;
 grant execute on function public.ranked_historico(uuid, int)       to authenticated;
 grant execute on function public.ranked_resultado(uuid)            to authenticated;
