@@ -35,9 +35,10 @@ Play ou na Microsoft Store (que cobram taxa de desenvolvedor).
 10. [Amigos e @username](#10-amigos-e-username)
 11. [Tags, perfil público e foto](#11-tags-perfil-público-e-foto)
 12. [Duelo 1v1 (PvP)](#12-duelo-1v1-pvp)
-13. [Editar e criar conteúdo](#13-editar-e-criar-conteúdo)
-14. [Decisões técnicas](#14-decisões-técnicas)
-15. [Problemas comuns](#15-problemas-comuns)
+13. [Aparecer no Google (SEO)](#13-aparecer-no-google-seo)
+14. [Editar e criar conteúdo](#14-editar-e-criar-conteúdo)
+15. [Decisões técnicas](#15-decisões-técnicas)
+16. [Problemas comuns](#16-problemas-comuns)
 
 ---
 
@@ -73,6 +74,8 @@ Para ligar a nuvem (contas reais, progresso sincronizado entre celular/PC/site),
 | `npm run test:amigos` | Testa o fluxo de amizades (busca, pedido, aceite, remoção, ranking) |
 | `npm run test:tags` | Testa as tags, os segredos e as regras do @username |
 | `npm run test:pvp` | Joga uma partida 1v1 num Postgres real e testa as tentativas de trapaça |
+| `npm run test:seo` | Confere sitemap, robots.txt e as meta tags do build |
+| `npm run og:gen` | Regera a imagem de prévia do link (`public/og.jpg`) |
 | `npm run test:progresso` | Garante que falha de leitura nunca vira progresso zerado |
 | `npm run test:migrations` | Aplica as migrations 3× num Postgres real e confere que nada é apagado |
 | `npm run seed:gen` | Regera `supabase/seed.sql` a partir do currículo |
@@ -855,7 +858,86 @@ usa exatamente a mesma pontuação do servidor. A tela avisa isso antes de come�
 
 ---
 
-## 13. Editar e criar conteúdo
+## 13. Aparecer no Google (SEO)
+
+Tudo o que está aqui é gratuito e funciona no domínio da Vercel — não precisa de domínio próprio.
+
+### 13.1 O endereço do site
+
+Sitemap, robots.txt e as tags de prévia precisam de **URL absoluta**. Ela vem, nesta ordem:
+
+1. `NEXT_PUBLIC_SITE_URL` — o que você configurar em **Vercel › Settings › Environment Variables**;
+2. `VERCEL_PROJECT_PRODUCTION_URL` — o domínio **fixo** de produção, que a Vercel injeta sozinha;
+3. `http://localhost:3000` — só em desenvolvimento.
+
+Uma `NEXT_PUBLIC_SITE_URL` apontando para `localhost` **perde** para o domínio da Vercel de
+propósito: sem essa regra, esquecer de trocar a variável publicaria um sitemap inteiro apontando
+para a sua máquina. E não usamos `VERCEL_URL`, que muda a cada deploy
+(`projeto-a1b2c3.vercel.app`) e colocaria um endereço descartável dentro do sitemap.
+
+### 13.2 Sitemap e robots.txt
+
+Gerados pelo Next a partir de [`src/app/sitemap.ts`](src/app/sitemap.ts) e
+[`src/app/robots.ts`](src/app/robots.ts) — ficam em `/sitemap.xml` e `/robots.txt`.
+
+O sitemap lista **só as páginas públicas**: `/`, `/cadastro/` e `/login/`. Todo o resto do
+aplicativo vive atrás do login (sem sessão, o `AppShell` manda para `/login`), então indexar essas
+telas colocaria no Google resultados que levam a uma tela de carregamento. Elas ficam de fora do
+sitemap, barradas no `robots.txt` **e** marcadas com `noindex, nofollow` no próprio HTML — o robots
+evita a visita, o meta evita a indexação caso o Google chegue por um link de fora.
+
+> **Isto aqui é indexável de verdade?** Sim. Mesmo sendo um app client-side, o Next pré-renderiza a
+> landing no build: o HTML entregue tem cerca de **9.800 caracteres de texto visível**, não uma
+> casca vazia. Dá para conferir abrindo `out/index.html` depois de `npm run build:static`.
+
+### 13.3 Título, descrição e prévia do link
+
+O layout raiz ([`src/app/layout.tsx`](src/app/layout.tsx)) define o título e a descrição da landing
+e serve de padrão para o site. Cada rota pública tem um `layout.tsx` próprio com o texto dela — as
+páginas são componentes de cliente e componente de cliente **não pode** exportar `metadata`, então
+esse layout de servidor de uma linha existe só para carregar as tags.
+
+Também saem prontas: `og:title`, `og:description`, `og:image`, `og:url`, `og:type`, `og:locale`,
+`twitter:card` e o `<link rel="canonical">`.
+
+A imagem de prévia é [`public/og.jpg`](public/og.jpg) (1200×630). Ela é **gerada a partir de um
+HTML** — [`scripts/og-image.html`](scripts/og-image.html) — para qualquer pessoa do grupo conseguir
+ajustar sem ferramenta de design:
+
+```bash
+npm i -D playwright && npx playwright install chromium   # só na primeira vez
+npm run og:gen
+```
+
+JPEG e não PNG de propósito: o mesmo desenho em PNG dava 440 KB por causa dos gradientes, e o
+WhatsApp costuma desistir de gerar a prévia acima de ~300 KB. Em JPEG a 90% fica em **69 KB**.
+
+### 13.4 Cadastrar no Google Search Console
+
+1. Publique na Vercel e confirme o endereço em **Vercel › Project › Domains** (algo como
+   `https://codequest.vercel.app`).
+2. Configure `NEXT_PUBLIC_SITE_URL` com esse endereço e **faça um novo deploy** — o sitemap é
+   gerado no build, então a variável precisa existir antes.
+3. Abra <https://search.google.com/search-console>, escolha **Prefixo do URL** e cole o endereço.
+4. Verifique a propriedade pela **tag HTML** (o método mais simples sem domínio próprio): o Google
+   dá uma meta tag; adicione o conteúdo dela em `verification` no `metadata` do layout raiz e faça
+   deploy.
+5. Em **Sitemaps**, envie `sitemap.xml`.
+
+> A indexação leva de alguns dias a algumas semanas. Use **Inspeção de URL › Solicitar indexação**
+> para acelerar a landing.
+
+### 13.5 Verificação automática
+
+`npm run test:seo` cobre a resolução do endereço (inclusive o caso de esquecer a variável), e —
+quando `out/` existe — confere no resultado do build: o sitemap é XML válido, só tem URL absoluta
+terminada em barra, nenhuma rota privada vazou, o robots barra todas elas, cada página pública tem
+title/description de bom tamanho e as tags sociais, cada página privada está com `noindex`, e a
+imagem de prévia cabe no limite do WhatsApp.
+
+---
+
+## 14. Editar e criar conteúdo
 
 O currículo é **TypeScript**, não banco de dados — por isso funciona offline no `.apk` e no `.exe`,
 e por isso um erro de digitação aparece na hora, com autocompletar.
@@ -896,7 +978,7 @@ O campo opcional `polyglot` gera as abas "o conceito é o mesmo, a sintaxe muda"
 
 ---
 
-## 14. Decisões técnicas
+## 15. Decisões técnicas
 
 ### Por que esta stack
 
@@ -948,7 +1030,7 @@ limites do plano gratuito. A execução de código não custa nada porque aconte
 
 ---
 
-## 15. Problemas comuns
+## 16. Problemas comuns
 
 **O app mostra "modo demonstração" mesmo com o `.env.local` preenchido**
 Reinicie o `npm run dev` — variáveis `NEXT_PUBLIC_*` são lidas na inicialização. Confira também se

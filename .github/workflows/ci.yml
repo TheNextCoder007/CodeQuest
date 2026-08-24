@@ -48,6 +48,11 @@ jobs:
         # do banco continuam iguais.
         run: npm run test:tags
 
+      - name: Testar o SEO
+        # Confere de onde sai o endereco publico e, depois do build, o
+        # sitemap, o robots.txt e as meta tags de cada pagina gerada.
+        run: npm run test:seo
+
       - name: Testar o modo 1v1
         # Joga uma partida inteira num PostgreSQL real pelas mesmas funcoes
         # que o app chama, tenta trapacear de varias formas, e compara as

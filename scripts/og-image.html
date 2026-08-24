@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <title>CodeQuest — imagem de previa</title>
+    <!--
+      Fonte da imagem `public/og.png` (a previa que aparece no WhatsApp, no
+      Discord e no Google).
+
+      Para regerar depois de mudar algo aqui:
+        npm run og:gen
+
+      Fica como HTML de proposito: e mais facil de ajustar do que um PNG, e
+      qualquer pessoa do grupo consegue mexer sem ferramenta de design.
+    -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&family=JetBrains+Mono:wght@700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        width: 1200px;
+        height: 630px;
+        overflow: hidden;
+        background: #04070f;
+        font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+        color: #e2e8f0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 72px 80px;
+        position: relative;
+        background-image:
+          radial-gradient(circle at 8% 6%, rgba(0, 227, 148, 0.22), transparent 45%),
+          radial-gradient(circle at 92% 10%, rgba(56, 214, 245, 0.18), transparent 42%),
+          radial-gradient(circle at 75% 100%, rgba(37, 99, 235, 0.3), transparent 50%);
+      }
+
+      .marca {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        margin-bottom: 40px;
+      }
+      .marca svg {
+        width: 88px;
+        height: 88px;
+      }
+      .nome {
+        font-size: 44px;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        color: #fff;
+      }
+      .nome span {
+        background: linear-gradient(100deg, #00e394, #38d6f5 55%, #2563eb);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+
+      h1 {
+        font-size: 66px;
+        line-height: 1.06;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        color: #fff;
+        max-width: 15ch;
+      }
+      h1 em {
+        font-style: normal;
+        background: linear-gradient(100deg, #00e394, #38d6f5 60%, #2563eb);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+
+      p.sub {
+        margin-top: 26px;
+        font-size: 27px;
+        line-height: 1.45;
+        color: #94a3b8;
+        max-width: 30ch;
+        font-weight: 500;
+      }
+
+      .pills {
+        position: absolute;
+        right: 80px;
+        bottom: 76px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 16px;
+      }
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        border-radius: 999px;
+        padding: 14px 26px;
+        font-size: 25px;
+        font-weight: 700;
+        border: 1px solid;
+        white-space: nowrap;
+      }
+      .pill.mint {
+        border-color: rgba(0, 227, 148, 0.4);
+        background: rgba(0, 227, 148, 0.12);
+        color: #6ee7b7;
+      }
+      .pill.amber {
+        border-color: rgba(251, 191, 36, 0.4);
+        background: rgba(251, 191, 36, 0.12);
+        color: #fcd34d;
+      }
+      .pill.blue {
+        border-color: rgba(56, 214, 245, 0.4);
+        background: rgba(56, 214, 245, 0.12);
+        color: #7dd3fc;
+      }
+
+      .rodape {
+        position: absolute;
+        left: 80px;
+        bottom: 76px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 22px;
+        font-weight: 700;
+        color: #475569;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="marca">
+      <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#00e394" />
+            <stop offset="55%" stop-color="#38d6f5" />
+            <stop offset="100%" stop-color="#2563eb" />
+          </linearGradient>
+        </defs>
+        <rect width="512" height="512" rx="112" fill="#04070f" />
+        <rect x="24" y="24" width="464" height="464" rx="92" fill="url(#g)" opacity="0.16" />
+        <g
+          fill="none"
+          stroke="url(#g)"
+          stroke-width="34"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <polyline points="196,168 118,256 196,344" />
+          <polyline points="316,168 394,256 316,344" />
+        </g>
+        <circle cx="256" cy="256" r="26" fill="url(#g)" />
+      </svg>
+      <span class="nome">Code<span>Quest</span></span>
+    </div>
+
+    <h1>Aprenda a programar <em>jogando</em></h1>
+    <p class="sub">Desafios com correção na hora, XP, streak e duelos com os amigos.</p>
+
+    <div class="pills">
+      <span class="pill mint">⭐ XP e níveis</span>
+      <span class="pill amber">🔥 Streak diário</span>
+      <span class="pill blue">⚔️ Duelos 1v1</span>
+    </div>
+
+    <div class="rodape">grátis · sem instalar nada</div>
+  </body>
+</html>
