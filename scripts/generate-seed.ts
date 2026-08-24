@@ -12,6 +12,7 @@ import { fileURLToPath } from 'node:url';
 import { languages } from '../src/content/index';
 import { achievements } from '../src/content/achievements';
 import { tags } from '../src/content/tags';
+import { pvpQuestions } from '../src/content/pvp-questions';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const outputPath = resolve(here, '..', 'supabase', 'seed.sql');
@@ -150,6 +151,29 @@ tags.forEach((tag) => {
 });
 lines.push('end', '$seed$;');
 
+/* --------------------------------------------------------------------------
+ * Perguntas do duelo 1v1
+ *
+ * Depende da migration 0005. Assim como as tags, fica dentro de um `if` para
+ * o seed continuar rodando em bancos que ainda nao aplicaram a migration.
+ * ----------------------------------------------------------------------- */
+lines.push('', '-- Perguntas do duelo 1v1 ---------------------------------------------------');
+lines.push('do $seed$', 'begin', "  if to_regclass('public.pvp_questions') is null then",
+  "    raise notice 'tabela public.pvp_questions ausente - rode a migration 0005 antes';", '    return;', '  end if;', '');
+pvpQuestions.forEach((questao) => {
+  lines.push(
+    `  insert into public.pvp_questions (id, language_slug, kind, prompt, options, answer, explanation, difficulty) values (${sql(
+      questao.id,
+    )}, ${sql(questao.languageSlug)}, ${sql(questao.kind)}, ${sql(questao.prompt)}, ${json(
+      questao.options ?? null,
+    )}, ${sql(questao.answer)}, ${sql(questao.explanation)}, ${questao.difficulty})`,
+    '    on conflict (id) do update set language_slug = excluded.language_slug, kind = excluded.kind,',
+    '    prompt = excluded.prompt, options = excluded.options, answer = excluded.answer,',
+    '    explanation = excluded.explanation, difficulty = excluded.difficulty;',
+  );
+});
+lines.push('end', '$seed$;');
+
 lines.push('', 'commit;', '');
 
 mkdirSync(dirname(outputPath), { recursive: true });
@@ -172,5 +196,5 @@ const totalExercises = languages.reduce(
 );
 
 console.log(
-  `seed.sql gerado: ${languages.length} linguagens, ${totalLessons} licoes, ${totalExercises} exercicios, ${achievements.length} conquistas, ${tags.length} tags.`,
+  `seed.sql gerado: ${languages.length} linguagens, ${totalLessons} licoes, ${totalExercises} exercicios, ${achievements.length} conquistas, ${tags.length} tags, ${pvpQuestions.length} perguntas de duelo.`,
 );

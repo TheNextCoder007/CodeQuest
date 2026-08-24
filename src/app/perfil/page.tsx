@@ -24,6 +24,9 @@ import {
 import { tagById } from '@/content/tags';
 import { enviarAvatar } from '@/lib/avatar';
 import { fetchPosicaoRanking } from '@/lib/perfil-publico';
+import { EstatisticasPvpCard } from '@/components/pvp/EstatisticasPvpCard';
+import { buscarEstatisticas } from '@/lib/pvp/api';
+import { ESTATISTICAS_VAZIAS, type EstatisticasPvp } from '@/lib/pvp/tipos';
 import {
   achievementsWithStatus,
   displayStreak,
@@ -36,7 +39,8 @@ import { cn } from '@/lib/cn';
 
 function PerfilContent() {
   const { user, signOut, demoMode } = useAuth();
-  const { state, loading, updateName, updateUsername, updateAvatar, equipTag } = usePlayer();
+  const { state, loading, updateName, updateUsername, updateAvatar, equipTag, sincronizarPvp } =
+    usePlayer();
   const router = useRouter();
 
   const [editing, setEditing] = useState(false);
@@ -69,6 +73,30 @@ function PerfilContent() {
       ativo = false;
     };
   }, [idAtual, xpAtual]);
+
+  // Estatisticas do duelo: vem da tabela que so o servidor escreve. Ao ler,
+  // conferimos se alguma tag de PvP ja foi merecida e ainda nao foi concedida.
+  const [statsPvp, setStatsPvp] = useState<EstatisticasPvp>({
+    ...ESTATISTICAS_VAZIAS,
+    vitoriasPorTema: {},
+  });
+
+  useEffect(() => {
+    if (!idAtual) return;
+    let ativo = true;
+    buscarEstatisticas(idAtual)
+      .then((lidas) => {
+        if (!ativo) return;
+        setStatsPvp(lidas);
+        void sincronizarPvp(lidas.vitorias, lidas.vitoriasPorTema);
+      })
+      .catch(() => {
+        /* sem duelo ainda: o cartao mostra o estado vazio */
+      });
+    return () => {
+      ativo = false;
+    };
+  }, [idAtual, sincronizarPvp]);
 
   const trocarFoto = useCallback(
     async (arquivo: File) => {
@@ -325,6 +353,9 @@ function PerfilContent() {
           ))}
         </div>
       </Card>
+
+      {/* Duelos ------------------------------------------------------- */}
+      <EstatisticasPvpCard stats={statsPvp} proprio />
 
       {/* Tags --------------------------------------------------------- */}
       <GaleriaTags

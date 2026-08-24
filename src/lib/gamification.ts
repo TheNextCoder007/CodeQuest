@@ -105,6 +105,8 @@ export interface AchievementState {
   flawlessLesson?: boolean;
   /** Tags ja desbloqueadas - as conquistas secretas espelham as tags. */
   unlockedTagIds?: string[];
+  /** Vitorias acumuladas no duelo 1v1. */
+  pvpVitorias?: number;
 }
 
 const moduleIsComplete = (moduleId: string, completed: Set<string>): boolean => {
@@ -138,6 +140,8 @@ const meetsCriteria = (achievement: AchievementDefinition, state: AchievementSta
       return state.xpTotal >= criteria.amount;
     case 'flawless':
       return state.flawlessLesson === true;
+    case 'pvp_wins':
+      return (state.pvpVitorias ?? 0) >= criteria.count;
     case 'secret': {
       // A conquista secreta acompanha a tag secreta: se a tag ja foi
       // desbloqueada, a medalha vem junto.

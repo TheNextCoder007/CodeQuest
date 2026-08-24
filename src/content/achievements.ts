@@ -21,7 +21,9 @@ export type AchievementCriteria =
    * Espelha uma tag secreta: a conquista e concedida junto com a tag.
    * O que desbloqueia cada segredo esta em `src/content/tags.ts` (SEGREDOS).
    */
-  | { kind: 'secret'; segredo: SegredoId };
+  | { kind: 'secret'; segredo: SegredoId }
+  /** Vitorias no modo 1v1. */
+  | { kind: 'pvp_wins'; count: number };
 
 export interface AchievementDefinition {
   id: string;
@@ -148,6 +150,38 @@ export const achievements: AchievementDefinition[] = [
   /* ---------------------------------------------------------------------
    * Espelhos das tags secretas (ver src/content/tags.ts)
    * ------------------------------------------------------------------ */
+  /* ---------------------------------------------------------------------
+   * Duelo 1v1
+   * ------------------------------------------------------------------ */
+  {
+    id: 'pvp-primeira-vitoria',
+    title: 'Primeira vitória',
+    description: 'Venceu seu primeiro duelo 1v1.',
+    icon: '🗡️',
+    criteria: { kind: 'pvp_wins', count: 1 },
+  },
+  {
+    id: 'pvp-10-vitorias',
+    title: '10 duelos vencidos',
+    description: 'Dez vitórias no 1v1 — isso já é constância.',
+    icon: '⚔️',
+    criteria: { kind: 'pvp_wins', count: 10 },
+  },
+  {
+    id: 'pvp-50-vitorias',
+    title: '50 duelos vencidos',
+    description: 'Cinquenta vitórias. Virou referência entre os amigos.',
+    icon: '🔥',
+    criteria: { kind: 'pvp_wins', count: 50 },
+  },
+  {
+    id: 'pvp-100-vitorias',
+    title: '100 duelos vencidos',
+    description: 'Cem vitórias no 1v1.',
+    icon: '💀',
+    criteria: { kind: 'pvp_wins', count: 100 },
+  },
+
   {
     id: 'segredo-curioso',
     title: 'Achou o botão secreto',

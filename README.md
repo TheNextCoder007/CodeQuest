@@ -34,9 +34,10 @@ Play ou na Microsoft Store (que cobram taxa de desenvolvedor).
 9. [Como a gamificação funciona](#9-como-a-gamificação-funciona)
 10. [Amigos e @username](#10-amigos-e-username)
 11. [Tags, perfil público e foto](#11-tags-perfil-público-e-foto)
-12. [Editar e criar conteúdo](#12-editar-e-criar-conteúdo)
-13. [Decisões técnicas](#13-decisões-técnicas)
-14. [Problemas comuns](#14-problemas-comuns)
+12. [Duelo 1v1 (PvP)](#12-duelo-1v1-pvp)
+13. [Editar e criar conteúdo](#13-editar-e-criar-conteúdo)
+14. [Decisões técnicas](#14-decisões-técnicas)
+15. [Problemas comuns](#15-problemas-comuns)
 
 ---
 
@@ -71,6 +72,7 @@ Para ligar a nuvem (contas reais, progresso sincronizado entre celular/PC/site),
 | `npm run content:verify-python` | Roda as soluções de referência no Python real e compara com as saídas esperadas |
 | `npm run test:amigos` | Testa o fluxo de amizades (busca, pedido, aceite, remoção, ranking) |
 | `npm run test:tags` | Testa as tags, os segredos e as regras do @username |
+| `npm run test:pvp` | Joga uma partida 1v1 num Postgres real e testa as tentativas de trapaça |
 | `npm run test:progresso` | Garante que falha de leitura nunca vira progresso zerado |
 | `npm run test:migrations` | Aplica as migrations 3× num Postgres real e confere que nada é apagado |
 | `npm run seed:gen` | Regera `supabase/seed.sql` a partir do currículo |
@@ -116,6 +118,7 @@ CodeQuest/
 │   ├── migrations/0002_amigos.sql # @username + amizades + RLS
 │   ├── migrations/0003_protecao_progresso.sql # travas contra perda de XP
 │   ├── migrations/0004_perfis_publicos.sql # tags, perfil público, avatar
+│   ├── migrations/0005_pvp.sql   # duelo 1v1 (perguntas, partidas, placar)
 │   ├── diagnostico.sql           # consultas de conferência (só leitura)
 │   └── seed.sql                  # conteúdo das trilhas (GERADO)
 ├── android/                      # projeto Android (Capacitor)
@@ -167,12 +170,14 @@ O Supabase dá um Postgres gerenciado + autenticação no plano gratuito, **sem 
    além da função `reconciliar_xp()` que reconstrói o XP a partir das lições concluídas.
 5. Abra outra query, cole **todo** o conteúdo de [`supabase/migrations/0004_perfis_publicos.sql`](supabase/migrations/0004_perfis_publicos.sql) e rode.
    Esse arquivo cria as tags de perfil, o bucket de fotos e as regras do @username (ver [seção 11](#11-tags-perfil-público-e-foto)).
-6. Abra mais uma query, cole **todo** o conteúdo de [`supabase/seed.sql`](supabase/seed.sql) e rode também.
-   Esse arquivo popula as 5 linguagens, 24 lições, 46 exercícios, 20 conquistas e 11 tags.
+6. Abra outra query, cole **todo** o conteúdo de [`supabase/migrations/0005_pvp.sql`](supabase/migrations/0005_pvp.sql) e rode.
+   Esse arquivo cria o duelo 1v1 (ver [seção 12](#12-duelo-1v1-pvp)).
+7. Abra mais uma query, cole **todo** o conteúdo de [`supabase/seed.sql`](supabase/seed.sql) e rode também.
+   Esse arquivo popula as 5 linguagens, 24 lições, 46 exercícios, 24 conquistas, 17 tags e 60 perguntas de duelo.
 
-> Os cinco scripts podem ser executados quantas vezes você quiser: eles usam
+> Os seis scripts podem ser executados quantas vezes você quiser: eles usam
 > `if not exists` / `on conflict do update` e não duplicam nem apagam nada.
-> Isso não é só promessa: `npm run test:migrations` aplica os cinco **três vezes
+> Isso não é só promessa: `npm run test:migrations` aplica os seis **três vezes
 > seguidas** num PostgreSQL de verdade e confere que o progresso de um aluno
 > continua intacto.
 
@@ -765,7 +770,92 @@ foto, continua valendo a inicial do nome sobre o gradiente da marca.
 
 ---
 
-## 12. Editar e criar conteúdo
+## 12. Duelo 1v1 (PvP)
+
+Duelo cronometrado entre amigos: **5 perguntas**, quem acerta mais — e mais rápido — vence.
+
+### 12.1 Formato das perguntas, e por quê
+
+São **múltipla escolha** e **completar um trecho curto de código**. Os exercícios da trilha ficaram
+de fora de propósito: quase todos são do tipo `output_match`, que exige rodar Python de verdade para
+corrigir. Num duelo isso significaria carregar o Pyodide (uns 6 MB) antes de cada partida e — pior —
+deixar a correção no cliente, onde ela pode ser burlada.
+
+Os dois formatos escolhidos se conferem com uma comparação de texto, o que permite manter o gabarito
+dentro do banco de dados e corrigir no servidor. São **60 perguntas** em
+[`src/content/pvp-questions.ts`](src/content/pvp-questions.ts), divididas em 6 temas: Python,
+JavaScript, Java, C#, C++ e Lógica.
+
+### 12.2 Pontuação
+
+| Situação | Pontos |
+| --- | --- |
+| Errou, ou estourou os 20 s | 0 |
+| Acertou | 100 + bônus de velocidade |
+
+O bônus começa em 100 e cai 1 ponto a cada 200 ms — responder na hora vale 200; aos 20 s, 0. O tempo
+é medido **pelo banco** (do instante em que a pergunta é entregue até o instante da resposta): tempo
+informado pelo cliente seria trivial de falsificar, então ele nem existe na API.
+
+### 12.3 Como a validação no servidor funciona
+
+O app é 100% client-side — não há um servidor nosso entre o navegador e o banco. Então "validar no
+servidor" aqui significa **validar dentro do PostgreSQL**
+([`0005_pvp.sql`](supabase/migrations/0005_pvp.sql)):
+
+- `pvp_questions` **não tem policy nenhuma**. Com RLS ligado, nenhum cliente lê a tabela — nem o
+  gabarito, nem o resto.
+- As tabelas da partida não têm policy de INSERT/UPDATE. A única forma de escrever nelas é pelas
+  funções `security definer`, que conferem quem está chamando.
+- `pvp_pergunta()` devolve enunciado e alternativas, **nunca a resposta**. O gabarito só volta depois
+  que a resposta chega, em `pvp_responder()`.
+- O vencedor e o placar são calculados por `pvp_finalizar()`. O cliente não envia pontuação — ele
+  pergunta qual foi o resultado.
+
+`npm run test:pvp` joga uma partida inteira num PostgreSQL real e tenta trapacear de várias formas
+(responder duas vezes, pular pergunta, aceitar o próprio convite, espiar partida alheia, escrever nas
+estatísticas). Também compara a pontuação em SQL com a versão em TypeScript, entrada por entrada.
+
+> **Limite honesto:** o banco de perguntas também existe em TypeScript, porque o modo demonstração
+> precisa jogar offline dentro do `.apk`/`.exe`. Ele fica num *chunk* separado, que o app online
+> nunca baixa — mas quem for atrás consegue lê-lo. Isso permite **saber** as respostas de antemão;
+> não permite **forjar** vitória, placar ou estatística, que continuam sendo decididos pelo banco.
+
+### 12.4 Amigos online e convite
+
+A tela de **Amigos** mostra uma bolinha verde em quem está com o app aberto, usando o **Presence** do
+Supabase Realtime — o estado vive só enquanto a aba existir e some sozinho quando ela fecha, sem
+tabela, sem escrita no banco e sem faxina agendada.
+
+Ao lado de cada amigo há o botão **Duelar**, que abre a escolha do tema e envia o convite. O convite
+chega em tempo real numa faixa no topo (em qualquer tela) com **Aceitar** / **Recusar**. Só é
+possível convidar **amigos confirmados**, e só há um convite por dupla de cada vez.
+
+### 12.5 Estatísticas, tags e conquistas
+
+O perfil (próprio e público) mostra vitórias, derrotas, empates, partidas, pontos somados,
+aproveitamento e tema favorito. Os números vêm de `pvp_stats`, escrita **só** por `pvp_finalizar()`.
+
+| Tag | Raridade | Critério |
+| --- | --- | --- |
+| 🗡️ Estreante | Comum | 1 vitória |
+| ⚔️ Duelista | Raro | 10 vitórias |
+| 🎓 Especialista | Épico | 10 vitórias no mesmo tema |
+| 🛡️ Gladiador | Épico | 25 vitórias |
+| 🔥 Implacável | Mítico | 50 vitórias |
+| 💀 Imortal | Lendário | 100 vitórias |
+
+E quatro conquistas acompanham os marcos (1, 10, 50 e 100 vitórias).
+
+### 12.6 No modo demonstração
+
+Sem Supabase não existe ninguém do outro lado, então a partida roda contra um **adversário simulado**
+com perfil configurável de acerto e velocidade ([`src/lib/pvp/local.ts`](src/lib/pvp/local.ts)) — que
+usa exatamente a mesma pontuação do servidor. A tela avisa isso antes de começar.
+
+---
+
+## 13. Editar e criar conteúdo
 
 O currículo é **TypeScript**, não banco de dados — por isso funciona offline no `.apk` e no `.exe`,
 e por isso um erro de digitação aparece na hora, com autocompletar.
@@ -806,7 +896,7 @@ O campo opcional `polyglot` gera as abas "o conceito é o mesmo, a sintaxe muda"
 
 ---
 
-## 13. Decisões técnicas
+## 14. Decisões técnicas
 
 ### Por que esta stack
 
@@ -858,7 +948,7 @@ limites do plano gratuito. A execução de código não custa nada porque aconte
 
 ---
 
-## 14. Problemas comuns
+## 15. Problemas comuns
 
 **O app mostra "modo demonstração" mesmo com o `.env.local` preenchido**
 Reinicie o `npm run dev` — variáveis `NEXT_PUBLIC_*` são lidas na inicialização. Confira também se

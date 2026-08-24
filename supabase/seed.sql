@@ -2159,4 +2159,277 @@ begin
 end
 $seed$;
 
+-- Perguntas do duelo 1v1 ---------------------------------------------------
+do $seed$
+begin
+  if to_regclass('public.pvp_questions') is null then
+    raise notice 'tabela public.pvp_questions ausente - rode a migration 0005 antes';
+    return;
+  end if;
+
+  insert into public.pvp_questions (id, language_slug, kind, prompt, options, answer, explanation, difficulty) values ('pvp-py-01', 'python', 'multiple_choice', 'O que `print(type(3 / 1))` mostra em Python 3?', '["<class ''float''>","<class ''int''>","<class ''number''>","<class ''double''>"]'::jsonb, '<class ''float''>', 'Em Python 3 a divisão com `/` sempre devolve float, mesmo quando o resto é zero.', 2)
+    on conflict (id) do update set language_slug = excluded.language_slug, kind = excluded.kind,
+    prompt = excluded.prompt, options = excluded.options, answer = excluded.answer,
+    explanation = excluded.explanation, difficulty = excluded.difficulty;
+  insert into public.pvp_questions (id, language_slug, kind, prompt, options, answer, explanation, difficulty) values ('pvp-py-02', 'python', 'multiple_choice', 'Qual é a saída de `print(len("CodeQuest"))`?', '["9","8","10","erro"]'::jsonb, '9', '"CodeQuest" tem 9 caracteres — `len` conta todos, inclusive as maiúsculas.', 1)
+    on conflict (id) do update set language_slug = excluded.language_slug, kind = excluded.kind,
+    prompt = excluded.prompt, options = excluded.options, answer = excluded.answer,
+    explanation = excluded.explanation, difficulty = excluded.difficulty;
+  insert into public.pvp_questions (id, language_slug, kind, prompt, options, answer, explanation, difficulty) values ('pvp-py-03', 'python', 'fill_blank', 'Complete para transformar o texto digitado em número inteiro:
+
+`idade = ____(input("Idade: "))`', null, 'int', '`input()` sempre devolve texto; `int()` converte para número inteiro.', 1)
+    on conflict (id) do update set language_slug = excluded.language_slug, kind = excluded.kind,
+    prompt = excluded.prompt, options = excluded.options, answer = excluded.answer,
+    explanation = excluded.explanation, difficulty = excluded.difficulty;
+  insert into public.pvp_questions (id, language_slug, kind, prompt, options, answer, explanation, difficulty) values ('pvp-py-04', 'python', 'multiple_choice', 'O que `print(10 // 3)` mostra?', '["3","3.333","4","1"]'::jsonb, '3', '`//` é a divisão inteira: descarta a parte decimal do resultado.', 1)
+    on conflict (id) do update set language_slug = excluded.language_slug, kind = excluded.kind,
+    prompt = excluded.prompt, options = excluded.options, answer = excluded.answer,
+    explanation = excluded.explanation, difficulty = excluded.difficulty;
+  insert into public.pvp_questions (id, language_slug, kind, prompt, options, answer, explanation, difficulty) values ('pvp-py-05', 'python', 'multiple_choice', 'Qual estrutura o Python usa para agrupar comandos dentro de um `if`?', '["Indentação","Chaves { }","Palavra `end`","Parênteses ( )"]'::jsonb, 'Indentação', 'Python usa o recuo do código (indentação) para delimitar blocos.', 1)
+    on conflict (id) do update set language_slug = excluded.language_slug, kind = excluded.kind,
+    prompt = excluded.prompt, options = excluded.options, answer = excluded.answer,
+    explanation = excluded.explanation, difficulty = excluded.difficulty;
+  insert into public.pvp_questions (id, language_slug, kind, prompt, options, answer, explanation, difficulty) values ('pvp-py-06', 'python', 'multiple_choice', 'O que `print("5" + "5")` mostra?', '["55","10","erro","\"55\""]'::jsonb, '55', 'Com dois textos, o `+` concatena em vez de somar.', 2)
+    on conflict (id) do update set language_slug = excluded.language_slug, kind = excluded.kind,
+    prompt = excluded.prompt, options = excluded.options, answer = excluded.answer,
+    explanation = excluded.explanation, difficulty = excluded.difficulty;
+  insert into public.pvp_questions (id, language_slug, kind, prompt, options, answer, explanation, difficulty) values ('pvp-py-07', 'python', 'fill_blank', 'Complete para repetir 5 vezes:
+
+`for i in ____(5):`', null, 'range', '`range(5)` gera os números de 0 a 4 — cinco repetições.', 1)
+    on conflict (id) do update set language_slug = excluded.language_slug, kind = excluded.kind,
+    prompt = excluded.prompt, options = excluded.options, answer = excluded.answer,
+    explanation = excluded.explanation, difficulty = excluded.difficulty;
+  insert into public.pvp_questions (id, language_slug, kind, prompt, options, answer, explanation, difficulty) values ('pvp-py-08', 'python', 'multiple_choice', 'Qual comando define uma função em Python?', '["def","function","fun","func"]'::jsonb, 'def', 'Em Python a palavra-chave é `def`, seguida do nome e dos parênteses.', 1)
+    on conflict (id) do update set language_slug = excluded.language_slug, kind = excluded.kind,
+    prompt = excluded.prompt, options = excluded.options, answer = excluded.answer,
+    explanation = excluded.explanation, difficulty = excluded.difficulty;
+  insert into public.pvp_questions (id, language_slug, kind, prompt, options, answer, explanation, difficulty) values ('pvp-py-09', 'python', 'multiple_choice', 'O que `print([1, 2, 3][-1])` mostra?', '["3","1","2","erro"]'::jsonb, '3', 'Índice negativo conta de trás para frente: `-1` é o último item.', 2)
+    on conflict (id) do update set language_slug = excluded.language_slug, kind = excluded.kind,
+    prompt = excluded.prompt, options = excluded.options, answer = excluded.answer,
+    explanation = excluded.explanation, difficulty = excluded.difficulty;
+  insert into public.pvp_questions (id, language_slug, kind, prompt, options, answer, explanation, difficulty) values ('pvp-py-10', 'python', 'multiple_choice', 'Qual destes é o operador de igualdade (comparação) em Python?', '["==","=","===","eq"]'::jsonb, '==', '`=` atribui valor; `==` compara. Trocar os dois é o erro mais comum de quem começa.', 1)
+    on conflict (id) do update set language_slug = excluded.language_slug, kind = excluded.kind,
+    prompt = excluded.prompt, options = excluded.options, answer = excluded.answer,
+    explanation = excluded.explanation, difficulty = excluded.difficulty;
+  insert into public.pvp_questions (id, language_slug, kind, prompt, options, answer, explanation, difficulty) values ('pvp-py-11', 'python', 'multiple_choice', 'O que acontece com `print(bool(""))`?', '["False","True","erro","None"]'::jsonb, 'False', 'Texto vazio é considerado falso em Python — assim como 0 e listas vazias.', 2)
+    on conflict (id) do update set language_slug = excluded.language_slug, kind = excluded.kind,
+    prompt = excluded.prompt, options = excluded.options, answer = excluded.answer,
+    explanation = excluded.explanation, difficulty = excluded.difficulty;
+  insert into public.pvp_questions (id, language_slug, kind, prompt, options, answer, explanation, difficulty) values ('pvp-py-12', 'python', 'fill_blank', 'Complete para mostrar o nome dentro do texto:
+
+`print(f"Olá, {____}")`  (a variável se chama `nome`)', null, 'nome', 'Dentro de uma f-string, o que está entre chaves é avaliado como código.', 1)
+    on conflict (id) do update set language_slug = excluded.language_slug, kind = excluded.kind,
+    prompt = excluded.prompt, options = excluded.options, answer = excluded.answer,
+    explanation = excluded.explanation, difficulty = excluded.difficulty;
+  insert into public.pvp_questions (id, language_slug, kind, prompt, options, answer, explanation, difficulty) values ('pvp-js-01', 'javascript', 'multiple_choice', 'Qual comando mostra algo no console do navegador?', '["console.log()","print()","echo()","System.out.println()"]'::jsonb, 'console.log()', 'Em JavaScript a saída padrão de depuração é `console.log()`.', 1)
+    on conflict (id) do update set language_slug = excluded.language_slug, kind = excluded.kind,
+    prompt = excluded.prompt, options = excluded.options, answer = excluded.answer,
+    explanation = excluded.explanation, difficulty = excluded.difficulty;
+  insert into public.pvp_questions (id, language_slug, kind, prompt, options, answer, explanation, difficulty) values ('pvp-js-02', 'javascript', 'multiple_choice', 'O que `console.log(typeof [])` mostra?', '["object","array","list","undefined"]'::jsonb, 'object', 'Em JavaScript arrays são objetos — por isso existe `Array.isArray()`.', 3)
+    on conflict (id) do update set language_slug = excluded.language_slug, kind = excluded.kind,
+    prompt = excluded.prompt, options = excluded.options, answer = excluded.answer,
+    explanation = excluded.explanation, difficulty = excluded.difficulty;
+  insert into public.pvp_questions (id, language_slug, kind, prompt, options, answer, explanation, difficulty) values ('pvp-js-03', 'javascript', 'multiple_choice', 'O que `console.log("5" + 3)` mostra?', '["53","8","erro","NaN"]'::jsonb, '53', 'Com um texto de um lado, o `+` concatena: o número 3 vira "3".', 2)
+    on conflict (id) do update set language_slug = excluded.language_slug, kind = excluded.kind,
+    prompt = excluded.prompt, options = excluded.options, answer = excluded.answer,
+    explanation = excluded.explanation, difficulty = excluded.difficulty;
+  insert into public.pvp_questions (id, language_slug, kind, prompt, options, answer, explanation, difficulty) values ('pvp-js-04', 'javascript', 'multiple_choice', 'O que `console.log("5" - 3)` mostra?', '["2","53","NaN","erro"]'::jsonb, '2', 'O `-` não existe para textos, então o JavaScript converte "5" para número.', 2)
+    on conflict (id) do update set language_slug = excluded.language_slug, kind = excluded.kind,
+    prompt = excluded.prompt, options = excluded.options, answer = excluded.answer,
+    explanation = excluded.explanation, difficulty = excluded.difficulty;
+  insert into public.pvp_questions (id, language_slug, kind, prompt, options, answer, explanation, difficulty) values ('pvp-js-05', 'javascript', 'fill_blank', 'Complete para declarar uma variável que NÃO pode ser reatribuída:
+
+`____ PI = 3.14;`', null, 'const', '`const` cria uma ligação que não pode receber outro valor depois.', 1)
+    on conflict (id) do update set language_slug = excluded.language_slug, kind = excluded.kind,
+    prompt = excluded.prompt, options = excluded.options, answer = excluded.answer,
+    explanation = excluded.explanation, difficulty = excluded.difficulty;
+  insert into public.pvp_questions (id, language_slug, kind, prompt, options, answer, explanation, difficulty) values ('pvp-js-06', 'javascript', 'multiple_choice', 'Qual comparação é estrita (compara valor E tipo)?', '["===","==","=","eq"]'::jsonb, '===', '`==` converte tipos antes de comparar; `===` não converte nada.', 1)
+    on conflict (id) do update set language_slug = excluded.language_slug, kind = excluded.kind,
+    prompt = excluded.prompt, options = excluded.options, answer = excluded.answer,
+    explanation = excluded.explanation, difficulty = excluded.difficulty;
+  insert into public.pvp_questions (id, language_slug, kind, prompt, options, answer, explanation, difficulty) values ('pvp-js-07', 'javascript', 'multiple_choice', 'O que `console.log(0.1 + 0.2 === 0.3)` mostra?', '["false","true","NaN","erro"]'::jsonb, 'false', 'Números decimais em ponto flutuante têm imprecisão: a soma dá 0.30000000000000004.', 3)
+    on conflict (id) do update set language_slug = excluded.language_slug, kind = excluded.kind,
+    prompt = excluded.prompt, options = excluded.options, answer = excluded.answer,
+    explanation = excluded.explanation, difficulty = excluded.difficulty;
+  insert into public.pvp_questions (id, language_slug, kind, prompt, options, answer, explanation, difficulty) values ('pvp-js-08', 'javascript', 'multiple_choice', 'Qual método adiciona um item ao FIM de um array?', '["push","pop","shift","append"]'::jsonb, 'push', '`push` acrescenta ao fim; `pop` remove do fim; `shift` remove do início.', 1)
+    on conflict (id) do update set language_slug = excluded.language_slug, kind = excluded.kind,
+    prompt = excluded.prompt, options = excluded.options, answer = excluded.answer,
+    explanation = excluded.explanation, difficulty = excluded.difficulty;
+  insert into public.pvp_questions (id, language_slug, kind, prompt, options, answer, explanation, difficulty) values ('pvp-js-09', 'javascript', 'fill_blank', 'Complete a função em formato de seta:
+
+`const dobro = (n) ____ n * 2;`', null, '=>', 'A arrow function usa `=>` entre os parâmetros e o corpo.', 2)
+    on conflict (id) do update set language_slug = excluded.language_slug, kind = excluded.kind,
+    prompt = excluded.prompt, options = excluded.options, answer = excluded.answer,
+    explanation = excluded.explanation, difficulty = excluded.difficulty;
+  insert into public.pvp_questions (id, language_slug, kind, prompt, options, answer, explanation, difficulty) values ('pvp-js-10', 'javascript', 'multiple_choice', 'O que `console.log([1, 2, 3].length)` mostra?', '["3","2","4","undefined"]'::jsonb, '3', '`length` devolve a quantidade de itens do array.', 1)
+    on conflict (id) do update set language_slug = excluded.language_slug, kind = excluded.kind,
+    prompt = excluded.prompt, options = excluded.options, answer = excluded.answer,
+    explanation = excluded.explanation, difficulty = excluded.difficulty;
+  insert into public.pvp_questions (id, language_slug, kind, prompt, options, answer, explanation, difficulty) values ('pvp-js-11', 'javascript', 'multiple_choice', 'Qual valor é considerado "falso" (falsy) em JavaScript?', '["0","\"0\"","[]","{}"]'::jsonb, '0', 'Os falsy são: `false`, `0`, `""`, `null`, `undefined` e `NaN`. Array e objeto vazios são verdadeiros.', 3)
+    on conflict (id) do update set language_slug = excluded.language_slug, kind = excluded.kind,
+    prompt = excluded.prompt, options = excluded.options, answer = excluded.answer,
+    explanation = excluded.explanation, difficulty = excluded.difficulty;
+  insert into public.pvp_questions (id, language_slug, kind, prompt, options, answer, explanation, difficulty) values ('pvp-js-12', 'javascript', 'multiple_choice', 'Qual declaração tem escopo de bloco?', '["let","var","function","global"]'::jsonb, 'let', '`let` e `const` respeitam blocos `{}`; `var` vaza para a função inteira.', 2)
+    on conflict (id) do update set language_slug = excluded.language_slug, kind = excluded.kind,
+    prompt = excluded.prompt, options = excluded.options, answer = excluded.answer,
+    explanation = excluded.explanation, difficulty = excluded.difficulty;
+  insert into public.pvp_questions (id, language_slug, kind, prompt, options, answer, explanation, difficulty) values ('pvp-java-01', 'java', 'multiple_choice', 'Qual comando imprime uma linha no console em Java?', '["System.out.println()","console.log()","print()","echo()"]'::jsonb, 'System.out.println()', '`System.out.println()` escreve no console e quebra a linha.', 1)
+    on conflict (id) do update set language_slug = excluded.language_slug, kind = excluded.kind,
+    prompt = excluded.prompt, options = excluded.options, answer = excluded.answer,
+    explanation = excluded.explanation, difficulty = excluded.difficulty;
+  insert into public.pvp_questions (id, language_slug, kind, prompt, options, answer, explanation, difficulty) values ('pvp-java-02', 'java', 'fill_blank', 'Complete a declaração de um número inteiro:
+
+`____ idade = 18;`', null, 'int', 'Java é de tipagem estática: o tipo vem antes do nome da variável.', 1)
+    on conflict (id) do update set language_slug = excluded.language_slug, kind = excluded.kind,
+    prompt = excluded.prompt, options = excluded.options, answer = excluded.answer,
+    explanation = excluded.explanation, difficulty = excluded.difficulty;
+  insert into public.pvp_questions (id, language_slug, kind, prompt, options, answer, explanation, difficulty) values ('pvp-java-03', 'java', 'multiple_choice', 'Qual é a assinatura do método onde um programa Java começa?', '["public static void main(String[] args)","public void main()","static main(String args)","void start(String[] args)"]'::jsonb, 'public static void main(String[] args)', 'A JVM procura exatamente esse método para iniciar o programa.', 2)
+    on conflict (id) do update set language_slug = excluded.language_slug, kind = excluded.kind,
+    prompt = excluded.prompt, options = excluded.options, answer = excluded.answer,
+    explanation = excluded.explanation, difficulty = excluded.difficulty;
+  insert into public.pvp_questions (id, language_slug, kind, prompt, options, answer, explanation, difficulty) values ('pvp-java-04', 'java', 'multiple_choice', 'O que `System.out.println(7 / 2);` mostra?', '["3","3.5","4","erro"]'::jsonb, '3', 'Divisão entre dois `int` em Java é inteira: a parte decimal é descartada.', 2)
+    on conflict (id) do update set language_slug = excluded.language_slug, kind = excluded.kind,
+    prompt = excluded.prompt, options = excluded.options, answer = excluded.answer,
+    explanation = excluded.explanation, difficulty = excluded.difficulty;
+  insert into public.pvp_questions (id, language_slug, kind, prompt, options, answer, explanation, difficulty) values ('pvp-java-05', 'java', 'multiple_choice', 'Qual tipo guarda um único caractere?', '["char","String","text","byte"]'::jsonb, 'char', '`char` guarda um caractere e usa aspas simples: `char letra = ''A'';`', 1)
+    on conflict (id) do update set language_slug = excluded.language_slug, kind = excluded.kind,
+    prompt = excluded.prompt, options = excluded.options, answer = excluded.answer,
+    explanation = excluded.explanation, difficulty = excluded.difficulty;
+  insert into public.pvp_questions (id, language_slug, kind, prompt, options, answer, explanation, difficulty) values ('pvp-java-06', 'java', 'multiple_choice', 'Como se compara o CONTEÚDO de duas Strings em Java?', '["a.equals(b)","a == b","a.compare(b)","a === b"]'::jsonb, 'a.equals(b)', '`==` compara se são o mesmo objeto na memória; `equals` compara o texto.', 3)
+    on conflict (id) do update set language_slug = excluded.language_slug, kind = excluded.kind,
+    prompt = excluded.prompt, options = excluded.options, answer = excluded.answer,
+    explanation = excluded.explanation, difficulty = excluded.difficulty;
+  insert into public.pvp_questions (id, language_slug, kind, prompt, options, answer, explanation, difficulty) values ('pvp-java-07', 'java', 'fill_blank', 'Complete para criar um laço que repete 10 vezes:
+
+`for (int i = 0; i ____ 10; i++)`', null, '<', 'Com `i < 10` e começando em 0, o laço roda exatamente 10 vezes.', 1)
+    on conflict (id) do update set language_slug = excluded.language_slug, kind = excluded.kind,
+    prompt = excluded.prompt, options = excluded.options, answer = excluded.answer,
+    explanation = excluded.explanation, difficulty = excluded.difficulty;
+  insert into public.pvp_questions (id, language_slug, kind, prompt, options, answer, explanation, difficulty) values ('pvp-java-08', 'java', 'multiple_choice', 'O que significa a palavra-chave `final` em uma variável?', '["O valor não pode ser alterado depois","A variável é global","A variável é apagada ao fim do método","A variável é pública"]'::jsonb, 'O valor não pode ser alterado depois', '`final` é o equivalente Java de uma constante.', 2)
+    on conflict (id) do update set language_slug = excluded.language_slug, kind = excluded.kind,
+    prompt = excluded.prompt, options = excluded.options, answer = excluded.answer,
+    explanation = excluded.explanation, difficulty = excluded.difficulty;
+  insert into public.pvp_questions (id, language_slug, kind, prompt, options, answer, explanation, difficulty) values ('pvp-java-09', 'java', 'multiple_choice', 'Qual tipo representa verdadeiro ou falso?', '["boolean","bool","bit","logic"]'::jsonb, 'boolean', 'Em Java o tipo se chama `boolean` por extenso (em C# e C++ é `bool`).', 1)
+    on conflict (id) do update set language_slug = excluded.language_slug, kind = excluded.kind,
+    prompt = excluded.prompt, options = excluded.options, answer = excluded.answer,
+    explanation = excluded.explanation, difficulty = excluded.difficulty;
+  insert into public.pvp_questions (id, language_slug, kind, prompt, options, answer, explanation, difficulty) values ('pvp-java-10', 'java', 'multiple_choice', 'O que é preciso para usar `Scanner` e ler do teclado?', '["import java.util.Scanner;","import java.io.Console;","include <scanner>","nada, já vem pronto"]'::jsonb, 'import java.util.Scanner;', '`Scanner` está no pacote `java.util`, então precisa ser importado.', 2)
+    on conflict (id) do update set language_slug = excluded.language_slug, kind = excluded.kind,
+    prompt = excluded.prompt, options = excluded.options, answer = excluded.answer,
+    explanation = excluded.explanation, difficulty = excluded.difficulty;
+  insert into public.pvp_questions (id, language_slug, kind, prompt, options, answer, explanation, difficulty) values ('pvp-cs-01', 'csharp', 'multiple_choice', 'Qual comando imprime uma linha no console em C#?', '["Console.WriteLine()","System.out.println()","print()","echo()"]'::jsonb, 'Console.WriteLine()', '`Console.WriteLine()` escreve e quebra a linha; `Console.Write()` não quebra.', 1)
+    on conflict (id) do update set language_slug = excluded.language_slug, kind = excluded.kind,
+    prompt = excluded.prompt, options = excluded.options, answer = excluded.answer,
+    explanation = excluded.explanation, difficulty = excluded.difficulty;
+  insert into public.pvp_questions (id, language_slug, kind, prompt, options, answer, explanation, difficulty) values ('pvp-cs-02', 'csharp', 'fill_blank', 'Complete para declarar uma variável deixando o compilador deduzir o tipo:
+
+`____ nome = "Davi";`', null, 'var', '`var` mantém a tipagem estática — o tipo é deduzido do valor, não some.', 2)
+    on conflict (id) do update set language_slug = excluded.language_slug, kind = excluded.kind,
+    prompt = excluded.prompt, options = excluded.options, answer = excluded.answer,
+    explanation = excluded.explanation, difficulty = excluded.difficulty;
+  insert into public.pvp_questions (id, language_slug, kind, prompt, options, answer, explanation, difficulty) values ('pvp-cs-03', 'csharp', 'multiple_choice', 'Qual tipo guarda texto em C#?', '["string","String[]","text","char[]"]'::jsonb, 'string', 'Em C# o tipo se escreve com `s` minúsculo — é um apelido para `System.String`.', 1)
+    on conflict (id) do update set language_slug = excluded.language_slug, kind = excluded.kind,
+    prompt = excluded.prompt, options = excluded.options, answer = excluded.answer,
+    explanation = excluded.explanation, difficulty = excluded.difficulty;
+  insert into public.pvp_questions (id, language_slug, kind, prompt, options, answer, explanation, difficulty) values ('pvp-cs-04', 'csharp', 'multiple_choice', 'O que faz o `?` em `int? idade;`?', '["Permite que a variável seja nula","Torna a variável opcional no método","Marca a variável como constante","Nada, é erro de sintaxe"]'::jsonb, 'Permite que a variável seja nula', 'O `?` cria um tipo anulável: `int?` aceita um número ou `null`.', 3)
+    on conflict (id) do update set language_slug = excluded.language_slug, kind = excluded.kind,
+    prompt = excluded.prompt, options = excluded.options, answer = excluded.answer,
+    explanation = excluded.explanation, difficulty = excluded.difficulty;
+  insert into public.pvp_questions (id, language_slug, kind, prompt, options, answer, explanation, difficulty) values ('pvp-cs-05', 'csharp', 'multiple_choice', 'Como se escreve uma string interpolada em C#?', '["$\"Olá, {nome}\"","f\"Olá, {nome}\"","`Olá, ${nome}`","\"Olá, \" . nome"]'::jsonb, '$"Olá, {nome}"', 'O `$` antes das aspas liga a interpolação; as variáveis vão entre chaves.', 2)
+    on conflict (id) do update set language_slug = excluded.language_slug, kind = excluded.kind,
+    prompt = excluded.prompt, options = excluded.options, answer = excluded.answer,
+    explanation = excluded.explanation, difficulty = excluded.difficulty;
+  insert into public.pvp_questions (id, language_slug, kind, prompt, options, answer, explanation, difficulty) values ('pvp-cs-06', 'csharp', 'multiple_choice', 'Qual palavra-chave declara uma constante em C#?', '["const","final","readonly var","static"]'::jsonb, 'const', '`const` exige valor no momento da declaração e nunca muda.', 1)
+    on conflict (id) do update set language_slug = excluded.language_slug, kind = excluded.kind,
+    prompt = excluded.prompt, options = excluded.options, answer = excluded.answer,
+    explanation = excluded.explanation, difficulty = excluded.difficulty;
+  insert into public.pvp_questions (id, language_slug, kind, prompt, options, answer, explanation, difficulty) values ('pvp-cs-07', 'csharp', 'fill_blank', 'Complete para ler uma linha digitada pelo usuário:
+
+`string nome = Console.____();`', null, 'ReadLine', '`Console.ReadLine()` devolve o que foi digitado, como texto.', 1)
+    on conflict (id) do update set language_slug = excluded.language_slug, kind = excluded.kind,
+    prompt = excluded.prompt, options = excluded.options, answer = excluded.answer,
+    explanation = excluded.explanation, difficulty = excluded.difficulty;
+  insert into public.pvp_questions (id, language_slug, kind, prompt, options, answer, explanation, difficulty) values ('pvp-cs-08', 'csharp', 'multiple_choice', 'O que `Console.WriteLine(7 / 2);` mostra?', '["3","3.5","4","erro"]'::jsonb, '3', 'Divisão entre inteiros é inteira. Para ter 3.5, algum lado precisa ser decimal.', 2)
+    on conflict (id) do update set language_slug = excluded.language_slug, kind = excluded.kind,
+    prompt = excluded.prompt, options = excluded.options, answer = excluded.answer,
+    explanation = excluded.explanation, difficulty = excluded.difficulty;
+  insert into public.pvp_questions (id, language_slug, kind, prompt, options, answer, explanation, difficulty) values ('pvp-cpp-01', 'cpp', 'multiple_choice', 'Qual comando imprime no console em C++?', '["std::cout","System.out","print","Console.Write"]'::jsonb, 'std::cout', '`std::cout << "texto";` envia o texto para a saída padrão.', 1)
+    on conflict (id) do update set language_slug = excluded.language_slug, kind = excluded.kind,
+    prompt = excluded.prompt, options = excluded.options, answer = excluded.answer,
+    explanation = excluded.explanation, difficulty = excluded.difficulty;
+  insert into public.pvp_questions (id, language_slug, kind, prompt, options, answer, explanation, difficulty) values ('pvp-cpp-02', 'cpp', 'fill_blank', 'Complete para poder usar `cout`:
+
+`#include <____>`', null, 'iostream', '`iostream` traz `cout`, `cin` e `endl`.', 1)
+    on conflict (id) do update set language_slug = excluded.language_slug, kind = excluded.kind,
+    prompt = excluded.prompt, options = excluded.options, answer = excluded.answer,
+    explanation = excluded.explanation, difficulty = excluded.difficulty;
+  insert into public.pvp_questions (id, language_slug, kind, prompt, options, answer, explanation, difficulty) values ('pvp-cpp-03', 'cpp', 'multiple_choice', 'Qual operador é usado para ENVIAR dados ao `cout`?', '["<<",">>","->","::"]'::jsonb, '<<', 'A "seta" aponta para onde o dado vai: `cout << x` escreve; `cin >> x` lê.', 1)
+    on conflict (id) do update set language_slug = excluded.language_slug, kind = excluded.kind,
+    prompt = excluded.prompt, options = excluded.options, answer = excluded.answer,
+    explanation = excluded.explanation, difficulty = excluded.difficulty;
+  insert into public.pvp_questions (id, language_slug, kind, prompt, options, answer, explanation, difficulty) values ('pvp-cpp-04', 'cpp', 'multiple_choice', 'O que o programa devolve ao sistema quando termina bem?', '["return 0;","return 1;","exit();","nada"]'::jsonb, 'return 0;', 'Por convenção, 0 significa "terminou sem erro".', 2)
+    on conflict (id) do update set language_slug = excluded.language_slug, kind = excluded.kind,
+    prompt = excluded.prompt, options = excluded.options, answer = excluded.answer,
+    explanation = excluded.explanation, difficulty = excluded.difficulty;
+  insert into public.pvp_questions (id, language_slug, kind, prompt, options, answer, explanation, difficulty) values ('pvp-cpp-05', 'cpp', 'multiple_choice', 'O que `int* p;` declara?', '["Um ponteiro para inteiro","Um inteiro multiplicado","Um array de inteiros","Uma referência a inteiro"]'::jsonb, 'Um ponteiro para inteiro', 'O `*` na declaração cria um ponteiro: uma variável que guarda um endereço.', 3)
+    on conflict (id) do update set language_slug = excluded.language_slug, kind = excluded.kind,
+    prompt = excluded.prompt, options = excluded.options, answer = excluded.answer,
+    explanation = excluded.explanation, difficulty = excluded.difficulty;
+  insert into public.pvp_questions (id, language_slug, kind, prompt, options, answer, explanation, difficulty) values ('pvp-cpp-06', 'cpp', 'multiple_choice', 'Qual tipo guarda um número com casas decimais e mais precisão?', '["double","float","int","decimal"]'::jsonb, 'double', '`double` usa o dobro de bits do `float`, então guarda mais casas com precisão.', 2)
+    on conflict (id) do update set language_slug = excluded.language_slug, kind = excluded.kind,
+    prompt = excluded.prompt, options = excluded.options, answer = excluded.answer,
+    explanation = excluded.explanation, difficulty = excluded.difficulty;
+  insert into public.pvp_questions (id, language_slug, kind, prompt, options, answer, explanation, difficulty) values ('pvp-cpp-07', 'cpp', 'fill_blank', 'Complete para quebrar a linha depois de imprimir:
+
+`std::cout << "Oi" << std::____;`', null, 'endl', '`std::endl` quebra a linha e descarrega o buffer de saída.', 1)
+    on conflict (id) do update set language_slug = excluded.language_slug, kind = excluded.kind,
+    prompt = excluded.prompt, options = excluded.options, answer = excluded.answer,
+    explanation = excluded.explanation, difficulty = excluded.difficulty;
+  insert into public.pvp_questions (id, language_slug, kind, prompt, options, answer, explanation, difficulty) values ('pvp-cpp-08', 'cpp', 'multiple_choice', 'Qual é o índice do PRIMEIRO elemento de um array em C++?', '["0","1","-1","depende do tipo"]'::jsonb, '0', 'Como na maioria das linguagens, a contagem começa do zero.', 1)
+    on conflict (id) do update set language_slug = excluded.language_slug, kind = excluded.kind,
+    prompt = excluded.prompt, options = excluded.options, answer = excluded.answer,
+    explanation = excluded.explanation, difficulty = excluded.difficulty;
+  insert into public.pvp_questions (id, language_slug, kind, prompt, options, answer, explanation, difficulty) values ('pvp-ger-01', 'geral', 'multiple_choice', 'O que é uma variável?', '["Um espaço nomeado que guarda um valor","Um comando que repete instruções","Um erro do programa","Um tipo de comentário"]'::jsonb, 'Um espaço nomeado que guarda um valor', 'Variável é um nome que aponta para um valor guardado na memória.', 1)
+    on conflict (id) do update set language_slug = excluded.language_slug, kind = excluded.kind,
+    prompt = excluded.prompt, options = excluded.options, answer = excluded.answer,
+    explanation = excluded.explanation, difficulty = excluded.difficulty;
+  insert into public.pvp_questions (id, language_slug, kind, prompt, options, answer, explanation, difficulty) values ('pvp-ger-02', 'geral', 'multiple_choice', 'Um laço que nunca para de repetir é chamado de:', '["Laço infinito","Recursão","Deadlock","Overflow"]'::jsonb, 'Laço infinito', 'Acontece quando a condição de parada nunca se torna falsa.', 1)
+    on conflict (id) do update set language_slug = excluded.language_slug, kind = excluded.kind,
+    prompt = excluded.prompt, options = excluded.options, answer = excluded.answer,
+    explanation = excluded.explanation, difficulty = excluded.difficulty;
+  insert into public.pvp_questions (id, language_slug, kind, prompt, options, answer, explanation, difficulty) values ('pvp-ger-03', 'geral', 'multiple_choice', 'Quantos bits tem 1 byte?', '["8","4","16","1024"]'::jsonb, '8', 'Um byte são 8 bits — o suficiente para 256 valores diferentes.', 2)
+    on conflict (id) do update set language_slug = excluded.language_slug, kind = excluded.kind,
+    prompt = excluded.prompt, options = excluded.options, answer = excluded.answer,
+    explanation = excluded.explanation, difficulty = excluded.difficulty;
+  insert into public.pvp_questions (id, language_slug, kind, prompt, options, answer, explanation, difficulty) values ('pvp-ger-04', 'geral', 'multiple_choice', 'O que é um "bug"?', '["Um comportamento errado do programa","Um tipo de variável","Um comando de repetição","Uma linguagem de programação"]'::jsonb, 'Um comportamento errado do programa', 'O termo vem de uma mariposa presa num computador em 1947 — mas hoje significa qualquer defeito.', 1)
+    on conflict (id) do update set language_slug = excluded.language_slug, kind = excluded.kind,
+    prompt = excluded.prompt, options = excluded.options, answer = excluded.answer,
+    explanation = excluded.explanation, difficulty = excluded.difficulty;
+  insert into public.pvp_questions (id, language_slug, kind, prompt, options, answer, explanation, difficulty) values ('pvp-ger-05', 'geral', 'multiple_choice', 'Se `a = 5` e `b = 2`, quanto vale `a % b`?', '["1","2","2.5","0"]'::jsonb, '1', 'O operador `%` devolve o RESTO da divisão: 5 dividido por 2 dá 2 e sobra 1.', 2)
+    on conflict (id) do update set language_slug = excluded.language_slug, kind = excluded.kind,
+    prompt = excluded.prompt, options = excluded.options, answer = excluded.answer,
+    explanation = excluded.explanation, difficulty = excluded.difficulty;
+  insert into public.pvp_questions (id, language_slug, kind, prompt, options, answer, explanation, difficulty) values ('pvp-ger-06', 'geral', 'multiple_choice', 'Qual condição é verdadeira quando `x` está entre 10 e 20 (exclusive)?', '["x > 10 e x < 20","x > 10 ou x < 20","x >= 10 e x <= 20","x != 10 e x != 20"]'::jsonb, 'x > 10 e x < 20', 'Com "ou", qualquer número satisfaria uma das partes — precisa ser "e".', 2)
+    on conflict (id) do update set language_slug = excluded.language_slug, kind = excluded.kind,
+    prompt = excluded.prompt, options = excluded.options, answer = excluded.answer,
+    explanation = excluded.explanation, difficulty = excluded.difficulty;
+  insert into public.pvp_questions (id, language_slug, kind, prompt, options, answer, explanation, difficulty) values ('pvp-ger-07', 'geral', 'multiple_choice', 'O que faz um compilador?', '["Traduz o código para uma linguagem que a máquina entende","Executa o código linha por linha em tempo real","Corrige os erros do programador","Guarda o código na nuvem"]'::jsonb, 'Traduz o código para uma linguagem que a máquina entende', 'Compilador traduz tudo antes de rodar; interpretador traduz enquanto roda.', 2)
+    on conflict (id) do update set language_slug = excluded.language_slug, kind = excluded.kind,
+    prompt = excluded.prompt, options = excluded.options, answer = excluded.answer,
+    explanation = excluded.explanation, difficulty = excluded.difficulty;
+  insert into public.pvp_questions (id, language_slug, kind, prompt, options, answer, explanation, difficulty) values ('pvp-ger-08', 'geral', 'multiple_choice', 'Uma função que chama a si mesma é um caso de:', '["Recursão","Iteração","Herança","Sobrecarga"]'::jsonb, 'Recursão', 'Toda recursão precisa de um caso base, senão vira laço infinito.', 2)
+    on conflict (id) do update set language_slug = excluded.language_slug, kind = excluded.kind,
+    prompt = excluded.prompt, options = excluded.options, answer = excluded.answer,
+    explanation = excluded.explanation, difficulty = excluded.difficulty;
+  insert into public.pvp_questions (id, language_slug, kind, prompt, options, answer, explanation, difficulty) values ('pvp-ger-09', 'geral', 'multiple_choice', 'Em binário, quanto vale 1010?', '["10","8","12","1010"]'::jsonb, '10', '1×8 + 0×4 + 1×2 + 0×1 = 10.', 3)
+    on conflict (id) do update set language_slug = excluded.language_slug, kind = excluded.kind,
+    prompt = excluded.prompt, options = excluded.options, answer = excluded.answer,
+    explanation = excluded.explanation, difficulty = excluded.difficulty;
+  insert into public.pvp_questions (id, language_slug, kind, prompt, options, answer, explanation, difficulty) values ('pvp-ger-10', 'geral', 'multiple_choice', 'Para que serve um comentário no código?', '["Explicar o código para quem lê — a máquina ignora","Deixar o programa mais rápido","Guardar valores temporários","Criar uma nova função"]'::jsonb, 'Explicar o código para quem lê — a máquina ignora', 'Comentário é para gente. O interpretador ou compilador pula essas linhas.', 1)
+    on conflict (id) do update set language_slug = excluded.language_slug, kind = excluded.kind,
+    prompt = excluded.prompt, options = excluded.options, answer = excluded.answer,
+    explanation = excluded.explanation, difficulty = excluded.difficulty;
+end
+$seed$;
+
 commit;

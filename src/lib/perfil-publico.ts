@@ -32,6 +32,24 @@ export const fetchPosicaoRanking = async (userId: string, xpTotal: number): Prom
   return (count ?? 0) + 1;
 };
 
+/** Dados publicos a partir do id (usado pelo aviso de convite de duelo). */
+export const fetchPerfilPublicoPorId = async (id: string): Promise<PublicProfile | null> => {
+  if (!id) return null;
+
+  if (!isSupabaseConfigured) {
+    return localState.directory().find((perfil) => perfil.id === id) ?? null;
+  }
+
+  const { data, error } = await getSupabase()!
+    .from('profiles')
+    .select(CAMPOS)
+    .eq('id', id)
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+  return (data as PublicProfile | null) ?? null;
+};
+
 /** Perfil publico a partir do @username. `null` quando nao existe. */
 export const fetchPerfilPublico = async (username: string): Promise<PerfilPublico | null> => {
   const alvo = username.trim().toLowerCase();

@@ -23,6 +23,10 @@ export interface TagState {
   level: number;
   completedLessonIds: string[];
   isDeveloper: boolean;
+  /** Vitorias no duelo 1v1 (0 quando as estatisticas ainda nao carregaram). */
+  pvpVitorias?: number;
+  /** Vitorias por tema - alimenta a tag de "especialista". */
+  pvpVitoriasPorTema?: Record<string, number>;
 }
 
 const trilhaCompleta = (languageSlug: string, completed: Set<string>): boolean => {
@@ -39,6 +43,15 @@ const atendeCriterio = (tag: TagDefinition, state: TagState): boolean => {
       return trilhaCompleta(tag.criteria.languageSlug, new Set(state.completedLessonIds));
     case 'manual':
       return state.isDeveloper;
+    case 'pvp_wins':
+      return (state.pvpVitorias ?? 0) >= tag.criteria.count;
+    case 'pvp_tema': {
+      // Basta UM tema atingir a marca: a tag e de especialista, nao de
+      // colecionador.
+      const porTema = Object.values(state.pvpVitoriasPorTema ?? {});
+      const alvo = tag.criteria.count;
+      return porTema.some((quantidade) => quantidade >= alvo);
+    }
     case 'secret':
       // Nunca por avaliacao: so por `registrarSegredo`.
       return false;

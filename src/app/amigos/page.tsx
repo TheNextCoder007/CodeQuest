@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { Check, Loader2, Search, UserMinus, UserPlus, Users, X } from 'lucide-react';
+import { Check, Loader2, Search, Swords, UserMinus, UserPlus, Users, X } from 'lucide-react';
 import { AppShell } from '@/components/AppShell';
 import { Avatar } from '@/components/social/Avatar';
 import { Button, LinkButton } from '@/components/ui/Button';
@@ -18,6 +18,11 @@ import {
 } from '@/lib/friends';
 import { displayUsername } from '@/lib/username';
 import { TagBadge } from '@/components/social/TagBadge';
+import { ConviteDuelo } from '@/components/pvp/ConviteDuelo';
+import { usePresenca } from '@/lib/presenca';
+import { partidasAbertas } from '@/lib/pvp/api';
+import { nomeDoTema } from '@/content/pvp-temas';
+import type { ResumoPartida } from '@/lib/pvp/tipos';
 import { tagById } from '@/content/tags';
 import { levelTitle } from '@/lib/gamification';
 import type { FriendsData, PublicProfile, SearchResult } from '@/types/db';
@@ -49,10 +54,13 @@ function PessoaRow({
   perfil,
   children,
   destaque,
+  online,
 }: {
   perfil: PublicProfile;
   children?: React.ReactNode;
   destaque?: boolean;
+  /** Bolinha verde: a pessoa esta com o app aberto agora. */
+  online?: boolean;
 }) {
   return (
     <div
@@ -63,7 +71,16 @@ function PessoaRow({
           : 'border-white/10 bg-white/[0.03] hover:border-white/20',
       )}
     >
-      <Avatar name={perfil.name} url={perfil.avatar_url} />
+      <span className="relative shrink-0">
+        <Avatar name={perfil.name} url={perfil.avatar_url} />
+        {online && (
+          <span
+            className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-night-950 bg-mint-400"
+            title="Online agora"
+            aria-label="Online agora"
+          />
+        )}
+      </span>
 
       <LinkDoPerfil username={perfil.username}>
         <p className="truncate font-semibold text-white">{perfil.name}</p>
@@ -102,7 +119,23 @@ function AmigosContent() {
   /** Id da pessoa sobre a qual uma acao esta em andamento (trava o botao). */
   const [ocupado, setOcupado] = useState<string | null>(null);
 
+  /** Duelo: quem esta online agora e qual convite esta sendo montado. */
+  const [convidando, setConvidando] = useState<PublicProfile | null>(null);
+  const [emAndamento, setEmAndamento] = useState<ResumoPartida[]>([]);
+
   const meuId = user?.id ?? '';
+  const online = usePresenca(meuId || undefined, state?.profile.username);
+
+  const recarregarPartidas = useCallback(() => {
+    if (!meuId) return;
+    partidasAbertas(meuId)
+      .then(setEmAndamento)
+      .catch(() => setEmAndamento([]));
+  }, [meuId]);
+
+  useEffect(() => {
+    recarregarPartidas();
+  }, [recarregarPartidas]);
 
   const recarregar = useCallback(async () => {
     if (!meuId) return;
@@ -210,6 +243,42 @@ function AmigosContent() {
           )}
         </div>
       </section>
+
+      {/* Duelos em andamento -------------------------------------------- */}
+      {emAndamento.length > 0 && (
+        <Card className="border-mint-500/30 bg-gradient-to-br from-mint-600/10 to-transparent">
+          <CardTitle>⚔️ Duelos em andamento</CardTitle>
+          <ul className="mt-4 space-y-2">
+            {emAndamento.map((partida) => {
+              const souAnfitriao = partida.hostId === meuId;
+              const esperando = partida.status === 'convite';
+              return (
+                <li
+                  key={partida.id}
+                  className="flex min-w-0 flex-wrap items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3"
+                >
+                  <span className="min-w-0 flex-1 text-sm text-slate-300">
+                    <strong className="text-white">{nomeDoTema(partida.tema)}</strong>
+                    {' · '}
+                    {esperando
+                      ? souAnfitriao
+                        ? 'aguardando a resposta do convite'
+                        : 'convite esperando você'
+                      : 'partida em andamento'}
+                  </span>
+                  <LinkButton
+                    href={`/duelo/?m=${encodeURIComponent(partida.id)}`}
+                    size="sm"
+                    variant={esperando && souAnfitriao ? 'ghost' : 'primary'}
+                  >
+                    {esperando && souAnfitriao ? 'Ver' : 'Entrar'}
+                  </LinkButton>
+                </li>
+              );
+            })}
+          </ul>
+        </Card>
+      )}
 
       {erro && (
         <Card className="border-rose-500/40">
@@ -393,10 +462,16 @@ function AmigosContent() {
           <ul className="mt-4 space-y-2">
             {data.friends.map((pessoa) => (
               <li key={pessoa.id}>
-                <PessoaRow perfil={pessoa}>
-                  <span className="hidden text-xs text-slate-500 sm:block sm:self-center">
-                    {levelTitle(pessoa.level)}
-                  </span>
+                <PessoaRow perfil={pessoa} online={online.has(pessoa.id)}>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    aria-label={`Duelar com ${pessoa.name}`}
+                    onClick={() => setConvidando(pessoa)}
+                  >
+                    <Swords className="h-4 w-4" />
+                    Duelar
+                  </Button>
                   <Button
                     size="sm"
                     variant="ghost"
@@ -426,8 +501,22 @@ function AmigosContent() {
         <p className="px-1 text-xs leading-relaxed text-slate-500">
           <strong className="text-amber-300">Modo demonstração:</strong> as amizades ficam salvas
           só neste dispositivo. Os perfis de exemplo (@ana_dev, @kauanfa, @luizjr) aceitam pedidos
-          automaticamente, já que não há ninguém do outro lado para responder.
+          automaticamente, já que não há ninguém do outro lado para responder — e o duelo roda
+          contra um adversário simulado, com as mesmas regras de pontuação.
         </p>
+      )}
+
+      {/* Convite de duelo ------------------------------------------------ */}
+      {convidando && (
+        <ConviteDuelo
+          meuId={meuId}
+          adversarioId={convidando.id}
+          adversarioUsername={convidando.username ?? ''}
+          adversarioNome={convidando.name}
+          aberto
+          onFechar={() => setConvidando(null)}
+          onEnviado={recarregarPartidas}
+        />
       )}
     </div>
   );

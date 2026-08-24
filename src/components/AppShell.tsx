@@ -9,6 +9,7 @@ import { useAuth } from '@/lib/auth/AuthProvider';
 import { usePlayer } from '@/lib/player/PlayerProvider';
 import { displayStreak, levelFromXp } from '@/lib/gamification';
 import { cn } from '@/lib/cn';
+import { AvisoDeConvite } from './pvp/AvisoDeConvite';
 import { UsernameGate } from './UsernameGate';
 import { Logo } from './Logo';
 
@@ -136,7 +137,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <Link
             href="/dashboard"
             onClick={contarCliqueNoLogo}
-            className="flex min-h-[44px] min-w-0 items-center"
+            className="flex min-h-[44px] min-w-[44px] items-center"
           >
             <Logo />
           </Link>
@@ -188,6 +189,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </button>
           </div>
         </div>
+
+        {/* Convite de duelo: aparece em qualquer tela. */}
+        <AvisoDeConvite />
 
         {demoMode && (
           <div className="border-t border-amber-400/20 bg-amber-400/[0.07] px-4 py-1.5 text-center text-[11px] text-amber-200">

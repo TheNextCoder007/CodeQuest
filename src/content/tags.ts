@@ -32,7 +32,11 @@ export type TagCriteria =
   /** Secreta: liberada por uma acao especifica (ver `segredo`). */
   | { kind: 'secret'; segredo: SegredoId }
   /** Concedida a mao no banco (`profiles.is_developer = true`). */
-  | { kind: 'manual' };
+  | { kind: 'manual' }
+  /** Vitorias acumuladas no modo 1v1. */
+  | { kind: 'pvp_wins'; count: number }
+  /** Vitorias no MESMO tema (vira "especialista" naquela linguagem). */
+  | { kind: 'pvp_tema'; count: number };
 
 /**
  * Identificadores das acoes secretas.
@@ -149,6 +153,70 @@ export const tags: TagDefinition[] = [
     criteria: { kind: 'language_completed', languageSlug: 'python' },
     secret: false,
     orderIndex: 6,
+  },
+
+  /* ---------------------------------------------------------------------
+   * Duelo 1v1 - raridade crescente conforme as vitorias acumulam
+   * ------------------------------------------------------------------ */
+  {
+    id: 'pvp-estreante',
+    name: 'Estreante',
+    description: 'Venceu o primeiro duelo 1v1.',
+    icon: '🗡️',
+    rarity: 'comum',
+    criteria: { kind: 'pvp_wins', count: 1 },
+    secret: false,
+    orderIndex: 10,
+  },
+  {
+    id: 'pvp-duelista',
+    name: 'Duelista',
+    description: '10 vitórias em duelos. Já sabe o que está fazendo.',
+    icon: '⚔️',
+    rarity: 'raro',
+    criteria: { kind: 'pvp_wins', count: 10 },
+    secret: false,
+    orderIndex: 11,
+  },
+  {
+    id: 'pvp-especialista',
+    name: 'Especialista',
+    description: '10 vitórias no mesmo tema. Escolheu um assunto e dominou.',
+    icon: '🎓',
+    rarity: 'epico',
+    criteria: { kind: 'pvp_tema', count: 10 },
+    secret: false,
+    orderIndex: 12,
+  },
+  {
+    id: 'pvp-gladiador',
+    name: 'Gladiador',
+    description: '25 vitórias em duelos.',
+    icon: '🛡️',
+    rarity: 'epico',
+    criteria: { kind: 'pvp_wins', count: 25 },
+    secret: false,
+    orderIndex: 13,
+  },
+  {
+    id: 'pvp-implacavel',
+    name: 'Implacável',
+    description: '50 vitórias em duelos. Pouca gente aceita o convite.',
+    icon: '🔥',
+    rarity: 'mitico',
+    criteria: { kind: 'pvp_wins', count: 50 },
+    secret: false,
+    orderIndex: 14,
+  },
+  {
+    id: 'pvp-imortal',
+    name: 'Imortal',
+    description: '100 vitórias em duelos.',
+    icon: '💀',
+    rarity: 'lendario',
+    criteria: { kind: 'pvp_wins', count: 100 },
+    secret: false,
+    orderIndex: 15,
   },
 
   /* ---------------------------------------------------------------------

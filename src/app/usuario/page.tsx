@@ -11,6 +11,9 @@ import { LinkButton } from '@/components/ui/Button';
 import { Card, CardTitle, Label, Pill, ProgressBar } from '@/components/ui/Card';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { fetchPerfilPublico } from '@/lib/perfil-publico';
+import { EstatisticasPvpCard } from '@/components/pvp/EstatisticasPvpCard';
+import { buscarEstatisticas } from '@/lib/pvp/api';
+import { ESTATISTICAS_VAZIAS, type EstatisticasPvp } from '@/lib/pvp/tipos';
 import { achievementsWithStatus, levelProgress, levelTitle } from '@/lib/gamification';
 import { tagsComEstado } from '@/lib/tags';
 import { tagById } from '@/content/tags';
@@ -35,6 +38,10 @@ function PerfilPublicoContent() {
   const [perfil, setPerfil] = useState<PerfilPublico | null>(null);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
+  const [statsPvp, setStatsPvp] = useState<EstatisticasPvp>({
+    ...ESTATISTICAS_VAZIAS,
+    vitoriasPorTema: {},
+  });
 
   useEffect(() => {
     if (!alvo) {
@@ -47,7 +54,17 @@ function PerfilPublicoContent() {
 
     fetchPerfilPublico(alvo)
       .then((resultado) => {
-        if (ativo) setPerfil(resultado);
+        if (!ativo) return;
+        setPerfil(resultado);
+        if (resultado) {
+          buscarEstatisticas(resultado.id)
+            .then((lidas) => {
+              if (ativo) setStatsPvp(lidas);
+            })
+            .catch(() => {
+              /* perfil sem duelo ainda */
+            });
+        }
       })
       .catch((falha) => {
         if (ativo) setErro(falha instanceof Error ? falha.message : 'Não foi possível carregar.');
@@ -186,6 +203,9 @@ function PerfilPublicoContent() {
           </div>
         )}
       </section>
+
+      {/* Duelos -------------------------------------------------------- */}
+      <EstatisticasPvpCard stats={statsPvp} />
 
       {/* Tags ---------------------------------------------------------- */}
       <Card>

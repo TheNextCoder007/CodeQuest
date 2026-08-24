@@ -61,6 +61,14 @@ interface PlayerContextValue {
    * segredo ja tinha sido descoberto antes.
    */
   registrarSegredo: (segredo: SegredoId) => Promise<TagDefinition | null>;
+  /**
+   * Concede as tags e conquistas que dependem do duelo 1v1.
+   *
+   * As estatisticas de PvP vivem numa tabela propria, escrita SO pelo
+   * servidor. Quem chama isto passa o que leu de la; aqui so avaliamos os
+   * criterios e gravamos o que faltar.
+   */
+  sincronizarPvp: (vitorias: number, vitoriasPorTema: Record<string, number>) => Promise<TagDefinition[]>;
   setCurrentLanguage: (slug: string) => Promise<void>;
   updateName: (name: string) => Promise<void>;
   /** Troca a foto de perfil (ja redimensionada e enviada por `enviarAvatar`). */
@@ -687,6 +695,87 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     [user, state],
   );
 
+  const sincronizarPvp = useCallback(
+    async (
+      vitorias: number,
+      vitoriasPorTema: Record<string, number>,
+    ): Promise<TagDefinition[]> => {
+      if (!user || !state) return [];
+
+      const novasTags = evaluateTags(
+        {
+          level: state.profile.level,
+          completedLessonIds: state.completedLessonIds,
+          isDeveloper: state.profile.is_developer,
+          pvpVitorias: vitorias,
+          pvpVitoriasPorTema: vitoriasPorTema,
+        },
+        state.unlockedTagIds,
+      );
+
+      const unlockedTagIds = [...state.unlockedTagIds, ...novasTags.map((tag) => tag.id)];
+      const novasConquistas = evaluateAchievements(
+        {
+          completedLessonIds: state.completedLessonIds,
+          xpTotal: state.profile.xp_total,
+          streak: displayStreak(state.profile.last_study_date, state.profile.streak_count),
+          flawlessLesson: state.flawlessLessonIds.length > 0,
+          unlockedTagIds,
+          pvpVitorias: vitorias,
+        },
+        state.unlockedAchievementIds,
+      );
+
+      if (novasTags.length === 0 && novasConquistas.length === 0) return [];
+
+      const nextState: PlayerState = {
+        ...state,
+        unlockedTagIds,
+        unlockedAchievementIds: [
+          ...state.unlockedAchievementIds,
+          ...novasConquistas.map((conquista) => conquista.id),
+        ],
+      };
+      setState(nextState);
+
+      if (!isSupabaseConfigured) {
+        localState.save(user.id, nextState);
+        return novasTags;
+      }
+
+      const supabase = getSupabase()!;
+      try {
+        await comRetentativas(async () => {
+          if (novasTags.length > 0) {
+            await supabase.from('user_tags').upsert(
+              novasTags.map((tag) => ({
+                user_id: user.id,
+                tag_id: tag.id,
+                unlocked_at: new Date().toISOString(),
+              })),
+              { onConflict: 'user_id,tag_id' },
+            );
+          }
+          if (novasConquistas.length > 0) {
+            await supabase.from('user_achievements').upsert(
+              novasConquistas.map((conquista) => ({
+                user_id: user.id,
+                achievement_id: conquista.id,
+                unlocked_at: new Date().toISOString(),
+              })),
+              { onConflict: 'user_id,achievement_id' },
+            );
+          }
+        });
+      } catch (falha) {
+        console.error('[CodeQuest] falha ao gravar tags de duelo', falha);
+      }
+
+      return novasTags;
+    },
+    [user, state],
+  );
+
   const value = useMemo<PlayerContextValue>(
     () => ({
       state,
@@ -697,6 +786,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       completeLesson,
       equipTag,
       registrarSegredo,
+      sincronizarPvp,
       setCurrentLanguage,
       updateName,
       updateAvatar,
@@ -711,6 +801,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       completeLesson,
       equipTag,
       registrarSegredo,
+      sincronizarPvp,
       setCurrentLanguage,
       updateName,
       updateAvatar,
