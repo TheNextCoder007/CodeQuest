@@ -225,6 +225,24 @@ if (!existsSync('out/sitemap.xml')) {
     );
   }
 
+  secao('verificacao do Google Search Console');
+  {
+    // O Google reconfere a tag de tempos em tempos e tira o acesso se ela
+    // sumir - por isso ela vira teste, e nao so um comentario no layout.
+    const TOKEN = 'jVu33xTPQKi2_VKWowOq8ik4UNT6qe8wx2SQzBJJcG4';
+    const paginas = ['out/index.html', 'out/login/index.html', 'out/dashboard/index.html'];
+    const comTag = paginas.filter((caminho) => {
+      if (!existsSync(caminho)) return false;
+      return readFileSync(caminho, 'utf8').includes(
+        `<meta name="google-site-verification" content="${TOKEN}"/>`,
+      );
+    });
+    ok(
+      comTag.length === paginas.length,
+      `a tag de verificacao do Google sai em todas as paginas (${comTag.length}/${paginas.length})`,
+    );
+  }
+
   secao('imagem de previa');
   ok(existsSync('out/og.jpg'), 'a imagem og.jpg foi publicada');
   if (existsSync('out/og.jpg')) {

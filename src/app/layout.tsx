@@ -63,6 +63,18 @@ export const metadata: Metadata = {
     icon: [{ url: '/icon.svg', type: 'image/svg+xml' }],
     apple: '/icon.svg',
   },
+
+  // Comprovacao de propriedade no Google Search Console.
+  //
+  // Fica no layout RAIZ de proposito: assim a tag sai em todas as paginas,
+  // inclusive nas privadas (que herdam daqui e so trocam titulo e robots).
+  // O Google aceita a verificacao encontrando a tag em qualquer uma delas.
+  //
+  // Depois que a propriedade estiver confirmada, NAO remova: o Google
+  // reconfere de tempos em tempos e tira o acesso se a tag sumir.
+  verification: {
+    google: 'jVu33xTPQKi2_VKWowOq8ik4UNT6qe8wx2SQzBJJcG4',
+  },
 };
 
 export const viewport: Viewport = {
