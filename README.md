@@ -35,10 +35,11 @@ Play ou na Microsoft Store (que cobram taxa de desenvolvedor).
 10. [Amigos e @username](#10-amigos-e-username)
 11. [Tags, perfil público e foto](#11-tags-perfil-público-e-foto)
 12. [Duelo 1v1 (PvP)](#12-duelo-1v1-pvp)
-13. [Aparecer no Google (SEO)](#13-aparecer-no-google-seo)
-14. [Editar e criar conteúdo](#14-editar-e-criar-conteúdo)
-15. [Decisões técnicas](#15-decisões-técnicas)
-16. [Problemas comuns](#16-problemas-comuns)
+13. [Modo ranqueado (temporadas e patamares)](#13-modo-ranqueado-temporadas-e-patamares)
+14. [Aparecer no Google (SEO)](#14-aparecer-no-google-seo)
+15. [Editar e criar conteúdo](#15-editar-e-criar-conteúdo)
+16. [Decisões técnicas](#16-decisões-técnicas)
+17. [Problemas comuns](#17-problemas-comuns)
 
 ---
 
@@ -74,6 +75,7 @@ Para ligar a nuvem (contas reais, progresso sincronizado entre celular/PC/site),
 | `npm run test:amigos` | Testa o fluxo de amizades (busca, pedido, aceite, remoção, ranking) |
 | `npm run test:tags` | Testa as tags, os segredos e as regras do @username |
 | `npm run test:pvp` | Joga uma partida 1v1 num Postgres real e testa as tentativas de trapaça |
+| `npm run test:ranqueado` | Testa a escada de patamares, o elo, as temporadas e os bots num Postgres real |
 | `npm run test:seo` | Confere sitemap, robots.txt e as meta tags do build |
 | `npm run og:gen` | Regera a imagem de prévia do link (`public/og.jpg`) |
 | `npm run test:progresso` | Garante que falha de leitura nunca vira progresso zerado |
@@ -101,6 +103,9 @@ CodeQuest/
 │   │   ├── licao/[id]/           # /licao/py-cond-02 teoria + exercícios
 │   │   ├── perfil/               # /perfil ........ dados, @username e conquistas
 │   │   ├── amigos/               # /amigos ........ busca, pedidos e lista
+│   │   ├── usuario/              # /usuario?u=... . perfil público de outra pessoa
+│   │   ├── duelo/                # /duelo?m=...... a partida em si (1v1 e ranqueada)
+│   │   ├── ranqueado/            # /ranqueado ..... patamar, temporada e início da partida
 │   │   └── ranking/              # /ranking ....... leaderboard global e de amigos
 │   ├── components/               # UI reutilizável (cards, editor, toasts…)
 │   ├── content/                  # 📚 O CURRÍCULO (fonte da verdade)
@@ -111,6 +116,9 @@ CodeQuest/
 │       ├── friends.ts            # amizades, busca e ranking entre amigos
 │       ├── username.ts           # regras do @username
 │       ├── player/               # XP, progresso, conquistas
+│       ├── tags.ts               # regras das tags de perfil
+│       ├── pvp/                  # duelo 1v1: regras, chamadas ao banco e modo demo
+│       ├── ranked/               # ranqueada: patamares, elo, temporadas e bots
 │       ├── python/               # ponte com o Pyodide
 │       ├── exercises/            # validação das respostas
 │       ├── gamification.ts       # nível, streak, critérios de conquista
@@ -122,6 +130,7 @@ CodeQuest/
 │   ├── migrations/0003_protecao_progresso.sql # travas contra perda de XP
 │   ├── migrations/0004_perfis_publicos.sql # tags, perfil público, avatar
 │   ├── migrations/0005_pvp.sql   # duelo 1v1 (perguntas, partidas, placar)
+│   ├── migrations/0006_ranqueado.sql # temporadas, elo, patamares, bots
 │   ├── diagnostico.sql           # consultas de conferência (só leitura)
 │   └── seed.sql                  # conteúdo das trilhas (GERADO)
 ├── android/                      # projeto Android (Capacitor)
@@ -175,12 +184,14 @@ O Supabase dá um Postgres gerenciado + autenticação no plano gratuito, **sem 
    Esse arquivo cria as tags de perfil, o bucket de fotos e as regras do @username (ver [seção 11](#11-tags-perfil-público-e-foto)).
 6. Abra outra query, cole **todo** o conteúdo de [`supabase/migrations/0005_pvp.sql`](supabase/migrations/0005_pvp.sql) e rode.
    Esse arquivo cria o duelo 1v1 (ver [seção 12](#12-duelo-1v1-pvp)).
-7. Abra mais uma query, cole **todo** o conteúdo de [`supabase/seed.sql`](supabase/seed.sql) e rode também.
-   Esse arquivo popula as 5 linguagens, 24 lições, 46 exercícios, 24 conquistas, 17 tags e 60 perguntas de duelo.
+7. Abra outra query, cole **todo** o conteúdo de [`supabase/migrations/0006_ranqueado.sql`](supabase/migrations/0006_ranqueado.sql) e rode.
+   Esse arquivo cria o modo ranqueado — temporadas, elo e bots (ver [seção 13](#13-modo-ranqueado-temporadas-e-patamares)).
+8. Abra mais uma query, cole **todo** o conteúdo de [`supabase/seed.sql`](supabase/seed.sql) e rode também.
+   Esse arquivo popula as 5 linguagens, 24 lições, 46 exercícios, 30 conquistas, 17 tags e 60 perguntas de duelo.
 
-> Os seis scripts podem ser executados quantas vezes você quiser: eles usam
+> Os sete scripts podem ser executados quantas vezes você quiser: eles usam
 > `if not exists` / `on conflict do update` e não duplicam nem apagam nada.
-> Isso não é só promessa: `npm run test:migrations` aplica os seis **três vezes
+> Isso não é só promessa: `npm run test:migrations` aplica todos eles **três vezes
 > seguidas** num PostgreSQL de verdade e confere que o progresso de um aluno
 > continua intacto.
 
@@ -858,11 +869,143 @@ usa exatamente a mesma pontuação do servidor. A tela avisa isso antes de come�
 
 ---
 
-## 13. Aparecer no Google (SEO)
+## 13. Modo ranqueado (temporadas e patamares)
+
+O duelo da [seção 12](#12-duelo-1v1-pvp) é contra um amigo, quando dá. O ranqueado é a versão
+competitiva dele: sempre disponível, valendo **elo**, com uma escada de patamares no estilo
+Brawl Stars e temporada que zera a cada 15 dias.
+
+A partida em si é a mesma — 5 perguntas cronometradas, mesma pontuação, mesma tela. O que muda
+é o que acontece **depois** dela.
+
+### 13.1 A escada
+
+São **7 patamares com 3 sub-níveis cada**, 21 divisões no total:
+
+| Patamar | Divisões | Elo | Vitória | Derrota |
+|---|---|---|---|---|
+| 🥉 Bronze 1–3 | 0–2 | 0–299 | +40 | −10 |
+| 🥈 Prata 1–3 | 3–5 | 300–599 | +35 | −12 |
+| 🥇 Ouro 1–3 | 6–8 | 600–899 | +30 | −15 |
+| 💎 Diamante 1–3 | 9–11 | 900–1199 | +25 | −18 |
+| 🔮 Mítico 1–3 | 12–14 | 1200–1499 | +20 | −20 |
+| 👑 Lendário 1–3 | 15–17 | 1500–1799 | +15 | −22 |
+| 🏅 Mestre 1–3 | 18–20 | 1800+ | +10 | −25 |
+
+Cada divisão custa **100 de elo**, sempre. Quem faz a subida ficar mais lenta lá em cima não é o
+tamanho da divisão — é o ganho por vitória, que cai de 40 para 10. Na prática: subir de Bronze 1
+para Bronze 2 leva **3 vitórias**; de Mestre 1 para Mestre 2 leva **10**. É a mesma curva do Brawl
+Stars, mas com uma vantagem: a tela consegue dizer "faltam 60 de 100", que é muito mais fácil de
+entender do que "faltam 2 vitórias e meia".
+
+Duas regras que existem para a coisa não ficar frustrante:
+
+- **O patamar conquistado não se perde.** Uma vez em Ouro 1 (600 de elo), você não volta para
+  Prata por mais que perca — o elo trava no piso do patamar. Você só anda para trás dentro do
+  próprio patamar.
+- **Empate não mexe no elo.** Num duelo de 5 perguntas cronometradas o empate é raro (precisa dar
+  a mesma pontuação até o bônus de velocidade), e punir um resultado que ninguém controla só
+  geraria reclamação.
+
+Mestre 3 é o teto da escada. O elo continua subindo depois dele — é ele que ordena quem já chegou
+lá —, mas a divisão trava.
+
+### 13.2 Temporadas
+
+A temporada dura **15 dias corridos**. No fim, todo mundo volta para Bronze 1 e uma nova começa.
+
+Não existe tarefa agendada fazendo isso, de propósito: cron é um serviço que o plano gratuito não
+garante. A virada é **preguiçosa** — a primeira pessoa que abre a tela de ranqueada depois do prazo
+é quem cria a temporada seguinte (`ranked_temporada_atual()`). As temporadas se encaixam sem
+buraco (a seguinte começa exatamente onde a anterior terminou), então ficar duas semanas sem abrir
+o app não bagunça a contagem: quando alguém voltar, o sistema pula quantas temporadas forem
+necessárias de uma vez.
+
+O reset **não apaga nada**. O elo é guardado por `(temporada, jogador)`, então na temporada nova a
+pessoa simplesmente ainda não tem linha — e quem não tem linha está em Bronze 1 com 0 de elo. As
+linhas antigas ficam onde estão, e são elas o histórico: o perfil mostra "Temporadas passadas" com
+o patamar mais alto que você alcançou em cada uma.
+
+### 13.3 Os bots
+
+Enquanto o CodeQuest não tiver gente ranqueada suficiente para formar dupla na hora, a partida é
+contra um adversário da casa. Ele não tem inteligência nenhuma — responde com uma taxa de acerto e
+uma faixa de tempo sorteadas —, mas **fica mais difícil a cada patamar**:
+
+| Patamar | Bot | Acerta | Responde em |
+|---|---|---|---|
+| Bronze | Bit | 45% | 5,0s – 14,0s |
+| Prata | Loop | 55% | 4,5s – 12,0s |
+| Ouro | Nullptr | 65% | 4,0s – 11,0s |
+| Diamante | Kernel | 72% | 3,5s – 9,5s |
+| Mítico | Daemon | 80% | 3,0s – 8,0s |
+| Lendário | Overflow | 88% | 2,5s – 6,5s |
+| Mestre | Root | 94% | 1,8s – 5,0s |
+
+Os nomes são termos de programação de propósito: deixa claro que é um adversário da casa, sem
+fingir ser uma pessoa.
+
+O bot **joga no servidor**. A dificuldade dele é escolhida pelo banco a partir do seu patamar e
+fica gravada na partida; cada resposta é sorteada por um gatilho no PostgreSQL, no momento em que
+você responde a mesma pergunta. O aplicativo não sorteia nada e não escolhe contra quem joga.
+
+**Trocar bot por gente de verdade depois:** a conta de elo não sabe que existe bot. Ela recebe só
+"venceu, perdeu ou empatou" (`ranked_aplicar_resultado`), e a partida ranqueada é uma linha comum
+em `matches`, com `modo = 'ranqueado'`. Para trocar por duelo entre dois humanos ranqueados basta
+preencher `guest_id` em vez de `bot_nome` na criação da partida — `pvp_finalizar` já aplica elo aos
+dois lados quando os dois existem. Nada de patamar, temporada ou histórico precisa ser reescrito.
+
+### 13.4 Como a validação no servidor funciona
+
+Mesma regra da Fase 3: o app é 100% client-side, então "validar no servidor" quer dizer **validar
+dentro do PostgreSQL** ([`0006_ranqueado.sql`](supabase/migrations/0006_ranqueado.sql)).
+
+- **O elo nunca é enviado pelo cliente.** Ele nem tem por onde: `ranked_stats` não tem uma única
+  policy de `INSERT`, `UPDATE` ou `DELETE`. A única coisa que escreve lá é
+  `ranked_aplicar_resultado`, que é `security definer` e está **revogada** de `authenticated`.
+- **Quem decide o resultado é `pvp_finalizar`**, somando as respostas gravadas — não um placar
+  enviado pelo aparelho.
+- **As jogadas do bot não são legíveis** pelo cliente (`match_bot_answers` tem RLS ligado e zero
+  policies): lê-las antes do fim entregaria o placar do adversário.
+- **Não dá para fugir de uma derrota.** `pvp_cancelar` recusa partida ranqueada; só existe uma
+  partida aberta por vez; e quem fecha o app ganhando leva a derrota assim mesmo — passados 5
+  minutos a partida é encerrada com o placar parcial, e o bot completa as respostas dele.
+
+Isso tudo é testado, não prometido: `npm run test:ranqueado` sobe um PostgreSQL de verdade
+(PGlite), joga partidas inteiras pelas mesmas funções que o app chama, tenta cada uma dessas
+fugas, e confere por introspecção que nenhuma tabela de elo aceita escrita direta.
+
+### 13.5 Conquistas
+
+Uma conquista por **patamar alcançado** — "Alcançou Prata", "Alcançou Ouro", até "Alcançou
+Mestre". São 6 (Bronze fica de fora: é onde todo mundo começa).
+
+A escolha foi por patamar inteiro e não por sub-nível porque 21 divisões dariam 21 medalhas quase
+iguais, e a lista de conquistas viraria uma planilha. Chegar a Ouro 1 já conta como "alcançou
+Ouro".
+
+Elas valem para sempre: a comparação usa o maior elo de **todas** as temporadas (`pico_historico`),
+então o reset de 15 dias não apaga a medalha.
+
+**A ranqueada não conta no cartel de duelos 1v1.** Vencer o bot não entra em `pvp_stats`, e por
+isso não conta para as tags de duelo — senão "Imortal — 100 vitórias" viraria uma tarde de farm.
+Os dois cartéis são separados no perfil.
+
+### 13.6 No modo demonstração
+
+Sem Supabase, a temporada e o elo ficam guardados no próprio aparelho
+([`src/lib/ranked/local.ts`](src/lib/ranked/local.ts)), com a mesma escada, os mesmos bots e a
+mesma regra de uma partida por vez. As duas implementações da conta de elo (SQL e TypeScript) são
+comparadas valor por valor por `npm run test:ranqueado` — se alguém mexer numa e esquecer da outra,
+o teste quebra.
+
+---
+
+## 14. Aparecer no Google (SEO)
 
 Tudo o que está aqui é gratuito e funciona no domínio da Vercel — não precisa de domínio próprio.
 
-### 13.1 O endereço do site
+### 14.1 O endereço do site
 
 Sitemap, robots.txt e as tags de prévia precisam de **URL absoluta**. Ela vem, nesta ordem:
 
@@ -875,7 +1018,7 @@ propósito: sem essa regra, esquecer de trocar a variável publicaria um sitemap
 para a sua máquina. E não usamos `VERCEL_URL`, que muda a cada deploy
 (`projeto-a1b2c3.vercel.app`) e colocaria um endereço descartável dentro do sitemap.
 
-### 13.2 Sitemap e robots.txt
+### 14.2 Sitemap e robots.txt
 
 Gerados pelo Next a partir de [`src/app/sitemap.ts`](src/app/sitemap.ts) e
 [`src/app/robots.ts`](src/app/robots.ts) — ficam em `/sitemap.xml` e `/robots.txt`.
@@ -890,7 +1033,7 @@ evita a visita, o meta evita a indexação caso o Google chegue por um link de f
 > landing no build: o HTML entregue tem cerca de **9.800 caracteres de texto visível**, não uma
 > casca vazia. Dá para conferir abrindo `out/index.html` depois de `npm run build:static`.
 
-### 13.3 Título, descrição e prévia do link
+### 14.3 Título, descrição e prévia do link
 
 O layout raiz ([`src/app/layout.tsx`](src/app/layout.tsx)) define o título e a descrição da landing
 e serve de padrão para o site. Cada rota pública tem um `layout.tsx` próprio com o texto dela — as
@@ -912,7 +1055,7 @@ npm run og:gen
 JPEG e não PNG de propósito: o mesmo desenho em PNG dava 440 KB por causa dos gradientes, e o
 WhatsApp costuma desistir de gerar a prévia acima de ~300 KB. Em JPEG a 90% fica em **69 KB**.
 
-### 13.4 Cadastrar no Google Search Console
+### 14.4 Cadastrar no Google Search Console
 
 1. Publique na Vercel e confirme o endereço em **Vercel › Project › Domains** (algo como
    `https://codequest.vercel.app`).
@@ -927,7 +1070,7 @@ WhatsApp costuma desistir de gerar a prévia acima de ~300 KB. Em JPEG a 90% fic
 > A indexação leva de alguns dias a algumas semanas. Use **Inspeção de URL › Solicitar indexação**
 > para acelerar a landing.
 
-### 13.5 Verificação automática
+### 14.5 Verificação automática
 
 `npm run test:seo` cobre a resolução do endereço (inclusive o caso de esquecer a variável), e —
 quando `out/` existe — confere no resultado do build: o sitemap é XML válido, só tem URL absoluta
@@ -937,7 +1080,7 @@ imagem de prévia cabe no limite do WhatsApp.
 
 ---
 
-## 14. Editar e criar conteúdo
+## 15. Editar e criar conteúdo
 
 O currículo é **TypeScript**, não banco de dados — por isso funciona offline no `.apk` e no `.exe`,
 e por isso um erro de digitação aparece na hora, com autocompletar.
@@ -978,7 +1121,7 @@ O campo opcional `polyglot` gera as abas "o conceito é o mesmo, a sintaxe muda"
 
 ---
 
-## 15. Decisões técnicas
+## 16. Decisões técnicas
 
 ### Por que esta stack
 
@@ -1030,7 +1173,7 @@ limites do plano gratuito. A execução de código não custa nada porque aconte
 
 ---
 
-## 16. Problemas comuns
+## 17. Problemas comuns
 
 **O app mostra "modo demonstração" mesmo com o `.env.local` preenchido**
 Reinicie o `npm run dev` — variáveis `NEXT_PUBLIC_*` são lidas na inicialização. Confira também se

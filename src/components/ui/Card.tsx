@@ -113,9 +113,12 @@ export function StatCard({
 
   return (
     <div className={cn('cq-card bg-gradient-to-br p-4 sm:p-5', rings[tone])}>
+      {/* `min-w-0` no rotulo e `shrink-0` no icone: com a fonte ampliada do
+          Android o rotulo nao cabia, e como ele nao encolhia era o ICONE que
+          era empurrado para fora da tela. */}
       <div className="flex items-start justify-between gap-2">
-        <p className="cq-label">{label}</p>
-        <span className="text-xl leading-none" aria-hidden>
+        <p className="cq-label min-w-0">{label}</p>
+        <span className="shrink-0 text-xl leading-none" aria-hidden>
           {icon}
         </span>
       </div>

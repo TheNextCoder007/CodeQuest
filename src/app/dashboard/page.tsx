@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { ArrowRight, Check, Lock } from 'lucide-react';
 import { AppShell } from '@/components/AppShell';
+import { ChamadaRanqueada } from '@/components/ranked/ChamadaRanqueada';
 import { Card, CardTitle, Label, Pill, ProgressBar, StatCard } from '@/components/ui/Card';
 import { LinkButton } from '@/components/ui/Button';
 import { useAuth } from '@/lib/auth/AuthProvider';
@@ -139,10 +140,20 @@ function DashboardContent() {
         <ProgressBar className="mt-4" value={levelProgress(state.profile.xp_total)} tone="blue" />
       </Card>
 
+      {/* Ranqueada ----------------------------------------------------
+        * Fica aqui, e nao na barra de baixo, de proposito: a barra ja tem
+        * cinco itens e um sexto nao caberia num Android de 360px com a fonte
+        * ampliada (ver o comentario em `AppShell`).
+        * ------------------------------------------------------------- */}
+      <ChamadaRanqueada />
+
       <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
         {/* Trilha ------------------------------------------------------ */}
         <Card>
-          <div className="flex items-center justify-between gap-3">
+          {/* `flex-wrap`: em tela de 320px com a fonte no maximo, o interior do
+              card fica com ~176px e o "Ver mapa" nao cabe ao lado do titulo -
+              sem quebrar linha ele ficava cortado na borda direita. */}
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="min-w-0">
               <CardTitle>
                 <span className="mr-2" aria-hidden>
@@ -238,9 +249,12 @@ function DashboardContent() {
 
           {/* Conquistas recentes -------------------------------------- */}
           <Card>
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <CardTitle>🏆 Conquistas</CardTitle>
-              <Link href="/perfil" className="cq-tap text-sm font-semibold text-mint-300 hover:underline">
+              <Link
+                href="/perfil"
+                className="cq-tap shrink-0 text-sm font-semibold text-mint-300 hover:underline"
+              >
                 Ver todas
               </Link>
             </div>

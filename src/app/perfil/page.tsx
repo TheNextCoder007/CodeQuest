@@ -25,8 +25,15 @@ import { tagById } from '@/content/tags';
 import { enviarAvatar } from '@/lib/avatar';
 import { fetchPosicaoRanking } from '@/lib/perfil-publico';
 import { EstatisticasPvpCard } from '@/components/pvp/EstatisticasPvpCard';
+import { CartaoRanqueada } from '@/components/ranked/CartaoRanqueada';
 import { buscarEstatisticas } from '@/lib/pvp/api';
 import { ESTATISTICAS_VAZIAS, type EstatisticasPvp } from '@/lib/pvp/tipos';
+import { buscarEstadoRanqueada, buscarHistoricoRanqueada } from '@/lib/ranked/api';
+import {
+  patamarMaximoAlcancado,
+  type EstadoRanqueada,
+  type TemporadaPassada,
+} from '@/lib/ranked/tipos';
 import {
   achievementsWithStatus,
   displayStreak,
@@ -39,8 +46,16 @@ import { cn } from '@/lib/cn';
 
 function PerfilContent() {
   const { user, signOut, demoMode } = useAuth();
-  const { state, loading, updateName, updateUsername, updateAvatar, equipTag, sincronizarPvp } =
-    usePlayer();
+  const {
+    state,
+    loading,
+    updateName,
+    updateUsername,
+    updateAvatar,
+    equipTag,
+    sincronizarPvp,
+    sincronizarRanqueada,
+  } = usePlayer();
   const router = useRouter();
 
   const [editing, setEditing] = useState(false);
@@ -97,6 +112,33 @@ function PerfilContent() {
       ativo = false;
     };
   }, [idAtual, sincronizarPvp]);
+
+  // Ranqueada: patamar da temporada atual e o historico das passadas. Como as
+  // estatisticas de duelo, vem de tabela que so o servidor escreve.
+  const [ranqueada, setRanqueada] = useState<EstadoRanqueada | null>(null);
+  const [temporadasPassadas, setTemporadasPassadas] = useState<TemporadaPassada[]>([]);
+
+  useEffect(() => {
+    if (!idAtual) return;
+    let ativo = true;
+
+    Promise.all([buscarEstadoRanqueada(idAtual), buscarHistoricoRanqueada(idAtual)])
+      .then(([atual, passadas]) => {
+        if (!ativo || !atual) return;
+        setRanqueada(atual);
+        setTemporadasPassadas(passadas);
+        // Conquista de patamar e permanente: a conferencia usa o maior elo de
+        // todas as temporadas, nao o da atual.
+        void sincronizarRanqueada(patamarMaximoAlcancado(atual));
+      })
+      .catch(() => {
+        /* migracao 0006 ainda nao aplicada: o cartao simplesmente nao aparece */
+      });
+
+    return () => {
+      ativo = false;
+    };
+  }, [idAtual, sincronizarRanqueada]);
 
   const trocarFoto = useCallback(
     async (arquivo: File) => {
@@ -259,8 +301,11 @@ function PerfilContent() {
                 </p>
               </div>
             ) : (
-              <p className="mt-1 flex items-center gap-1.5">
-                <span className="font-mono text-sm text-aqua-300">
+              <p className="mt-1 flex min-w-0 items-center gap-1.5">
+                {/* O @username e uma palavra so, sem espaco: sem `min-w-0` +
+                    `truncate` ele nao encolhe nunca, e com a fonte ampliada do
+                    Android era o lapis de editar que saia da tela. */}
+                <span className="min-w-0 truncate font-mono text-sm text-aqua-300">
                   {profile.username ? displayUsername(profile.username) : 'sem nome de usuário'}
                 </span>
                 <button
@@ -353,6 +398,11 @@ function PerfilContent() {
           ))}
         </div>
       </Card>
+
+      {/* Ranqueada ---------------------------------------------------- */}
+      {ranqueada && (
+        <CartaoRanqueada estado={ranqueada} historico={temporadasPassadas} proprio />
+      )}
 
       {/* Duelos ------------------------------------------------------- */}
       <EstatisticasPvpCard stats={statsPvp} proprio />

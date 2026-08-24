@@ -2,6 +2,15 @@
 
 export type StatusPartida = 'convite' | 'ativa' | 'encerrada' | 'recusada' | 'cancelada';
 
+/**
+ * Amistoso e o duelo entre amigos da Fase 3. Ranqueado e o da Fase 4 - mesma
+ * partida, mesmas perguntas, mas valendo elo e (por enquanto) contra um bot.
+ */
+export type ModoPartida = 'amistoso' | 'ranqueado';
+
+/** Resultado do ponto de vista de quem esta perguntando. */
+export type DesfechoPessoal = 'vitoria' | 'derrota' | 'empate';
+
 /** Uma pergunta como ela chega ao cliente: SEM o gabarito. */
 export interface PerguntaPvp {
   num: number;
@@ -24,9 +33,25 @@ export interface EstadoPartida {
   status: StatusPartida;
   total: number;
   tema: string;
+  modo: ModoPartida;
   hostId: string;
-  guestId: string;
+  /** Nulo quando o adversario e um bot (partida ranqueada). */
+  guestId: string | null;
   winnerId: string | null;
+  /**
+   * Nome do bot, quando o adversario e da casa.
+   *
+   * Num duelo entre pessoas isto e nulo - `winner_id` ja resolve, e o nome do
+   * amigo a tela ja tem.
+   */
+  adversario: string | null;
+  /**
+   * Como a partida terminou PARA MIM.
+   *
+   * Existe porque `winnerId` nao consegue dizer "o bot ganhou": bot nao tem
+   * perfil, entao o campo ficaria nulo e a derrota pareceria empate.
+   */
+  meuDesfecho: DesfechoPessoal | null;
   hostRespondidas: number;
   guestRespondidas: number;
   hostPontos: number;

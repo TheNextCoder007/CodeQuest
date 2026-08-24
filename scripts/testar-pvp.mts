@@ -62,6 +62,10 @@ for (const arquivo of [
   'supabase/migrations/0003_protecao_progresso.sql',
   'supabase/migrations/0004_perfis_publicos.sql',
   'supabase/migrations/0005_pvp.sql',
+  // A 0006 troca `pvp_estado` e `pvp_finalizar` por versoes que tambem sabem
+  // lidar com bot. Ela entra aqui de proposito: o duelo entre amigos precisa
+  // continuar passando nestes testes DEPOIS da mudanca.
+  'supabase/migrations/0006_ranqueado.sql',
   'supabase/seed.sql',
 ]) {
   await db.exec(ler(arquivo));

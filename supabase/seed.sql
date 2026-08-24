@@ -2091,6 +2091,36 @@ insert into public.achievements (id, title, description, icon, criteria) values 
 insert into public.achievements (id, title, description, icon, criteria) values ('sem-erros', 'Impecável', 'Você concluiu uma lição acertando todos os exercícios de primeira.', '🥇', '{"kind":"flawless"}'::jsonb)
   on conflict (id) do update set title = excluded.title, description = excluded.description,
   icon = excluded.icon, criteria = excluded.criteria;
+insert into public.achievements (id, title, description, icon, criteria) values ('pvp-primeira-vitoria', 'Primeira vitória', 'Venceu seu primeiro duelo 1v1.', '🗡️', '{"kind":"pvp_wins","count":1}'::jsonb)
+  on conflict (id) do update set title = excluded.title, description = excluded.description,
+  icon = excluded.icon, criteria = excluded.criteria;
+insert into public.achievements (id, title, description, icon, criteria) values ('pvp-10-vitorias', '10 duelos vencidos', 'Dez vitórias no 1v1 — isso já é constância.', '⚔️', '{"kind":"pvp_wins","count":10}'::jsonb)
+  on conflict (id) do update set title = excluded.title, description = excluded.description,
+  icon = excluded.icon, criteria = excluded.criteria;
+insert into public.achievements (id, title, description, icon, criteria) values ('pvp-50-vitorias', '50 duelos vencidos', 'Cinquenta vitórias. Virou referência entre os amigos.', '🔥', '{"kind":"pvp_wins","count":50}'::jsonb)
+  on conflict (id) do update set title = excluded.title, description = excluded.description,
+  icon = excluded.icon, criteria = excluded.criteria;
+insert into public.achievements (id, title, description, icon, criteria) values ('pvp-100-vitorias', '100 duelos vencidos', 'Cem vitórias no 1v1.', '💀', '{"kind":"pvp_wins","count":100}'::jsonb)
+  on conflict (id) do update set title = excluded.title, description = excluded.description,
+  icon = excluded.icon, criteria = excluded.criteria;
+insert into public.achievements (id, title, description, icon, criteria) values ('ranqueada-prata', 'Alcançou Prata', 'Saiu do Bronze na temporada ranqueada.', '🥈', '{"kind":"ranked_tier","patamar":1}'::jsonb)
+  on conflict (id) do update set title = excluded.title, description = excluded.description,
+  icon = excluded.icon, criteria = excluded.criteria;
+insert into public.achievements (id, title, description, icon, criteria) values ('ranqueada-ouro', 'Alcançou Ouro', 'Chegou ao Ouro na ranqueada. Daqui as vitórias valem menos elo.', '🥇', '{"kind":"ranked_tier","patamar":2}'::jsonb)
+  on conflict (id) do update set title = excluded.title, description = excluded.description,
+  icon = excluded.icon, criteria = excluded.criteria;
+insert into public.achievements (id, title, description, icon, criteria) values ('ranqueada-diamante', 'Alcançou Diamante', 'Chegou ao Diamante na ranqueada.', '💠', '{"kind":"ranked_tier","patamar":3}'::jsonb)
+  on conflict (id) do update set title = excluded.title, description = excluded.description,
+  icon = excluded.icon, criteria = excluded.criteria;
+insert into public.achievements (id, title, description, icon, criteria) values ('ranqueada-mitico', 'Alcançou Mítico', 'Chegou ao Mítico. Os bots daqui pra cima erram pouco.', '🔮', '{"kind":"ranked_tier","patamar":4}'::jsonb)
+  on conflict (id) do update set title = excluded.title, description = excluded.description,
+  icon = excluded.icon, criteria = excluded.criteria;
+insert into public.achievements (id, title, description, icon, criteria) values ('ranqueada-lendario', 'Alcançou Lendário', 'Chegou ao Lendário na ranqueada.', '👑', '{"kind":"ranked_tier","patamar":5}'::jsonb)
+  on conflict (id) do update set title = excluded.title, description = excluded.description,
+  icon = excluded.icon, criteria = excluded.criteria;
+insert into public.achievements (id, title, description, icon, criteria) values ('ranqueada-mestre', 'Alcançou Mestre', 'Chegou ao Mestre — o patamar mais alto da ranqueada.', '🏅', '{"kind":"ranked_tier","patamar":6}'::jsonb)
+  on conflict (id) do update set title = excluded.title, description = excluded.description,
+  icon = excluded.icon, criteria = excluded.criteria;
 insert into public.achievements (id, title, description, icon, criteria) values ('segredo-curioso', 'Achou o botão secreto', 'Dez cliques no logo depois, algo apareceu.', '🕵️', '{"kind":"secret","segredo":"logo-10-cliques"}'::jsonb)
   on conflict (id) do update set title = excluded.title, description = excluded.description,
   icon = excluded.icon, criteria = excluded.criteria;
@@ -2133,6 +2163,30 @@ begin
     icon = excluded.icon, rarity = excluded.rarity, criteria = excluded.criteria,
     secret = excluded.secret, order_index = excluded.order_index;
   insert into public.tags (id, name, description, icon, rarity, criteria, secret, order_index) values ('pythonista', 'Pythonista', 'Concluiu a trilha de Python inteira, do primeiro print ao projeto final.', '🐍', 'epico', '{"kind":"language_completed","languageSlug":"python"}'::jsonb, false, 6)
+    on conflict (id) do update set name = excluded.name, description = excluded.description,
+    icon = excluded.icon, rarity = excluded.rarity, criteria = excluded.criteria,
+    secret = excluded.secret, order_index = excluded.order_index;
+  insert into public.tags (id, name, description, icon, rarity, criteria, secret, order_index) values ('pvp-estreante', 'Estreante', 'Venceu o primeiro duelo 1v1.', '🗡️', 'comum', '{"kind":"pvp_wins","count":1}'::jsonb, false, 10)
+    on conflict (id) do update set name = excluded.name, description = excluded.description,
+    icon = excluded.icon, rarity = excluded.rarity, criteria = excluded.criteria,
+    secret = excluded.secret, order_index = excluded.order_index;
+  insert into public.tags (id, name, description, icon, rarity, criteria, secret, order_index) values ('pvp-duelista', 'Duelista', '10 vitórias em duelos. Já sabe o que está fazendo.', '⚔️', 'raro', '{"kind":"pvp_wins","count":10}'::jsonb, false, 11)
+    on conflict (id) do update set name = excluded.name, description = excluded.description,
+    icon = excluded.icon, rarity = excluded.rarity, criteria = excluded.criteria,
+    secret = excluded.secret, order_index = excluded.order_index;
+  insert into public.tags (id, name, description, icon, rarity, criteria, secret, order_index) values ('pvp-especialista', 'Especialista', '10 vitórias no mesmo tema. Escolheu um assunto e dominou.', '🎓', 'epico', '{"kind":"pvp_tema","count":10}'::jsonb, false, 12)
+    on conflict (id) do update set name = excluded.name, description = excluded.description,
+    icon = excluded.icon, rarity = excluded.rarity, criteria = excluded.criteria,
+    secret = excluded.secret, order_index = excluded.order_index;
+  insert into public.tags (id, name, description, icon, rarity, criteria, secret, order_index) values ('pvp-gladiador', 'Gladiador', '25 vitórias em duelos.', '🛡️', 'epico', '{"kind":"pvp_wins","count":25}'::jsonb, false, 13)
+    on conflict (id) do update set name = excluded.name, description = excluded.description,
+    icon = excluded.icon, rarity = excluded.rarity, criteria = excluded.criteria,
+    secret = excluded.secret, order_index = excluded.order_index;
+  insert into public.tags (id, name, description, icon, rarity, criteria, secret, order_index) values ('pvp-implacavel', 'Implacável', '50 vitórias em duelos. Pouca gente aceita o convite.', '🔥', 'mitico', '{"kind":"pvp_wins","count":50}'::jsonb, false, 14)
+    on conflict (id) do update set name = excluded.name, description = excluded.description,
+    icon = excluded.icon, rarity = excluded.rarity, criteria = excluded.criteria,
+    secret = excluded.secret, order_index = excluded.order_index;
+  insert into public.tags (id, name, description, icon, rarity, criteria, secret, order_index) values ('pvp-imortal', 'Imortal', '100 vitórias em duelos.', '💀', 'lendario', '{"kind":"pvp_wins","count":100}'::jsonb, false, 15)
     on conflict (id) do update set name = excluded.name, description = excluded.description,
     icon = excluded.icon, rarity = excluded.rarity, criteria = excluded.criteria,
     secret = excluded.secret, order_index = excluded.order_index;

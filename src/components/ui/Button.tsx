@@ -7,8 +7,13 @@ import { cn } from '@/lib/cn';
 type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
 type Size = 'sm' | 'md' | 'lg';
 
+// `max-w-full` + `[overflow-wrap:anywhere]`: num celular estreito com a fonte
+// do Android no maximo, um rotulo de duas palavras fica mais largo que o card
+// inteiro. Sem poder quebrar a palavra, o botao vazava para fora da tela em vez
+// de encolher. `anywhere` (e nao `break-word`) porque so ele reduz a largura
+// minima intrinseca, que e o que decide o tamanho do botao.
 const base =
-  'inline-flex items-center justify-center gap-2 rounded-xl font-semibold transition duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-mint-400 focus-visible:ring-offset-2 focus-visible:ring-offset-night-950 disabled:cursor-not-allowed disabled:opacity-50';
+  'inline-flex max-w-full items-center justify-center gap-2 rounded-xl text-center font-semibold [overflow-wrap:anywhere] transition duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-mint-400 focus-visible:ring-offset-2 focus-visible:ring-offset-night-950 disabled:cursor-not-allowed disabled:opacity-50';
 
 const variants: Record<Variant, string> = {
   primary:

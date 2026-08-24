@@ -14,6 +14,7 @@
 
 import { readFileSync } from 'node:fs';
 import { PGlite } from '@electric-sql/pglite';
+import { tags } from '../src/content/tags';
 
 let passaram = 0;
 let falharam = 0;
@@ -263,8 +264,14 @@ ok(aindaBloqueia, 'depois da 0003 o XP continua sem poder diminuir');
  * ---------------------------------------------------------------------- */
 console.log('\n--- migration 0004 ---');
 
+// Conferido contra o catalogo TypeScript, e nao contra um numero escrito a
+// mao: senao toda tag nova (Fase 3 trouxe 6, a Fase 4 pode trazer mais) quebra
+// este teste sem que nada esteja errado de fato.
 const catalogo = await db.query<{ n: number }>('select count(*)::int as n from public.tags');
-ok(catalogo.rows[0].n === 11, `o seed populou o catalogo de tags (${catalogo.rows[0].n})`);
+ok(
+  catalogo.rows[0].n === tags.length,
+  `o seed populou o catalogo de tags (${catalogo.rows[0].n} de ${tags.length})`,
+);
 
 // --- palavras bloqueadas ---------------------------------------------------
 const filtro = await db.query<{ alvo: string; proibido: boolean }>(

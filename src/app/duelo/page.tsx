@@ -3,7 +3,7 @@
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { ArrowLeft, Check, Loader2, Swords, Timer, X } from 'lucide-react';
+import { ArrowLeft, Check, Loader2, Shield, Swords, Timer, TrendingDown, TrendingUp, X } from 'lucide-react';
 import { AppShell } from '@/components/AppShell';
 import { MarkdownLite } from '@/components/content/MarkdownLite';
 import { Button, LinkButton } from '@/components/ui/Button';
@@ -21,6 +21,10 @@ import {
 } from '@/lib/pvp/api';
 import { TEMPO_LIMITE_MS } from '@/lib/pvp/regras';
 import { nomeDoTema } from '@/content/pvp-temas';
+import { PatamarBadge } from '@/components/ranked/PatamarBadge';
+import { buscarEstadoRanqueada, buscarResultadoRanqueado } from '@/lib/ranked/api';
+import { nomeDaDivisao } from '@/lib/ranked/patamares';
+import { patamarMaximoAlcancado, type ResultadoRanqueado } from '@/lib/ranked/tipos';
 import type { EstadoPartida, PerguntaPvp, ResultadoResposta } from '@/lib/pvp/tipos';
 import { cn } from '@/lib/cn';
 
@@ -29,7 +33,7 @@ type Fase = 'carregando' | 'perguntando' | 'respondida' | 'aguardando' | 'fim' |
 function DueloContent() {
   const parametros = useSearchParams();
   const { user } = useAuth();
-  const { sincronizarPvp } = usePlayer();
+  const { sincronizarPvp, sincronizarRanqueada } = usePlayer();
   const { showToast } = useToast();
   const matchId = parametros.get('m') ?? '';
 
@@ -42,6 +46,8 @@ function DueloContent() {
   const [meusPontos, setMeusPontos] = useState(0);
   const [restanteMs, setRestanteMs] = useState(TEMPO_LIMITE_MS);
   const [enviando, setEnviando] = useState(false);
+  // So preenchido em partida ranqueada: quanto elo mudou.
+  const [ranqueada, setRanqueada] = useState<ResultadoRanqueado | null>(null);
 
   const inicioDaPergunta = useRef<number>(0);
   // Evita responder duas vezes quando o tempo estoura junto com o clique.
@@ -198,13 +204,47 @@ function DueloContent() {
     };
   }, [fase, matchId, recarregarEstado]);
 
-  /* --- tags de duelo ao terminar ----------------------------------------
-   * As estatisticas so existem depois que o servidor fecha a partida, entao
-   * e aqui que conferimos se alguma tag de PvP foi conquistada.
+  /* --- premios ao terminar -----------------------------------------------
+   * Tanto o cartel de duelo quanto o elo so existem depois que o SERVIDOR
+   * fecha a partida - por isso a conferencia acontece aqui, e nao no momento
+   * em que a ultima resposta foi enviada.
+   *
+   * Ranqueada e amistoso premiam coisas diferentes de proposito: ranqueada
+   * mexe em elo e conquistas de patamar; amistoso mexe no cartel 1v1 e nas
+   * tags de duelo. Ver `pvp_finalizar` em `0006_ranqueado.sql`.
    * -------------------------------------------------------------------- */
+  const ehRanqueada = estado?.modo === 'ranqueado';
+
   useEffect(() => {
-    if (fase !== 'fim' || !user?.id) return;
+    if (fase !== 'fim' || !user?.id || !estado) return;
     let ativo = true;
+
+    if (ehRanqueada) {
+      (async () => {
+        const mudanca = await buscarResultadoRanqueado(user.id, matchId).catch(() => null);
+        if (!ativo || !mudanca) return;
+        setRanqueada(mudanca);
+
+        const atual = await buscarEstadoRanqueada(user.id).catch(() => null);
+        if (!ativo || !atual) return;
+
+        const novas = await sincronizarRanqueada(patamarMaximoAlcancado(atual));
+        novas.forEach((conquista, indice) => {
+          window.setTimeout(() => {
+            showToast({
+              icon: conquista.icon,
+              title: conquista.title,
+              description: conquista.description,
+              tone: 'amber',
+            });
+          }, 500 * (indice + 1));
+        });
+      })();
+
+      return () => {
+        ativo = false;
+      };
+    }
 
     buscarEstatisticas(user.id)
       .then(async (stats) => {
@@ -228,7 +268,9 @@ function DueloContent() {
     return () => {
       ativo = false;
     };
-  }, [fase, user?.id, sincronizarPvp, showToast]);
+    // `estado` entra so pelo `modo`; o resto do objeto muda a cada sondagem.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fase, user?.id, ehRanqueada, matchId, sincronizarPvp, sincronizarRanqueada, showToast]);
 
   const avancar = async () => {
     if (!pergunta || !estado) return;
@@ -268,8 +310,19 @@ function DueloContent() {
   if (fase === 'fim' && estado) {
     const meus = souHost ? estado.hostPontos : estado.guestPontos;
     const dele = souHost ? estado.guestPontos : estado.hostPontos;
-    const venci = estado.winnerId === user?.id;
-    const empatou = estado.winnerId === null;
+
+    // `meuDesfecho` vem do servidor e e a fonte da verdade. `winnerId` sozinho
+    // nao serve na ranqueada: o bot nao tem perfil, entao quando ELE ganha o
+    // campo fica nulo - e uma derrota apareceria como empate.
+    const venci = estado.meuDesfecho
+      ? estado.meuDesfecho === 'vitoria'
+      : estado.winnerId === user?.id;
+    const empatou = estado.meuDesfecho
+      ? estado.meuDesfecho === 'empate'
+      : estado.winnerId === null;
+    const nomeDoAdversario = estado.adversario ?? 'Adversário';
+    const subiu = ranqueada ? ranqueada.divisaoDepois > ranqueada.divisaoAntes : false;
+    const caiu = ranqueada ? ranqueada.divisaoDepois < ranqueada.divisaoAntes : false;
 
     return (
       <div className="space-y-6">
@@ -290,6 +343,7 @@ function DueloContent() {
             {venci ? 'Você venceu!' : empatou ? 'Empate!' : 'Você perdeu essa'}
           </CardTitle>
           <p className="mt-2 text-sm text-slate-400">
+            {ehRanqueada && 'Ranqueada · '}
             Tema: {nomeDoTema(estado.tema)} · {estado.total} perguntas
           </p>
 
@@ -302,16 +356,76 @@ function DueloContent() {
               ×
             </span>
             <div className="min-w-0">
-              <p className="text-xs uppercase tracking-widest text-slate-500">Adversário</p>
+              <p className="truncate text-xs uppercase tracking-widest text-slate-500">
+                {nomeDoAdversario}
+              </p>
               <p className="text-3xl font-extrabold text-slate-300">{dele}</p>
             </div>
           </div>
 
+          {/* Elo -------------------------------------------------------- */}
+          {ehRanqueada && ranqueada && (
+            <div className="mt-6 rounded-xl border border-white/10 bg-white/[0.03] p-4">
+              <div className="flex flex-wrap items-center justify-center gap-3">
+                <PatamarBadge divisao={ranqueada.divisaoAntes} tamanho="sm" />
+                <span
+                  className={cn(
+                    'flex items-center gap-1 text-lg font-extrabold',
+                    ranqueada.delta > 0
+                      ? 'text-mint-300'
+                      : ranqueada.delta < 0
+                        ? 'text-rose-300'
+                        : 'text-slate-400',
+                  )}
+                >
+                  {ranqueada.delta > 0 ? (
+                    <TrendingUp className="h-4 w-4" aria-hidden />
+                  ) : ranqueada.delta < 0 ? (
+                    <TrendingDown className="h-4 w-4" aria-hidden />
+                  ) : null}
+                  {ranqueada.delta > 0 ? '+' : ''}
+                  {ranqueada.delta} elo
+                </span>
+                {(subiu || caiu) && <PatamarBadge divisao={ranqueada.divisaoDepois} tamanho="sm" />}
+              </div>
+
+              <p className="mt-3 text-sm text-slate-400">
+                {subiu ? (
+                  <>
+                    Subiu para{' '}
+                    <strong className="text-mint-300">{nomeDaDivisao(ranqueada.divisaoDepois)}</strong>
+                    !
+                  </>
+                ) : caiu ? (
+                  <>
+                    Caiu para{' '}
+                    <strong className="text-rose-300">{nomeDaDivisao(ranqueada.divisaoDepois)}</strong>
+                    .
+                  </>
+                ) : ranqueada.delta === 0 ? (
+                  'Empate não mexe no elo.'
+                ) : (
+                  <>
+                    Agora com <strong className="text-slate-200">{ranqueada.eloDepois} de elo</strong>{' '}
+                    em {nomeDaDivisao(ranqueada.divisaoDepois)}.
+                  </>
+                )}
+              </p>
+            </div>
+          )}
+
           <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <LinkButton href="/amigos">
-              <Swords className="h-4 w-4" aria-hidden />
-              Jogar de novo
-            </LinkButton>
+            {ehRanqueada ? (
+              <LinkButton href="/ranqueado">
+                <Shield className="h-4 w-4" aria-hidden />
+                Próxima ranqueada
+              </LinkButton>
+            ) : (
+              <LinkButton href="/amigos">
+                <Swords className="h-4 w-4" aria-hidden />
+                Jogar de novo
+              </LinkButton>
+            )}
             <LinkButton href="/perfil" variant="ghost">
               Ver minhas estatísticas
             </LinkButton>
@@ -327,9 +441,9 @@ function DueloContent() {
         <Loader2 className="mx-auto h-8 w-8 animate-spin text-mint-400" aria-hidden />
         <CardTitle className="mt-4">Você terminou!</CardTitle>
         <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-slate-400">
-          Somou <strong className="text-mint-300">{meusPontos} pontos</strong>. Agora é esperar o
-          adversário responder — ele está na pergunta {Math.min(deleRespondidas + 1, estado.total)} de{' '}
-          {estado.total}.
+          Somou <strong className="text-mint-300">{meusPontos} pontos</strong>. Agora é esperar{' '}
+          {estado.adversario ?? 'o adversário'} responder — está na pergunta{' '}
+          {Math.min(deleRespondidas + 1, estado.total)} de {estado.total}.
         </p>
         <div className="mx-auto mt-6 max-w-xs">
           <ProgressBar value={deleRespondidas / estado.total} />
@@ -349,7 +463,9 @@ function DueloContent() {
       <section className="cq-card bg-gradient-to-br from-electric-500/15 via-night-900/60 to-mint-600/10 p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="min-w-0">
-            <Label>Duelo · {nomeDoTema(estado.tema)}</Label>
+            <Label>
+              {estado.modo === 'ranqueado' ? 'Ranqueada' : 'Duelo'} · {nomeDoTema(estado.tema)}
+            </Label>
             <p className="mt-1 text-lg font-extrabold text-white">
               Pergunta {pergunta.num} de {pergunta.total}
             </p>
@@ -370,8 +486,9 @@ function DueloContent() {
           />
         </div>
 
-        <p className="mt-3 text-xs text-slate-500">
-          Você: {minhasRespondidas}/{estado.total} · Adversário: {deleRespondidas}/{estado.total}
+        <p className="mt-3 truncate text-xs text-slate-500">
+          Você: {minhasRespondidas}/{estado.total} · {estado.adversario ?? 'Adversário'}:{' '}
+          {deleRespondidas}/{estado.total}
         </p>
       </section>
 

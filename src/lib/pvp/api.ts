@@ -12,8 +12,10 @@ import {
 } from './local';
 import {
   ESTATISTICAS_VAZIAS,
+  type DesfechoPessoal,
   type EstadoPartida,
   type EstatisticasPvp,
+  type ModoPartida,
   type PerguntaPvp,
   type ResultadoFinal,
   type ResultadoResposta,
@@ -164,9 +166,12 @@ interface LinhaEstado {
   status: StatusPartida;
   total: number;
   tema: string;
+  modo: ModoPartida;
   host_id: string;
-  guest_id: string;
+  guest_id: string | null;
   winner_id: string | null;
+  adversario: string | null;
+  meu_desfecho: DesfechoPessoal | null;
   host_respondidas: number;
   guest_respondidas: number;
   host_pontos: number;
@@ -183,9 +188,14 @@ export const buscarEstado = async (matchId: string): Promise<EstadoPartida> => {
     status: linha.status,
     total: linha.total,
     tema: linha.tema,
+    // `modo` e `adversario` so existem depois da migracao 0006. Publicar o
+    // codigo antes de rodar o SQL nao pode quebrar o duelo entre amigos.
+    modo: linha.modo ?? 'amistoso',
     hostId: linha.host_id,
     guestId: linha.guest_id,
     winnerId: linha.winner_id,
+    adversario: linha.adversario ?? null,
+    meuDesfecho: linha.meu_desfecho ?? null,
     hostRespondidas: linha.host_respondidas,
     guestRespondidas: linha.guest_respondidas,
     hostPontos: linha.host_pontos,
@@ -267,6 +277,11 @@ export const partidasAbertas = async (meuId: string): Promise<ResumoPartida[]> =
     .select('id, tema, status, host_id, guest_id, winner_id, pontos_host, pontos_guest, created_at')
     .or(`host_id.eq.${meuId},guest_id.eq.${meuId}`)
     .in('status', ['convite', 'ativa'])
+    // Ranqueada contra bot nao tem `guest_id`, e ela nao pertence a esta lista
+    // (que e "duelos com amigos"). Filtrar por `guest_id` em vez de por `modo`
+    // e de proposito: `modo` so existe depois da migracao 0006, e esta tela
+    // precisa continuar funcionando para quem ainda nao rodou o SQL novo.
+    .not('guest_id', 'is', null)
     .order('created_at', { ascending: false });
 
   if (error) throw new Error(error.message);
@@ -282,6 +297,7 @@ export const partidasRecentes = async (meuId: string, limite = 10): Promise<Resu
     .select('id, tema, status, host_id, guest_id, winner_id, pontos_host, pontos_guest, created_at')
     .or(`host_id.eq.${meuId},guest_id.eq.${meuId}`)
     .eq('status', 'encerrada')
+    .not('guest_id', 'is', null)
     .order('created_at', { ascending: false })
     .limit(limite);
 

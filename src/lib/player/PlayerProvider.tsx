@@ -69,6 +69,14 @@ interface PlayerContextValue {
    * criterios e gravamos o que faltar.
    */
   sincronizarPvp: (vitorias: number, vitoriasPorTema: Record<string, number>) => Promise<TagDefinition[]>;
+  /**
+   * Concede as conquistas de patamar da ranqueada.
+   *
+   * Recebe o maior patamar ja alcancado (0 = Bronze ... 6 = Mestre), que vem
+   * de `ranked_estado` - tabela que so o servidor escreve. Devolve as
+   * conquistas novas, para a tela poder comemorar.
+   */
+  sincronizarRanqueada: (patamarMax: number) => Promise<AchievementDefinition[]>;
   setCurrentLanguage: (slug: string) => Promise<void>;
   updateName: (name: string) => Promise<void>;
   /** Troca a foto de perfil (ja redimensionada e enviada por `enviarAvatar`). */
@@ -776,6 +784,60 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     [user, state],
   );
 
+  const sincronizarRanqueada = useCallback(
+    async (patamarMax: number): Promise<AchievementDefinition[]> => {
+      if (!user || !state) return [];
+
+      const novasConquistas = evaluateAchievements(
+        {
+          completedLessonIds: state.completedLessonIds,
+          xpTotal: state.profile.xp_total,
+          streak: displayStreak(state.profile.last_study_date, state.profile.streak_count),
+          flawlessLesson: state.flawlessLessonIds.length > 0,
+          unlockedTagIds: state.unlockedTagIds,
+          rankedPatamarMax: patamarMax,
+        },
+        state.unlockedAchievementIds,
+      );
+
+      if (novasConquistas.length === 0) return [];
+
+      const nextState: PlayerState = {
+        ...state,
+        unlockedAchievementIds: [
+          ...state.unlockedAchievementIds,
+          ...novasConquistas.map((conquista) => conquista.id),
+        ],
+      };
+      setState(nextState);
+
+      if (!isSupabaseConfigured) {
+        localState.save(user.id, nextState);
+        return novasConquistas;
+      }
+
+      try {
+        await comRetentativas(async () => {
+          await getSupabase()!
+            .from('user_achievements')
+            .upsert(
+              novasConquistas.map((conquista) => ({
+                user_id: user.id,
+                achievement_id: conquista.id,
+                unlocked_at: new Date().toISOString(),
+              })),
+              { onConflict: 'user_id,achievement_id' },
+            );
+        });
+      } catch (falha) {
+        console.error('[CodeQuest] falha ao gravar conquistas de ranqueada', falha);
+      }
+
+      return novasConquistas;
+    },
+    [user, state],
+  );
+
   const value = useMemo<PlayerContextValue>(
     () => ({
       state,
@@ -787,6 +849,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       equipTag,
       registrarSegredo,
       sincronizarPvp,
+      sincronizarRanqueada,
       setCurrentLanguage,
       updateName,
       updateAvatar,
@@ -802,6 +865,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       equipTag,
       registrarSegredo,
       sincronizarPvp,
+      sincronizarRanqueada,
       setCurrentLanguage,
       updateName,
       updateAvatar,

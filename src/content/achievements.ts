@@ -23,7 +23,22 @@ export type AchievementCriteria =
    */
   | { kind: 'secret'; segredo: SegredoId }
   /** Vitorias no modo 1v1. */
-  | { kind: 'pvp_wins'; count: number };
+  | { kind: 'pvp_wins'; count: number }
+  /**
+   * Chegar a um patamar do modo ranqueado.
+   *
+   * `patamar` e o indice em `PATAMARES` (`src/lib/ranked/patamares.ts`):
+   * 1 = Prata, 2 = Ouro, ... 6 = Mestre. Bronze fica de fora porque e onde
+   * todo mundo comeca - conquista por estar no comeco nao e conquista.
+   *
+   * E por PATAMAR, nao por sub-nivel: 21 divisoes dariam 21 medalhas quase
+   * iguais e a lista de conquistas viraria uma planilha. Chegar a Ouro 1 ja
+   * conta como "alcancou Ouro".
+   *
+   * Vale para sempre: a comparacao usa o maior elo de TODAS as temporadas
+   * (`pico_historico`), entao o reset de 15 dias nao apaga a medalha.
+   */
+  | { kind: 'ranked_tier'; patamar: number };
 
 export interface AchievementDefinition {
   id: string;
@@ -180,6 +195,52 @@ export const achievements: AchievementDefinition[] = [
     description: 'Cem vitórias no 1v1.',
     icon: '💀',
     criteria: { kind: 'pvp_wins', count: 100 },
+  },
+
+  /* ---------------------------------------------------------------------
+   * Ranqueada - uma por patamar (ver `ranked_tier` acima)
+   * ------------------------------------------------------------------ */
+  {
+    id: 'ranqueada-prata',
+    title: 'Alcançou Prata',
+    description: 'Saiu do Bronze na temporada ranqueada.',
+    icon: '🥈',
+    criteria: { kind: 'ranked_tier', patamar: 1 },
+  },
+  {
+    id: 'ranqueada-ouro',
+    title: 'Alcançou Ouro',
+    description: 'Chegou ao Ouro na ranqueada. Daqui as vitórias valem menos elo.',
+    icon: '🥇',
+    criteria: { kind: 'ranked_tier', patamar: 2 },
+  },
+  {
+    id: 'ranqueada-diamante',
+    title: 'Alcançou Diamante',
+    description: 'Chegou ao Diamante na ranqueada.',
+    icon: '💠',
+    criteria: { kind: 'ranked_tier', patamar: 3 },
+  },
+  {
+    id: 'ranqueada-mitico',
+    title: 'Alcançou Mítico',
+    description: 'Chegou ao Mítico. Os bots daqui pra cima erram pouco.',
+    icon: '🔮',
+    criteria: { kind: 'ranked_tier', patamar: 4 },
+  },
+  {
+    id: 'ranqueada-lendario',
+    title: 'Alcançou Lendário',
+    description: 'Chegou ao Lendário na ranqueada.',
+    icon: '👑',
+    criteria: { kind: 'ranked_tier', patamar: 5 },
+  },
+  {
+    id: 'ranqueada-mestre',
+    title: 'Alcançou Mestre',
+    description: 'Chegou ao Mestre — o patamar mais alto da ranqueada.',
+    icon: '🏅',
+    criteria: { kind: 'ranked_tier', patamar: 6 },
   },
 
   {

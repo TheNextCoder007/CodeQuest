@@ -87,6 +87,7 @@ export const ROTAS_PRIVADAS = [
   '/ranking/',
   '/amigos/',
   '/duelo/',
+  '/ranqueado/',
   '/usuario/',
   '/auth/',
 ];

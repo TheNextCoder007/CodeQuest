@@ -25,6 +25,7 @@
     "test:migrations": "tsx scripts/testar-migrations.mts",
     "test:tags": "tsx scripts/testar-tags.mts",
     "test:pvp": "tsx scripts/testar-pvp.mts",
+    "test:ranqueado": "tsx scripts/testar-ranqueado.mts",
     "og:gen": "node scripts/gerar-og.mjs",
     "test:seo": "tsx scripts/testar-seo.mts"
   },

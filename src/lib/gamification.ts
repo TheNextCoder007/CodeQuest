@@ -107,6 +107,12 @@ export interface AchievementState {
   unlockedTagIds?: string[];
   /** Vitorias acumuladas no duelo 1v1. */
   pvpVitorias?: number;
+  /**
+   * Maior patamar ja alcancado na ranqueada, em QUALQUER temporada
+   * (0 = Bronze ... 6 = Mestre). Ver `patamarMaximoAlcancado` em
+   * `src/lib/ranked/tipos.ts`.
+   */
+  rankedPatamarMax?: number;
 }
 
 const moduleIsComplete = (moduleId: string, completed: Set<string>): boolean => {
@@ -142,6 +148,8 @@ const meetsCriteria = (achievement: AchievementDefinition, state: AchievementSta
       return state.flawlessLesson === true;
     case 'pvp_wins':
       return (state.pvpVitorias ?? 0) >= criteria.count;
+    case 'ranked_tier':
+      return (state.rankedPatamarMax ?? 0) >= criteria.patamar;
     case 'secret': {
       // A conquista secreta acompanha a tag secreta: se a tag ja foi
       // desbloqueada, a medalha vem junto.

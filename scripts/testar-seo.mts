@@ -100,7 +100,7 @@ secao('quais rotas entram no sitemap');
   ok(caminhos.includes('/'), 'a landing esta no sitemap');
   ok(caminhos.length === 3, `o sitemap tem 3 rotas publicas (${caminhos.join(', ')})`);
 
-  const gated = ['/dashboard', '/perfil', '/trilha', '/licao', '/ranking', '/amigos', '/duelo', '/usuario'];
+  const gated = ['/dashboard', '/perfil', '/trilha', '/licao', '/ranking', '/amigos', '/duelo', '/ranqueado', '/usuario'];
   ok(
     gated.every((rota) => !caminhos.includes(rota)),
     'nenhuma rota que exige login entrou no sitemap',
@@ -139,7 +139,7 @@ if (!existsSync('out/sitemap.xml')) {
     'toda URL do sitemap e absoluta',
   );
 
-  const gated = ['/dashboard', '/perfil', '/trilha', '/licao', '/ranking', '/amigos', '/duelo', '/usuario', '/auth'];
+  const gated = ['/dashboard', '/perfil', '/trilha', '/licao', '/ranking', '/amigos', '/duelo', '/ranqueado', '/usuario', '/auth'];
   ok(
     !urls.some((url) => gated.some((rota) => url.includes(rota))),
     'nenhuma rota privada vazou para o sitemap',
@@ -212,6 +212,7 @@ if (!existsSync('out/sitemap.xml')) {
     ['ranking', 'out/ranking/index.html'],
     ['amigos', 'out/amigos/index.html'],
     ['duelo', 'out/duelo/index.html'],
+    ['ranqueado', 'out/ranqueado/index.html'],
     ['usuario', 'out/usuario/index.html'],
   ] as [string, string][]) {
     if (!existsSync(caminho)) {

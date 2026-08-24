@@ -146,7 +146,11 @@ export function Inline({ text }: { text: string }) {
           return (
             <code
               key={index}
-              className="rounded-md border border-white/10 bg-night-950/80 px-1.5 py-0.5 font-mono text-[0.85em] text-mint-300"
+              // `anywhere` deixa o trecho de codigo quebrar no meio quando nao
+              // ha largura. Um `nome_de_variavel_longo` nao tem espaco onde
+              // quebrar, entao sem isto ele vazava para fora da tela num
+              // celular estreito com a fonte do Android ampliada.
+              className="rounded-md border border-white/10 bg-night-950/80 px-1.5 py-0.5 font-mono text-[0.85em] text-mint-300 [overflow-wrap:anywhere]"
             >
               {part.slice(1, -1)}
             </code>

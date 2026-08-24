@@ -9,7 +9,9 @@ import {
 } from './regras';
 import {
   ESTATISTICAS_VAZIAS,
+  type DesfechoPessoal,
   type EstadoPartida,
+  type ModoPartida,
   type EstatisticasPvp,
   type PerguntaPvp,
   type ResultadoFinal,
@@ -87,6 +89,7 @@ interface RespostaLocal {
 interface DueloLocal {
   id: string;
   tema: string;
+  modo: ModoPartida;
   status: StatusPartida;
   meuId: string;
   adversarioId: string;
@@ -97,6 +100,8 @@ interface DueloLocal {
   dele: RespostaLocal[];
   criadaEm: string;
   winnerId: string | null;
+  /** Resultado do dono do aparelho. Preenchido por `finalizarLocal`. */
+  desfecho: DesfechoPessoal | null;
 }
 
 const ler = (): Record<string, DueloLocal> => {
@@ -143,6 +148,7 @@ export async function criarDueloLocal(
   adversarioNome: string,
   tema: string,
   bot: PerfilDeBot = BOT_PADRAO,
+  modo: ModoPartida = 'amistoso',
 ): Promise<string> {
   // Import sob demanda: o banco de perguntas carrega os gabaritos junto, e
   // so o modo demonstracao precisa deles no dispositivo.
@@ -158,6 +164,7 @@ export async function criarDueloLocal(
   salvar({
     id,
     tema,
+    modo,
     status: 'ativa',
     meuId,
     adversarioId,
@@ -168,6 +175,7 @@ export async function criarDueloLocal(
     dele: sorteadas.map(respostaVazia),
     criadaEm: new Date().toISOString(),
     winnerId: null,
+    desfecho: null,
   });
 
   return id;
@@ -257,9 +265,12 @@ export function estadoLocal(id: string): EstadoPartida {
     status: duelo.status,
     total: duelo.perguntaIds.length,
     tema: duelo.tema,
+    modo: duelo.modo ?? 'amistoso',
     hostId: duelo.meuId,
     guestId: duelo.adversarioId,
     winnerId: duelo.winnerId,
+    adversario: duelo.adversarioNome,
+    meuDesfecho: duelo.desfecho ?? null,
     hostRespondidas: respondidas(duelo.minhas),
     guestRespondidas: respondidas(duelo.dele),
     hostPontos: somar(duelo.minhas),
@@ -283,9 +294,15 @@ export function finalizarLocal(id: string): ResultadoFinal {
   const quem = desfecho(meus, dele);
   duelo.status = 'encerrada';
   duelo.winnerId = quem === 'empate' ? null : quem === 'anfitriao' ? duelo.meuId : duelo.adversarioId;
+  duelo.desfecho = quem === 'empate' ? 'empate' : quem === 'anfitriao' ? 'vitoria' : 'derrota';
   salvar(duelo);
 
-  registrarStatsLocais(duelo.meuId, quem === 'anfitriao', quem === 'empate', meus, duelo.tema);
+  // Ranqueada nao entra no cartel de duelos com amigos - mesma regra do
+  // servidor (ver `pvp_finalizar` em `supabase/migrations/0006_ranqueado.sql`).
+  // Quem aplica o elo da ranqueada e `finalizarRanqueadaLocal`.
+  if ((duelo.modo ?? 'amistoso') === 'amistoso') {
+    registrarStatsLocais(duelo.meuId, quem === 'anfitriao', quem === 'empate', meus, duelo.tema);
+  }
 
   return { status: 'encerrada', winnerId: duelo.winnerId, pontosHost: meus, pontosGuest: dele };
 }
@@ -332,10 +349,70 @@ function registrarStatsLocais(
   window.localStorage.setItem(CHAVE_STATS, JSON.stringify(todos));
 }
 
+/**
+ * A partida ranqueada em andamento deste aparelho, se houver.
+ *
+ * Devolve o id e ha quanto tempo ela comecou, para a ranqueada poder aplicar
+ * a mesma regra do servidor: uma partida por vez, e quem larga no meio leva a
+ * derrota depois de 5 minutos.
+ */
+export const ranqueadaAbertaLocal = (
+  userId: string,
+): { id: string; comecouHaMs: number } | null => {
+  const aberta = Object.values(ler())
+    .filter(
+      (duelo) =>
+        duelo.meuId === userId && duelo.modo === 'ranqueado' && duelo.status === 'ativa',
+    )
+    .sort((a, b) => b.criadaEm.localeCompare(a.criadaEm))
+    .at(0);
+
+  if (!aberta) return null;
+  return { id: aberta.id, comecouHaMs: Date.now() - new Date(aberta.criadaEm).getTime() };
+};
+
+/** Marca como encerrada uma partida largada no meio (o placar parcial vale). */
+export const encerrarAbandonadaLocal = (id: string) => {
+  const duelo = pegar(id);
+  if (duelo.status !== 'ativa') return;
+
+  // O adversario simulado termina as perguntas dele - largar na frente nao
+  // pode virar vitoria de graca (mesma regra de `ranked_bot_completar`).
+  duelo.dele.forEach((resposta) => {
+    if (resposta.answeredAt !== null) return;
+    const jogada = jogadaDoBot(duelo.bot);
+    resposta.correta = jogada.acertou;
+    resposta.ms = jogada.ms;
+    resposta.pontos = jogada.pontos;
+    resposta.answeredAt = Date.now();
+    resposta.resposta = jogada.acertou ? '(acertou)' : '(errou)';
+  });
+
+  // As minhas que ficaram em branco valem zero.
+  duelo.minhas.forEach((resposta) => {
+    if (resposta.answeredAt !== null) return;
+    resposta.answeredAt = Date.now();
+    resposta.pontos = 0;
+    resposta.correta = false;
+  });
+
+  salvar(duelo);
+};
+
+/**
+ * Como a partida terminou para o dono do aparelho.
+ *
+ * `finalizarLocal` grava isto; a ranqueada le para saber que elo aplicar.
+ */
+export const desfechoLocal = (id: string): DesfechoPessoal | null => pegar(id).desfecho ?? null;
+
+/** Tema da partida local (a ranqueada usa para a tela de resultado). */
+export const temaLocal = (id: string): string => pegar(id).tema;
+
 /** Partidas recentes deste dispositivo, da mais nova para a mais antiga. */
 export const partidasLocais = (userId: string, limite = 10): ResumoPartida[] =>
   Object.values(ler())
-    .filter((duelo) => duelo.meuId === userId)
+    .filter((duelo) => duelo.meuId === userId && (duelo.modo ?? 'amistoso') === 'amistoso')
     .sort((a, b) => b.criadaEm.localeCompare(a.criadaEm))
     .slice(0, limite)
     .map((duelo) => ({

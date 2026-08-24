@@ -12,7 +12,10 @@ import { Card, CardTitle, Label, Pill, ProgressBar } from '@/components/ui/Card'
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { fetchPerfilPublico } from '@/lib/perfil-publico';
 import { EstatisticasPvpCard } from '@/components/pvp/EstatisticasPvpCard';
+import { CartaoRanqueada } from '@/components/ranked/CartaoRanqueada';
 import { buscarEstatisticas } from '@/lib/pvp/api';
+import { buscarEstadoRanqueada } from '@/lib/ranked/api';
+import type { EstadoRanqueada } from '@/lib/ranked/tipos';
 import { ESTATISTICAS_VAZIAS, type EstatisticasPvp } from '@/lib/pvp/tipos';
 import { achievementsWithStatus, levelProgress, levelTitle } from '@/lib/gamification';
 import { tagsComEstado } from '@/lib/tags';
@@ -38,6 +41,9 @@ function PerfilPublicoContent() {
   const [perfil, setPerfil] = useState<PerfilPublico | null>(null);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
+  // O patamar aparece no perfil publico; o historico de temporadas, nao -
+  // recorde antigo de outra pessoa nao acrescenta nada a quem esta visitando.
+  const [ranqueada, setRanqueada] = useState<EstadoRanqueada | null>(null);
   const [statsPvp, setStatsPvp] = useState<EstatisticasPvp>({
     ...ESTATISTICAS_VAZIAS,
     vitoriasPorTema: {},
@@ -63,6 +69,14 @@ function PerfilPublicoContent() {
             })
             .catch(() => {
               /* perfil sem duelo ainda */
+            });
+
+          buscarEstadoRanqueada(resultado.id)
+            .then((lida) => {
+              if (ativo) setRanqueada(lida);
+            })
+            .catch(() => {
+              /* migracao 0006 pendente ou perfil sem ranqueada */
             });
         }
       })
@@ -205,6 +219,8 @@ function PerfilPublicoContent() {
       </section>
 
       {/* Duelos -------------------------------------------------------- */}
+      {ranqueada && <CartaoRanqueada estado={ranqueada} />}
+
       <EstatisticasPvpCard stats={statsPvp} />
 
       {/* Tags ---------------------------------------------------------- */}
