@@ -62,7 +62,7 @@ export function TagCard({
           <Lock className="h-4 w-4" aria-hidden />
         </span>
         <span className="min-w-0">
-          <span className="block truncate text-sm font-semibold text-slate-500">Tag secreta</span>
+          <span className="block truncate text-sm font-medium text-slate-500">Tag secreta</span>
           <span className="block truncate text-xs text-slate-600">
             Alguma coisa por aí desbloqueia esta.
           </span>

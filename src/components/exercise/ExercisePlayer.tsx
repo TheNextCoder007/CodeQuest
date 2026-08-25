@@ -5,6 +5,7 @@ import { Check, Lightbulb, Play, RotateCcw, X } from 'lucide-react';
 import type { Exercise } from '@/types/content';
 import { Button } from '@/components/ui/Button';
 import { Card, Pill } from '@/components/ui/Card';
+import { Input } from '@/components/ui/Field';
 import { MarkdownLite } from '@/components/content/MarkdownLite';
 import { CodeEditor, Terminal } from './CodeEditor';
 import { justRun, validateExercise, type ValidationResult } from '@/lib/exercises/validate';
@@ -151,7 +152,7 @@ export function ExercisePlayer({
           <span className="text-lg" aria-hidden>
             🎯
           </span>
-          <h2 className="text-lg font-bold text-white">
+          <h2 className="cq-h2">
             Desafio {index + 1} <span className="text-slate-500">de {total}</span>
           </h2>
         </div>
@@ -205,7 +206,7 @@ export function ExercisePlayer({
       )}
 
       {exercise.validationType === 'fill_blank' && (
-        <input
+        <Input
           type="text"
           value={blank}
           disabled={solved}
@@ -217,7 +218,7 @@ export function ExercisePlayer({
             if (event.key === 'Enter') void handleCheck();
           }}
           placeholder="Digite sua resposta"
-          className="w-full rounded-xl border border-white/10 bg-night-950/70 px-4 py-3 font-mono text-sm text-white placeholder:text-slate-600 focus:border-mint-400/60 focus:outline-none focus:ring-2 focus:ring-mint-400/15"
+          className="font-mono"
         />
       )}
 
@@ -233,7 +234,7 @@ export function ExercisePlayer({
           />
 
           {exercise.stdin && exercise.stdin.length > 0 && (
-            <p className="text-xs text-slate-500">
+            <p className="cq-muted">
               Entradas simuladas para o{' '}
               <code className="font-mono text-slate-400">
                 {runtime?.funcaoDeEntrada ?? 'input()'}
@@ -366,7 +367,7 @@ export function ExercisePlayer({
               <button
                 type="button"
                 onClick={() => setCode(exercise.starterCode ?? '')}
-                className="cq-tap text-xs text-slate-500 hover:text-slate-300"
+                className="cq-tap cq-muted hover:text-slate-300"
               >
                 restaurar código inicial
               </button>

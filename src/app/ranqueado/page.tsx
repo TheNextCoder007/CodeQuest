@@ -137,7 +137,7 @@ function RanqueadoContent() {
   const eloDoMitico = eloInicialDoPatamar(PATAMAR_TEMAS_COMPLETOS);
 
   return (
-    <div className="space-y-4">
+    <div className="cq-page">
       {/* Onde estou ------------------------------------------------------ */}
       <section className={cn('cq-card bg-gradient-to-br p-5 sm:p-6', estilo.cartao)}>
         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -179,7 +179,7 @@ function RanqueadoContent() {
 
         <div className="mt-5">
           <ProgressBar value={progresso.fracao} tone={estilo.barra} />
-          <p className="mt-2 text-xs text-slate-500">
+          <p className="mt-2 cq-muted">
             {progresso.noTopo
               ? 'Você está no topo da escada: Mestre é o patamar mais alto e não tem sub-níveis.'
               : `Faltam ${progresso.faltam} de elo para ${nomeDaDivisao(estado.divisao + 1)}.`}
@@ -208,7 +208,7 @@ function RanqueadoContent() {
             🤖
           </span>
           <div className="min-w-0">
-            <p className="text-lg font-bold text-white">{adversario.nome}</p>
+            <p className="cq-h2">{adversario.nome}</p>
             <p className="text-sm text-slate-400">
               Acerta cerca de {Math.round(adversario.acerto * 100)}% e responde entre{' '}
               {(adversario.msMin / 1000).toFixed(1)}s e {(adversario.msMax / 1000).toFixed(1)}s.
@@ -280,7 +280,7 @@ function RanqueadoContent() {
             <Shield className="h-5 w-5" aria-hidden />
             Jogar partida ranqueada
           </Button>
-          <p className="mt-2 text-center text-xs text-slate-500">
+          <p className="mt-2 text-center cq-muted">
             Uma partida por vez. Sair no meio conta como derrota depois de 5 minutos.
           </p>
         </div>
@@ -306,12 +306,12 @@ function RanqueadoContent() {
                 key={temporada.numero}
                 className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5"
               >
-                <span className="min-w-0 text-sm font-semibold text-slate-300">
+                <span className="min-w-0 text-sm font-medium text-slate-300">
                   Temporada {temporada.numero}
                 </span>
                 <span className="flex min-w-0 flex-wrap items-center gap-2">
                   <PatamarBadge divisao={temporada.picoDivisao} tamanho="sm" />
-                  <span className="text-xs text-slate-500">
+                  <span className="cq-muted">
                     {temporada.vitorias}V · {temporada.derrotas}D em {temporada.partidas}{' '}
                     {temporada.partidas === 1 ? 'partida' : 'partidas'}
                   </span>

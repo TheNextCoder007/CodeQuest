@@ -12,16 +12,19 @@ type Size = 'sm' | 'md' | 'lg';
 // inteiro. Sem poder quebrar a palavra, o botao vazava para fora da tela em vez
 // de encolher. `anywhere` (e nao `break-word`) porque so ele reduz a largura
 // minima intrinseca, que e o que decide o tamanho do botao.
+// `active:scale-[0.98]` da o retorno tatil que faltava: sem ele o botao so
+// mudava de brilho, e num toque rapido no celular nem isso era percebido. A
+// escala e minuscula de proposito - passa disso e vira brinquedo.
 const base =
-  'inline-flex max-w-full items-center justify-center gap-2 rounded-xl text-center font-semibold [overflow-wrap:anywhere] transition duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-mint-400 focus-visible:ring-offset-2 focus-visible:ring-offset-night-950 disabled:cursor-not-allowed disabled:opacity-50';
+  'inline-flex max-w-full items-center justify-center gap-2 rounded-xl text-center font-semibold [overflow-wrap:anywhere] transition duration-200 ease-out active:scale-[0.98] active:duration-75 cq-focus disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50';
 
 const variants: Record<Variant, string> = {
   primary:
-    'bg-gradient-to-r from-mint-500 to-aqua-400 text-night-950 shadow-glow hover:brightness-110 active:brightness-95',
+    'bg-gradient-to-r from-mint-500 to-aqua-400 text-night-950 shadow-glow hover:shadow-glow hover:brightness-110',
   secondary:
-    'border border-white/15 bg-white/5 text-slate-100 hover:border-mint-400/50 hover:bg-white/10',
+    'border border-white/15 bg-white/5 text-slate-100 hover:border-mint-400/40 hover:bg-white/[0.09]',
   ghost: 'text-slate-300 hover:bg-white/5 hover:text-white',
-  danger: 'border border-rose-500/40 bg-rose-500/10 text-rose-200 hover:bg-rose-500/20',
+  danger: 'border border-rose-500/40 bg-rose-500/10 text-rose-200 hover:bg-rose-500/[0.18]',
 };
 
 // `min-h` garante alvo de toque confortavel no celular (o piso recomendado

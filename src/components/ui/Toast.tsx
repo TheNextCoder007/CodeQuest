@@ -70,7 +70,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
         {bursts.map((burst) => (
           <span
             key={burst.id}
-            className="animate-xp-pop rounded-full border border-mint-400/50 bg-night-900/90 px-6 py-3 text-2xl font-extrabold text-mint-300 shadow-glow"
+            className="animate-xp-pop rounded-full border border-mint-400/50 bg-night-900/90 px-6 py-3 text-2xl font-extrabold tabular-nums text-mint-300 shadow-glow"
           >
             +{burst.amount} XP
           </span>
@@ -84,7 +84,10 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
             key={toast.id}
             role="status"
             className={cn(
-              'animate-fade-up rounded-2xl border p-4 backdrop-blur',
+              // `slide-up` e mais curto que o `fade-up` das telas: um toast
+              // que demora meio segundo para entrar ja perdeu o momento do
+              // que estava comemorando.
+              'animate-slide-up rounded-2xl border p-4 shadow-card backdrop-blur-md',
               tones[toast.tone],
             )}
           >
@@ -93,9 +96,11 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                 {toast.icon}
               </span>
               <div className="min-w-0">
-                <p className="font-bold text-white">{toast.title}</p>
+                <p className="cq-h3">{toast.title}</p>
                 {toast.description && (
-                  <p className="mt-0.5 text-sm text-slate-300">{toast.description}</p>
+                  <p className="mt-1 text-sm leading-relaxed text-slate-400">
+                    {toast.description}
+                  </p>
                 )}
               </div>
             </div>

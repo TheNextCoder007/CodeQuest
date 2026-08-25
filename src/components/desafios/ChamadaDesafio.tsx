@@ -45,7 +45,7 @@ export function ChamadaDesafio() {
     <Link
       href="/desafio"
       className={cn(
-        'cq-card group flex flex-wrap items-center gap-4 bg-gradient-to-br p-5 transition hover:brightness-110',
+        'cq-card cq-card-hover cq-focus group flex flex-wrap items-center gap-4 bg-gradient-to-br p-5',
         feito
           ? 'from-mint-500/15 to-aqua-400/10 border-mint-500/30'
           : 'from-amber-400/15 to-orange-500/10 border-amber-400/30',

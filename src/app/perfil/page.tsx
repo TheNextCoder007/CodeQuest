@@ -10,6 +10,7 @@ import { TagBadge } from '@/components/social/TagBadge';
 import { Button, LinkButton } from '@/components/ui/Button';
 import { Card, CardTitle, Label, Pill, ProgressBar, StatCard } from '@/components/ui/Card';
 import { buscarTotalDeDesafios } from '@/lib/desafios/api';
+import { Input } from '@/components/ui/Field';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { usePlayer } from '@/lib/player/PlayerProvider';
 import { languageBySlug } from '@/content';
@@ -237,9 +238,9 @@ function PerfilContent() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="cq-page">
       {/* Identidade --------------------------------------------------- */}
-      <section className="cq-card bg-gradient-to-br from-mint-600/15 via-night-900/60 to-electric-500/10 p-6">
+      <section className="cq-card bg-gradient-to-br from-mint-600/15 via-night-900/60 to-electric-500/10 p-5 sm:p-6">
         <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:gap-5">
           <AvatarEditavel
             name={profile.name}
@@ -254,7 +255,8 @@ function PerfilContent() {
 
             {editing ? (
               <div className="mt-2 flex flex-wrap gap-2">
-                <input
+                <Input
+                  tamanho="lg"
                   autoFocus
                   value={nameDraft}
                   onChange={(event) => setNameDraft(event.target.value)}
@@ -262,7 +264,7 @@ function PerfilContent() {
                     if (event.key === 'Enter') void salvarNome();
                     if (event.key === 'Escape') setEditing(false);
                   }}
-                  className="min-w-0 flex-1 rounded-xl border border-white/10 bg-night-950/70 px-3 py-2 text-lg font-bold text-white focus:border-mint-400/60 focus:outline-none"
+                  className="flex-1"
                 />
                 <Button size="sm" onClick={salvarNome}>
                   <Check className="h-4 w-4" /> Salvar
@@ -272,7 +274,7 @@ function PerfilContent() {
                 </Button>
               </div>
             ) : (
-              <h1 className="mt-1 flex flex-wrap items-center gap-1 break-words text-2xl font-extrabold text-white sm:text-3xl">
+              <h1 className="cq-h1 mt-1 flex flex-wrap items-center gap-1 break-words">
                 {profile.name}
                 <button
                   type="button"
@@ -434,7 +436,7 @@ function PerfilContent() {
                 </span>
                 <ProgressBar className="mt-1.5 h-1.5" value={item.ratio} />
               </span>
-              <span className="shrink-0 text-xs font-semibold text-slate-400">
+              <span className="shrink-0 text-xs font-medium text-slate-400">
                 {item.completedLessons}/{item.totalLessons}
               </span>
             </div>

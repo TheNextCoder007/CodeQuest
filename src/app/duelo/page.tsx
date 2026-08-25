@@ -289,8 +289,8 @@ function DueloContent() {
 
   if (fase === 'erro') {
     return (
-      <div className="space-y-4">
-        <Link href="/amigos" className="cq-tap text-sm font-semibold text-slate-400 hover:text-mint-300">
+      <div className="cq-page">
+        <Link href="/amigos" className="cq-tap text-sm font-medium text-slate-400 hover:text-mint-300">
           <ArrowLeft className="h-4 w-4" aria-hidden /> Voltar
         </Link>
         <Card className="border-rose-500/40 text-center">
@@ -325,7 +325,7 @@ function DueloContent() {
     const caiu = ranqueada ? ranqueada.divisaoDepois < ranqueada.divisaoAntes : false;
 
     return (
-      <div className="space-y-6">
+      <div className="cq-page">
         <Card
           className={cn(
             'text-center',
@@ -459,7 +459,7 @@ function DueloContent() {
   const acabando = restanteMs <= 5000;
 
   return (
-    <div className="space-y-4">
+    <div className="cq-page">
       {/* Cabecalho do duelo ------------------------------------------- */}
       <section className="cq-card bg-gradient-to-br from-electric-500/15 via-night-900/60 to-mint-600/10 p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -490,7 +490,7 @@ function DueloContent() {
           />
         </div>
 
-        <p className="mt-3 truncate text-xs text-slate-500">
+        <p className="mt-3 truncate cq-muted">
           Você: {minhasRespondidas}/{estado.total} · {estado.adversario ?? 'Adversário'}:{' '}
           {deleRespondidas}/{estado.total}
         </p>
@@ -589,7 +589,7 @@ function DueloContent() {
             {resultado.explicacao && (
               <p className="mt-2 text-sm leading-relaxed text-slate-300">{resultado.explicacao}</p>
             )}
-            <p className="mt-2 text-xs text-slate-500">
+            <p className="mt-2 cq-muted">
               Tempo: {(resultado.tempoMs / 1000).toFixed(1)}s
             </p>
           </div>

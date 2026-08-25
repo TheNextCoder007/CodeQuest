@@ -55,7 +55,7 @@ export function ChamadaRanqueada() {
     <Link
       href="/ranqueado"
       className={cn(
-        'cq-card group flex flex-wrap items-center gap-4 bg-gradient-to-br p-5 transition hover:brightness-110',
+        'cq-card cq-card-hover cq-focus group flex flex-wrap items-center gap-4 bg-gradient-to-br p-5',
         estilo.cartao,
       )}
     >

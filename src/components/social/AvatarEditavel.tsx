@@ -108,7 +108,7 @@ export function AvatarEditavel({
         <button
           type="button"
           onClick={() => void onRemover()}
-          className="mt-3 flex min-h-[32px] items-center gap-1.5 text-xs text-slate-500 transition hover:text-rose-300"
+          className="mt-3 flex min-h-[32px] items-center gap-1.5 cq-muted transition hover:text-rose-300"
         >
           <Trash2 className="h-3.5 w-3.5" aria-hidden />
           remover foto

@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { Logo } from '@/components/Logo';
+import { Field, Input } from '@/components/ui/Field';
 
 /** Moldura compartilhada pelas telas de login e cadastro. */
 export function AuthLayout({
@@ -23,7 +24,7 @@ export function AuthLayout({
 
       <div className="w-full max-w-md animate-fade-up">
         <div className="cq-card p-6 sm:p-8">
-          <h1 className="text-2xl font-extrabold text-white">{title}</h1>
+          <h1 className="cq-h1">{title}</h1>
           <p className="mt-1.5 text-sm text-slate-400">{subtitle}</p>
           <div className="mt-6">{children}</div>
         </div>
@@ -34,22 +35,29 @@ export function AuthLayout({
   );
 }
 
+/**
+ * Campo das telas de login e cadastro.
+ *
+ * E so o `Field` compartilhado com o rotulo ja preenchido - existia como
+ * componente proprio antes de haver um `Field`, e continua exportado daqui
+ * para as duas telas nao precisarem mudar de import.
+ */
 export function TextField({
   label,
   id,
+  hint,
+  erro,
   ...props
-}: { label: string; id: string } & React.InputHTMLAttributes<HTMLInputElement>) {
+}: {
+  label: string;
+  id: string;
+  hint?: string;
+  erro?: string | null;
+} & React.InputHTMLAttributes<HTMLInputElement>) {
   return (
-    <div>
-      <label htmlFor={id} className="mb-1.5 block text-sm font-medium text-slate-300">
-        {label}
-      </label>
-      <input
-        id={id}
-        className="min-h-[48px] w-full rounded-xl border border-white/10 bg-night-950/60 px-4 py-3 text-base text-white placeholder:text-slate-600 focus:border-mint-400/60 focus:outline-none focus:ring-2 focus:ring-mint-400/20 sm:text-sm"
-        {...props}
-      />
-    </div>
+    <Field label={label} id={id} hint={hint} erro={erro}>
+      {(campo) => <Input {...campo} {...props} erro={Boolean(erro)} />}
+    </Field>
   );
 }
 

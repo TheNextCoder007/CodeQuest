@@ -84,7 +84,7 @@ function PessoaRow({
 
       <LinkDoPerfil username={perfil.username}>
         <p className="truncate font-semibold text-white">{perfil.name}</p>
-        <p className="truncate text-xs text-slate-500">
+        <p className="truncate cq-muted">
           <span className="font-mono text-aqua-300">{displayUsername(perfil.username)}</span>
           {' · '}
           Nível {perfil.level} · {perfil.xp_total} XP
@@ -237,11 +237,11 @@ function AmigosContent() {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="cq-page">
       {/* Cabecalho ---------------------------------------------------- */}
-      <section className="cq-card bg-gradient-to-br from-mint-600/15 via-night-900/60 to-electric-500/10 p-6">
+      <section className="cq-card bg-gradient-to-br from-mint-600/15 via-night-900/60 to-electric-500/10 p-5 sm:p-6">
         <Label>Estude junto</Label>
-        <h1 className="mt-1.5 flex items-center gap-2 text-2xl font-extrabold text-white sm:text-3xl">
+        <h1 className="mt-1.5 flex items-center gap-2 cq-h1">
           <Users className="h-7 w-7 text-mint-400" aria-hidden />
           Amigos
         </h1>
@@ -345,7 +345,7 @@ function AmigosContent() {
           Busque pelo nome de usuário (ex.: <span className="font-mono text-aqua-300">@davi123</span>).
         </p>
 
-        <div className="mt-4 flex items-center gap-2 rounded-xl border border-white/10 bg-night-950/60 px-3 focus-within:border-mint-400/50">
+        <div className="cq-input-shell mt-4">
           <Search className="h-4 w-4 shrink-0 text-slate-500" aria-hidden />
           <input
             value={termo}
@@ -355,13 +355,13 @@ function AmigosContent() {
             autoComplete="off"
             spellCheck={false}
             aria-label="Buscar por nome de usuário"
-            className="w-full bg-transparent py-3 font-mono text-base text-white placeholder:text-slate-600 focus:outline-none sm:text-sm"
+            className="cq-input-bare font-mono"
           />
           {buscando && <Loader2 className="h-4 w-4 shrink-0 animate-spin text-slate-500" />}
         </div>
 
         {termo.trim().replace(/^@+/, '').length === 1 && (
-          <p className="mt-3 text-xs text-slate-500">Digite pelo menos 2 caracteres.</p>
+          <p className="mt-3 cq-muted">Digite pelo menos 2 caracteres.</p>
         )}
 
         {buscou && resultados.length === 0 && !buscando && (

@@ -134,7 +134,7 @@ export function UsernameGate({ children }: { children: React.ReactNode }) {
       <div className="w-full max-w-md animate-fade-up">
         <div className="cq-card bg-gradient-to-br from-mint-600/15 via-night-900/70 to-electric-500/10 p-6 sm:p-8">
           <Label>Falta só um passo</Label>
-          <h1 className="mt-2 text-2xl font-extrabold text-white">Escolha seu nome de usuário</h1>
+          <h1 className="mt-2 cq-h1">Escolha seu nome de usuário</h1>
           <p className="mt-2 text-sm leading-relaxed text-slate-400">
             É por ele que seus colegas vão te encontrar na busca de amigos. Ele é diferente do seu
             nome de exibição, que continua sendo{' '}
@@ -172,7 +172,7 @@ export function UsernameGate({ children }: { children: React.ReactNode }) {
                     setErroSalvar(null);
                   }}
                   placeholder="davi123"
-                  className="w-full bg-transparent py-3 font-mono text-base text-white placeholder:text-slate-600 focus:outline-none sm:text-sm"
+                  className="cq-input-bare font-mono"
                 />
 
                 <span className="shrink-0">
@@ -213,14 +213,14 @@ export function UsernameGate({ children }: { children: React.ReactNode }) {
             <button
               type="button"
               onClick={sugerirOutro}
-              className="min-h-[44px] w-full text-center text-xs text-slate-500 transition hover:text-mint-300"
+              className="min-h-[44px] w-full text-center cq-muted transition hover:text-mint-300"
             >
               sugerir outro nome para mim
             </button>
           </form>
         </div>
 
-        <p className="mt-5 text-center text-xs text-slate-500">
+        <p className="mt-5 text-center cq-muted">
           Você pode mudar seu nome de usuário depois, na tela de Perfil.
         </p>
       </div>

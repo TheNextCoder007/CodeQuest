@@ -149,7 +149,7 @@ function DesafioContent() {
 
   if (carregando) {
     return (
-      <div className="space-y-4">
+      <div className="cq-page">
         <div className="h-32 animate-pulse rounded-2xl bg-white/5" />
         <div className="h-64 animate-pulse rounded-2xl bg-white/5" />
       </div>
@@ -197,7 +197,7 @@ function DesafioContent() {
   const jaFeito = estado.jaCompletou;
 
   return (
-    <div className="space-y-6">
+    <div className="cq-page">
       {/* Cabecalho ---------------------------------------------------- */}
       <Card
         className={cn(
@@ -213,7 +213,7 @@ function DesafioContent() {
               <Flame className="mr-1.5 inline h-3.5 w-3.5" aria-hidden />
               Desafio diário
             </Label>
-            <h1 className="mt-1 text-2xl font-extrabold text-white">
+            <h1 className="mt-1 cq-h1">
               {jaFeito ? 'Desafio de hoje concluído' : 'O desafio de hoje'}
             </h1>
             <p className="mt-1 text-sm text-slate-400">
@@ -316,7 +316,7 @@ function DesafioContent() {
                   <span className="block truncate text-sm font-semibold text-white">
                     {amigo.nome}
                   </span>
-                  <span className="text-xs text-slate-500">
+                  <span className="cq-muted">
                     {amigo.concluido ? 'fez o de hoje' : 'ainda não fez hoje'} · {amigo.total} no
                     total
                   </span>

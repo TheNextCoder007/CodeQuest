@@ -32,6 +32,16 @@ const config: Config = {
           600: '#1d4ed8',
         },
       },
+      /*
+       * `transition` sem duracao explicita cai aqui. O padrao do Tailwind e
+       * 150ms, que no escuro fica seco demais - a mudanca de cor "pisca" em
+       * vez de deslizar. 200ms e o ponto em que o movimento fica perceptivel
+       * sem parecer lento, e definir no tema conserta os 38 lugares que usam
+       * `transition` cru de uma vez.
+       */
+      transitionDuration: {
+        DEFAULT: '200ms',
+      },
       fontFamily: {
         sans: ['var(--font-sans)', 'system-ui', 'sans-serif'],
         mono: ['var(--font-mono)', 'ui-monospace', 'monospace'],
@@ -39,7 +49,14 @@ const config: Config = {
       boxShadow: {
         glow: '0 0 0 1px rgba(0, 227, 148, 0.25), 0 12px 40px -12px rgba(0, 227, 148, 0.35)',
         'glow-blue': '0 0 0 1px rgba(77, 141, 255, 0.25), 0 12px 40px -12px rgba(77, 141, 255, 0.35)',
-        card: '0 18px 50px -24px rgba(0, 0, 0, 0.9)',
+        // Duas camadas: um contorno curto que define a borda do card contra o
+        // fundo escuro, e uma sombra longa e difusa que da profundidade sem
+        // virar mancha.
+        card: '0 1px 2px -1px rgba(0, 0, 0, 0.6), 0 18px 50px -24px rgba(0, 0, 0, 0.9)',
+        // Elevacao do card clicavel sob o cursor: mesma sombra, mais alta, com
+        // um fio de mint no lugar da borda.
+        'card-hover':
+          '0 1px 2px -1px rgba(0, 0, 0, 0.6), 0 26px 60px -22px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(0, 227, 148, 0.14)',
       },
       backgroundImage: {
         'grid-mesh':
@@ -64,9 +81,22 @@ const config: Config = {
           '70%': { boxShadow: '0 0 0 14px rgba(0,227,148,0)' },
           '100%': { boxShadow: '0 0 0 0 rgba(0,227,148,0)' },
         },
+        /* Troca de tela: so opacidade e 4px de deslocamento. Mais que isso a
+           cada navegacao vira enjoo, principalmente no celular. */
+        'page-in': {
+          '0%': { opacity: '0', transform: 'translateY(4px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        /* Entrada dos toasts: vem de baixo e de leve, sem escala. */
+        'slide-up': {
+          '0%': { opacity: '0', transform: 'translateY(10px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
       },
       animation: {
-        'fade-up': 'fade-up 0.5s ease-out both',
+        'fade-up': 'fade-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) both',
+        'slide-up': 'slide-up 0.28s cubic-bezier(0.16, 1, 0.3, 1) both',
+        'page-in': 'page-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) both',
         'xp-pop': 'xp-pop 1.6s ease-out forwards',
         shimmer: 'shimmer 2.5s linear infinite',
         'pulse-ring': 'pulse-ring 1.8s ease-out infinite',

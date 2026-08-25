@@ -46,7 +46,7 @@ function OfflineScreen({ message, onRetry }: { message: string; onRetry: () => v
     <div className="flex min-h-dvh flex-col items-center justify-center gap-5 px-6 text-center">
       <CloudOff className="h-10 w-10 text-slate-500" aria-hidden />
       <div>
-        <h1 className="text-lg font-bold text-white">Sem conexão com o servidor</h1>
+        <h1 className="cq-h2">Sem conexão com o servidor</h1>
         <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-slate-400">{message}</p>
       </div>
       <button
@@ -148,9 +148,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  'rounded-lg px-3 py-2 text-sm font-medium transition',
+                  'cq-focus rounded-lg px-3 py-2 text-sm font-medium transition',
                   isActive(item.href)
-                    ? 'bg-white/10 text-white'
+                    ? 'bg-white/10 text-white ring-1 ring-inset ring-white/10'
                     : 'text-slate-400 hover:bg-white/5 hover:text-white',
                 )}
               >
@@ -159,18 +159,23 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             ))}
           </nav>
 
-          {/* O bloco da direita nao encolhe: quem cede espaco e o nome escrito
-              do logo. Se ele encolhesse, o botao de sair sairia da tela. */}
-          <div className="ml-auto flex shrink-0 items-center gap-2">
+          {/* Ordem de quem cede espaco quando a tela aperta:
+              1. o nome escrito do logo (vira so o simbolo);
+              2. o numero do XP, que trunca;
+              3. ninguem mais - o botao de sair e `shrink-0` e sempre fica.
+              Antes o bloco inteiro era `shrink-0`, e com XP de 6 digitos numa
+              tela de 320px com a fonte no maximo era o botao de SAIR que saia
+              da tela. */}
+          <div className="ml-auto flex min-w-0 items-center gap-2">
             <span className="hidden shrink-0 items-center gap-1.5 rounded-full border border-amber-400/30 bg-amber-400/10 px-3 py-1.5 text-xs font-bold text-amber-200 sm:inline-flex">
               <Flame className="h-3.5 w-3.5 shrink-0" aria-hidden />
               {streak}
             </span>
-            {/* O XP nunca encolhe: com a fonte ampliada quem cede espaco e o
-                nome escrito do logo (que vira so o simbolo), nao o numero. */}
-            <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-mint-500/30 bg-mint-500/10 px-3 py-1.5 text-xs font-bold text-mint-300">
+            {/* O XP so trunca em ultimo caso (ver a ordem acima). O icone
+                fica, entao mesmo cortado continua legivel do que se trata. */}
+            <span className="inline-flex min-w-0 items-center gap-1.5 rounded-full border border-mint-500/30 bg-mint-500/10 px-3 py-1.5 text-xs font-bold tabular-nums text-mint-300">
               <Star className="h-3.5 w-3.5 shrink-0" aria-hidden />
-              {xp} XP
+              <span className="truncate">{xp} XP</span>
             </span>
             <span className="hidden shrink-0 rounded-full border border-electric-400/30 bg-electric-400/10 px-3 py-1.5 text-xs font-bold text-aqua-300 lg:inline-flex">
               Nv {level}
@@ -181,7 +186,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               onClick={() => {
                 void signOut().then(() => router.replace('/'));
               }}
-              className="flex h-[40px] w-[40px] shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-white/5 hover:text-rose-300"
+              className="cq-focus flex h-[40px] w-[40px] shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-white/5 hover:text-rose-300 active:scale-95"
               aria-label="Sair da conta"
               title="Sair"
             >
@@ -201,7 +206,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         )}
       </header>
 
-      <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:py-8">{children}</main>
+      {/* `key={pathname}` faz o React remontar o conteudo a cada rota, o que
+          reinicia a animacao. Sem a chave, o fade so aconteceria uma vez, no
+          primeiro carregamento. Quem desativou animacoes no sistema nao ve
+          nada disso (ver `prefers-reduced-motion` em globals.css). */}
+      <main
+        key={pathname}
+        className="mx-auto w-full max-w-6xl animate-page-in px-4 py-6 sm:py-8"
+      >
+        {children}
+      </main>
 
       {/* Barra inferior: e a navegacao principal no celular / .apk */}
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-night-950/95 backdrop-blur lg:hidden cq-safe-bottom">
@@ -218,13 +232,21 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   // proprio rotulo e, com a fonte ampliada do Android, os cinco
                   // somados passam da largura da tela - o ultimo ("Perfil")
                   // simplesmente some da borda.
-                  'flex min-w-0 flex-1 basis-0 flex-col items-center gap-1 px-1 py-3 text-[11px] font-medium transition',
-                  active ? 'text-mint-300' : 'text-slate-500',
+                  // `relative` para o marcador do item ativo, que e absoluto e
+                  // por isso nao entra na conta da largura.
+                  'relative flex min-w-0 flex-1 basis-0 flex-col items-center gap-1 px-1 py-3 text-[11px] font-medium transition active:scale-95',
+                  active ? 'text-mint-300' : 'text-slate-500 hover:text-slate-300',
                 )}
               >
+                {active && (
+                  <span
+                    className="absolute inset-x-3 top-0 h-0.5 rounded-b-full bg-gradient-to-r from-mint-400 to-aqua-400"
+                    aria-hidden
+                  />
+                )}
                 <Icon
                   className={cn(
-                    'h-5 w-5 shrink-0',
+                    'h-5 w-5 shrink-0 transition',
                     active && 'drop-shadow-[0_0_6px_rgba(0,227,148,0.6)]',
                   )}
                 />

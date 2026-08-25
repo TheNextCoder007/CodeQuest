@@ -139,7 +139,7 @@ function LessonContent({ lessonId }: { lessonId: string }) {
   const jaConcluida = state.completedLessonIds.includes(lesson.id);
 
   return (
-    <div className="space-y-6">
+    <div className="cq-page">
       {/* Cabecalho ---------------------------------------------------- */}
       <div>
         <Link
@@ -230,7 +230,7 @@ function LessonContent({ lessonId }: { lessonId: string }) {
         <Card className="animate-fade-up border-mint-500/40 bg-gradient-to-br from-mint-600/15 to-transparent text-center">
           <PartyPopper className="mx-auto h-10 w-10 text-mint-400" />
           <Label className="mt-4">Lição concluída</Label>
-          <h2 className="mt-2 text-2xl font-extrabold text-white">{lesson.title}</h2>
+          <h2 className="mt-2 cq-h1">{lesson.title}</h2>
 
           <div className="mt-6 grid grid-cols-1 gap-3 sm:flex sm:flex-wrap sm:justify-center">
             <div className="rounded-xl border border-mint-500/40 bg-mint-500/10 px-6 py-4">

@@ -94,7 +94,7 @@ function PerfilPublicoContent() {
 
   if (carregando) {
     return (
-      <div className="space-y-4">
+      <div className="cq-page">
         <div className="h-48 animate-pulse rounded-2xl bg-white/5" />
         <div className="h-32 animate-pulse rounded-2xl bg-white/5" />
       </div>
@@ -103,10 +103,10 @@ function PerfilPublicoContent() {
 
   if (erro || !perfil) {
     return (
-      <div className="space-y-4">
+      <div className="cq-page">
         <Link
           href="/ranking"
-          className="cq-tap text-sm font-semibold text-slate-400 hover:text-mint-300"
+          className="cq-tap text-sm font-medium text-slate-400 hover:text-mint-300"
         >
           <ArrowLeft className="h-4 w-4" aria-hidden /> Voltar
         </Link>
@@ -143,16 +143,16 @@ function PerfilPublicoContent() {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="cq-page">
       <Link
         href="/ranking"
-        className="cq-tap text-sm font-semibold text-slate-400 hover:text-mint-300"
+        className="cq-tap text-sm font-medium text-slate-400 hover:text-mint-300"
       >
         <ArrowLeft className="h-4 w-4" aria-hidden /> Voltar ao ranking
       </Link>
 
       {/* Identidade ---------------------------------------------------- */}
-      <section className="cq-card bg-gradient-to-br from-electric-500/15 via-night-900/60 to-mint-600/10 p-6">
+      <section className="cq-card bg-gradient-to-br from-electric-500/15 via-night-900/60 to-mint-600/10 p-5 sm:p-6">
         <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:gap-5">
           <AvatarComMoldura
             name={perfil.name}
@@ -164,7 +164,7 @@ function PerfilPublicoContent() {
           <div className="w-full min-w-0 flex-1">
             <Label>{euMesmo ? 'Seu perfil público' : 'Perfil de estudante'}</Label>
 
-            <h1 className="mt-1 break-words text-2xl font-extrabold text-white sm:text-3xl">
+            <h1 className="mt-1 break-words cq-h1">
               {perfil.name}
             </h1>
 
@@ -227,7 +227,7 @@ function PerfilPublicoContent() {
       <Card>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <CardTitle>🏷️ Tags conquistadas</CardTitle>
-          <span className="text-xs text-slate-500">{tagsDaPessoa.length}</span>
+          <span className="cq-muted">{tagsDaPessoa.length}</span>
         </div>
 
         {tagsDaPessoa.length === 0 ? (

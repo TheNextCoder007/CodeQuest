@@ -116,11 +116,11 @@ function RankingContent() {
   const semAmigos = aba === 'amigos' && lista !== null && lista.length <= 1;
 
   return (
-    <div className="space-y-6">
+    <div className="cq-page">
       {/* Cabecalho ---------------------------------------------------- */}
-      <section className="cq-card bg-gradient-to-br from-electric-500/15 via-night-900/60 to-mint-600/10 p-6">
+      <section className="cq-card bg-gradient-to-br from-electric-500/15 via-night-900/60 to-mint-600/10 p-5 sm:p-6">
         <Label>Comparação amigável</Label>
-        <h1 className="mt-1.5 flex items-center gap-2 text-2xl font-extrabold text-white sm:text-3xl">
+        <h1 className="mt-1.5 flex items-center gap-2 cq-h1">
           🥇 Ranking
         </h1>
         <p className="mt-2 max-w-xl text-sm text-slate-400">
@@ -316,7 +316,7 @@ function RankingContent() {
                   <div className="min-w-0 text-right">
                     <p className="font-bold text-mint-300">{linha.elo}</p>
                     <p className="text-[11px] uppercase tracking-wider text-slate-500">elo</p>
-                    <p className="text-xs text-slate-500">
+                    <p className="cq-muted">
                       {linha.vitorias}V · {linha.derrotas}D
                     </p>
                   </div>
@@ -360,7 +360,7 @@ function RankingContent() {
                       {linha.name}
                       {euMesmo && <span className="ml-2 text-xs text-mint-300">(você)</span>}
                     </p>
-                    <p className="truncate text-xs text-slate-500">
+                    <p className="truncate cq-muted">
                       {linha.username && (
                         <span className="font-mono text-aqua-300">
                           {displayUsername(linha.username)}
@@ -378,7 +378,7 @@ function RankingContent() {
 
                   <div className="min-w-0 text-right">
                     <p className="font-bold text-mint-300">{linha.xp_total} XP</p>
-                    <p className="flex items-center justify-end gap-1 text-xs text-slate-500">
+                    <p className="flex items-center justify-end gap-1 cq-muted">
                       <Flame className="h-3 w-3 text-amber-400" />
                       {linha.streak_count}
                     </p>

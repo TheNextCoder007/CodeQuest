@@ -141,7 +141,7 @@ export function CartaoRanqueada({
                 key={temporada.numero}
                 className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2"
               >
-                <span className="min-w-0 text-sm font-semibold text-slate-300">
+                <span className="min-w-0 text-sm font-medium text-slate-300">
                   Temporada {temporada.numero}
                 </span>
                 <span className="flex min-w-0 items-center gap-2">

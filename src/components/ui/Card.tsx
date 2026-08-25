@@ -3,10 +3,20 @@ import { cn } from '@/lib/cn';
 export function Card({
   className,
   children,
+  interativo = false,
   ...props
-}: React.HTMLAttributes<HTMLDivElement>) {
+}: React.HTMLAttributes<HTMLDivElement> & {
+  /**
+   * Card que responde ao cursor. Use em qualquer card que seja clicavel -
+   * antes cada tela escrevia o proprio hover e existiam 12 variantes.
+   */
+  interativo?: boolean;
+}) {
   return (
-    <div className={cn('cq-card p-5 sm:p-6', className)} {...props}>
+    <div
+      className={cn('cq-card p-5 sm:p-6', interativo && 'cq-card-hover', className)}
+      {...props}
+    >
       {children}
     </div>
   );
@@ -15,11 +25,25 @@ export function Card({
 export function CardTitle({
   className,
   children,
+  as: Tag = 'h3',
+}: {
+  className?: string;
+  children: React.ReactNode;
+  /** `h2` quando o card e a secao principal da tela. */
+  as?: 'h2' | 'h3';
+}) {
+  return <Tag className={cn('cq-h2', className)}>{children}</Tag>;
+}
+
+/** Titulo da tela. Um por pagina, sempre `h1`. */
+export function PageTitle({
+  className,
+  children,
 }: {
   className?: string;
   children: React.ReactNode;
 }) {
-  return <h3 className={cn('text-lg font-bold text-white', className)}>{children}</h3>;
+  return <h1 className={cn('cq-h1', className)}>{children}</h1>;
 }
 
 export function Label({ className, children }: { className?: string; children: React.ReactNode }) {
@@ -46,7 +70,10 @@ export function ProgressBar({
 
   return (
     <div
-      className={cn('h-2 w-full overflow-hidden rounded-full bg-white/10', className)}
+      className={cn(
+        'h-2 w-full overflow-hidden rounded-full bg-white/10 ring-1 ring-inset ring-white/5',
+        className,
+      )}
       role="progressbar"
       aria-valuenow={percent}
       aria-valuemin={0}
@@ -80,7 +107,7 @@ export function Pill({
   return (
     <span
       className={cn(
-        'inline-flex max-w-full items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold',
+        'inline-flex max-w-full items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold leading-5',
         tones[tone],
         className,
       )}
@@ -116,14 +143,21 @@ export function StatCard({
       {/* `min-w-0` no rotulo e `shrink-0` no icone: com a fonte ampliada do
           Android o rotulo nao cabia, e como ele nao encolhia era o ICONE que
           era empurrado para fora da tela. */}
-      <div className="flex items-start justify-between gap-2">
+      {/* `min-h-8` reserva as duas linhas que um rotulo longo ("Lições
+          concluídas", "Desafios diários") ocupa. Sem isso, os cards de rotulo
+          curto sobem o numero e a fileira inteira fica com as metricas em
+          alturas diferentes. E minimo, nao fixo: com a fonte ampliada do
+          Android o rotulo cresce a vontade. */}
+      <div className="flex min-h-8 items-start justify-between gap-2">
         <p className="cq-label min-w-0">{label}</p>
         <span className="shrink-0 text-xl leading-none" aria-hidden>
           {icon}
         </span>
       </div>
-      <p className="mt-2 text-2xl font-extrabold text-white sm:text-3xl">{value}</p>
-      {hint && <p className="mt-1 text-xs text-slate-400">{hint}</p>}
+      {/* `tabular-nums`: o XP muda de valor na tela (o +120 do desafio diario,
+          o ganho da licao) e sem largura fixa de digito o numero "dança". */}
+      <p className="mt-2 text-2xl font-extrabold tabular-nums text-white sm:text-3xl">{value}</p>
+      {hint && <p className="cq-muted mt-1.5">{hint}</p>}
     </div>
   );
 }

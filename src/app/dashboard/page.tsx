@@ -20,7 +20,7 @@ function DashboardContent() {
 
   if (loading || !state) {
     return (
-      <div className="space-y-4">
+      <div className="cq-page">
         <div className="h-28 animate-pulse rounded-2xl bg-white/5" />
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {[0, 1, 2, 3].map((index) => (
@@ -57,7 +57,7 @@ function DashboardContent() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="cq-page">
       {/* Saudacao + proxima licao ------------------------------------- */}
       <section className="cq-card overflow-hidden bg-gradient-to-br from-mint-600/15 via-night-900/60 to-electric-500/10 p-6 sm:p-8">
         <Label>Bem-vindo de volta</Label>
@@ -78,7 +78,7 @@ function DashboardContent() {
                 <p className="text-xs font-semibold uppercase tracking-widest text-mint-400">
                   {moduloDaProxima?.icon} {moduloDaProxima?.title}
                 </p>
-                <p className="mt-1 truncate text-lg font-bold text-white">{proxima.title}</p>
+                <p className="mt-1 truncate cq-h2">{proxima.title}</p>
                 <p className="text-sm text-slate-400">
                   {proxima.subtitle} · vale {lessonXp(proxima)} XP
                 </p>
@@ -188,7 +188,7 @@ function DashboardContent() {
                     'flex min-h-[56px] items-center gap-3 rounded-xl border px-3 py-2.5 transition',
                     item.status === 'locked'
                       ? 'cursor-not-allowed border-white/5 bg-white/[0.02] opacity-50'
-                      : 'border-white/10 bg-white/[0.03] hover:border-mint-500/40',
+                      : 'border-white/10 bg-white/[0.03] transition duration-200 ease-out hover:-translate-y-px hover:border-mint-500/30 hover:bg-white/[0.06] active:translate-y-0',
                   )}
                 >
                   <span className="text-lg" aria-hidden>
@@ -198,7 +198,7 @@ function DashboardContent() {
                     <span className="block truncate text-sm font-semibold text-white">
                       {item.module.title}
                     </span>
-                    <span className="text-xs text-slate-500">
+                    <span className="cq-muted">
                       {item.completedLessons}/{item.totalLessons} lições
                     </span>
                   </span>
@@ -243,7 +243,7 @@ function DashboardContent() {
                     >
                       {missao.titulo}
                     </span>
-                    <span className="text-xs text-slate-500">{missao.detalhe}</span>
+                    <span className="cq-muted">{missao.detalhe}</span>
                   </span>
                 </li>
               ))}
@@ -278,7 +278,7 @@ function DashboardContent() {
                       <span className="block truncate text-sm font-semibold text-white">
                         {conquista.title}
                       </span>
-                      <span className="block truncate text-xs text-slate-500">
+                      <span className="block truncate cq-muted">
                         {conquista.description}
                       </span>
                     </span>

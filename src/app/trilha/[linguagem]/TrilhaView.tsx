@@ -38,7 +38,7 @@ function TrilhaContent({ slug }: { slug: string }) {
 
   if (!language.available) {
     return (
-      <div className="space-y-6">
+      <div className="cq-page">
         <Card className="text-center">
           <span className="text-5xl" aria-hidden>
             {language.icon}
@@ -60,7 +60,7 @@ function TrilhaContent({ slug }: { slug: string }) {
 
   if (loading || !state) {
     return (
-      <div className="space-y-4">
+      <div className="cq-page">
         {[0, 1, 2].map((index) => (
           <div key={index} className="h-32 animate-pulse rounded-2xl bg-white/5" />
         ))}
@@ -73,13 +73,13 @@ function TrilhaContent({ slug }: { slug: string }) {
   const summary = trackSummary(language.slug, completed);
 
   return (
-    <div className="space-y-6">
+    <div className="cq-page">
       {/* Cabecalho da trilha ------------------------------------------ */}
-      <section className="cq-card bg-gradient-to-br from-mint-600/15 via-night-900/60 to-electric-500/10 p-6">
+      <section className="cq-card bg-gradient-to-br from-mint-600/15 via-night-900/60 to-electric-500/10 p-5 sm:p-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <Label>Trilha de aprendizado</Label>
-            <h1 className="mt-1.5 text-2xl font-extrabold text-white sm:text-3xl">
+            <h1 className="mt-1.5 cq-h1">
               <span className="mr-2" aria-hidden>
                 {language.icon}
               </span>
@@ -134,10 +134,10 @@ function TrilhaContent({ slug }: { slug: string }) {
 
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-mono text-xs text-slate-500">
+                      <span className="font-mono cq-muted">
                         {String(item.module.orderIndex).padStart(2, '0')}
                       </span>
-                      <h2 className="min-w-0 text-lg font-bold text-white">{item.module.title}</h2>
+                      <h2 className="min-w-0 cq-h2">{item.module.title}</h2>
                       {item.status === 'completed' && <Pill tone="mint">Concluído</Pill>}
                       {bloqueado && <Pill>Bloqueado</Pill>}
                     </div>
@@ -147,14 +147,14 @@ function TrilhaContent({ slug }: { slug: string }) {
                     </p>
 
                     {bloqueado ? (
-                      <p className="mt-3 text-xs text-slate-500">
+                      <p className="mt-3 cq-muted">
                         Conclua o módulo anterior para desbloquear.
                       </p>
                     ) : (
                       <>
                         <div className="mt-3 flex items-center gap-3">
                           <ProgressBar value={item.ratio} className="flex-1" />
-                          <span className="shrink-0 text-xs font-semibold text-slate-400">
+                          <span className="shrink-0 text-xs font-medium text-slate-400">
                             {item.completedLessons}/{item.totalLessons}
                           </span>
                         </div>
@@ -186,7 +186,7 @@ function TrilhaContent({ slug }: { slug: string }) {
                                   <span className="block text-sm font-medium leading-snug text-slate-200">
                                     {lesson.title}
                                   </span>
-                                  <span className="block truncate text-xs text-slate-500">
+                                  <span className="block truncate cq-muted">
                                     {lesson.subtitle} · {lessonXp(lesson)} XP
                                   </span>
                                 </span>
@@ -246,7 +246,7 @@ function OutrasLinguagens({ atual }: { atual: string }) {
             key={language.id}
             href={`/trilha/${language.slug}`}
             className={cn(
-              'flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-3 transition hover:border-mint-500/40',
+              'flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-3 transition duration-200 ease-out hover:-translate-y-px hover:border-mint-500/30 hover:bg-white/[0.06] active:translate-y-0',
               !language.available && 'opacity-60',
             )}
           >

@@ -73,7 +73,7 @@ export function ConviteDuelo({
       <div className="cq-card w-full max-w-md animate-fade-up p-5 sm:p-6">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <h2 className="flex items-center gap-2 text-lg font-bold text-white">
+            <h2 className="flex items-center gap-2 cq-h2">
               <Swords className="h-5 w-5 shrink-0 text-mint-400" aria-hidden />
               Duelar com {adversarioNome}
             </h2>
