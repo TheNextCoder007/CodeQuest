@@ -2,12 +2,16 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Flame, Globe, Trophy, UserPlus, Users } from 'lucide-react';
+import { Flame, Globe, Shield, Star, Swords, Trophy, UserPlus, Users } from 'lucide-react';
 import { AppShell } from '@/components/AppShell';
 import { Avatar } from '@/components/social/Avatar';
 import { LinkButton } from '@/components/ui/Button';
 import { Card, CardTitle, Label, Pill } from '@/components/ui/Card';
 import { useAuth } from '@/lib/auth/AuthProvider';
+import { usePlayer } from '@/lib/player/PlayerProvider';
+import { PatamarBadge } from '@/components/ranked/PatamarBadge';
+import { buscarRankingRanqueada } from '@/lib/ranked/api';
+import type { LinhaRankingRanqueada } from '@/lib/ranked/tipos';
 import { fetchLeaderboard } from '@/lib/leaderboard';
 import { fetchFriendsLeaderboard } from '@/lib/friends';
 import { displayUsername } from '@/lib/username';
@@ -43,23 +47,53 @@ function LinhaDoRanking({
 
 type Aba = 'global' | 'amigos';
 
+/**
+ * Duas listas diferentes na mesma tela.
+ *
+ * `xp` e o ranking de sempre (esforco acumulado na trilha). `ranqueada` e o da
+ * temporada, por patamar e elo. Cada um responde a uma pergunta diferente -
+ * "quem mais estudou" contra "quem esta jogando melhor agora" -, e por isso
+ * nao daria para juntar os dois numa lista so.
+ */
+type Modo = 'xp' | 'ranqueada';
+
 const abas = [
   { id: 'global' as const, label: 'Global', icon: Globe },
   { id: 'amigos' as const, label: 'Amigos', icon: Users },
 ];
 
+const modos = [
+  { id: 'xp' as const, label: 'XP', icon: Star },
+  { id: 'ranqueada' as const, label: 'Ranqueada', icon: Shield },
+];
+
 function RankingContent() {
   const { user } = useAuth();
+  const { state } = usePlayer();
 
+  const [modo, setModo] = useState<Modo>('xp');
+  const [ranqueada, setRanqueada] = useState<LinhaRankingRanqueada[] | null>(null);
   const [aba, setAba] = useState<Aba>('global');
   const [rows, setRows] = useState<LeaderboardRow[] | null>(null);
   const [erro, setErro] = useState<string | null>(null);
 
   const carregar = useCallback(
-    async (alvo: Aba) => {
+    async (qual: Modo, alvo: Aba) => {
       setRows(null);
+      setRanqueada(null);
       setErro(null);
       try {
+        if (qual === 'ranqueada') {
+          setRanqueada(
+            await buscarRankingRanqueada(alvo, {
+              id: user?.id ?? '',
+              nome: user?.name ?? '',
+              username: state?.profile.username ?? null,
+              avatarUrl: state?.profile.avatar_url ?? null,
+            }),
+          );
+          return;
+        }
         const dados =
           alvo === 'global' ? await fetchLeaderboard() : await fetchFriendsLeaderboard(user?.id ?? '');
         setRows(dados);
@@ -67,18 +101,19 @@ function RankingContent() {
         setErro(falha instanceof Error ? falha.message : 'Não foi possível carregar o ranking.');
       }
     },
-    [user?.id],
+    [user?.id, user?.name, state?.profile.username, state?.profile.avatar_url],
   );
 
   useEffect(() => {
-    void carregar(aba);
-  }, [aba, carregar]);
+    void carregar(modo, aba);
+  }, [modo, aba, carregar]);
 
-  const minhaPosicao = rows?.findIndex((linha) => linha.id === user?.id) ?? -1;
+  const lista = modo === 'xp' ? rows : ranqueada;
+  const minhaPosicao = lista?.findIndex((linha) => linha.id === user?.id) ?? -1;
 
   // Na aba de amigos, o proprio usuario sempre aparece - entao "sozinho na
   // lista" significa que ele ainda nao tem nenhum amigo confirmado.
-  const semAmigos = aba === 'amigos' && rows !== null && rows.length <= 1;
+  const semAmigos = aba === 'amigos' && lista !== null && lista.length <= 1;
 
   return (
     <div className="space-y-6">
@@ -89,9 +124,13 @@ function RankingContent() {
           🥇 Ranking
         </h1>
         <p className="mt-2 max-w-xl text-sm text-slate-400">
-          {aba === 'global'
-            ? 'Todos os estudantes do CodeQuest ordenados por XP acumulado. Cada lição concluída muda essa lista.'
-            : 'Só você e seus amigos confirmados. Uma disputa mais justa — e bem mais divertida.'}
+          {modo === 'ranqueada'
+            ? aba === 'global'
+              ? 'Quem está jogando melhor a temporada, por patamar e elo. Zera a cada 15 dias.'
+              : 'Você e seus amigos confirmados na temporada de ranqueada.'
+            : aba === 'global'
+              ? 'Todos os estudantes do CodeQuest ordenados por XP acumulado. Cada lição concluída muda essa lista.'
+              : 'Só você e seus amigos confirmados. Uma disputa mais justa — e bem mais divertida.'}
         </p>
 
         {minhaPosicao >= 0 && !semAmigos && (
@@ -104,10 +143,40 @@ function RankingContent() {
         )}
       </section>
 
+      {/* XP ou ranqueada ------------------------------------------------ */}
+      <div
+        role="tablist"
+        aria-label="Qual ranking"
+        className="flex gap-1 rounded-xl border border-white/10 bg-night-900/60 p-1"
+      >
+        {modos.map((item) => {
+          const Icon = item.icon;
+          const ativo = modo === item.id;
+          return (
+            <button
+              key={item.id}
+              role="tab"
+              aria-selected={ativo}
+              type="button"
+              onClick={() => setModo(item.id)}
+              className={cn(
+                'flex min-h-[44px] min-w-0 flex-1 basis-0 items-center justify-center gap-2 rounded-lg px-2 py-2.5 text-sm font-semibold transition sm:px-3',
+                ativo
+                  ? 'bg-gradient-to-r from-electric-500 to-aqua-400 text-night-950 shadow-glow-blue'
+                  : 'text-slate-400 hover:bg-white/5 hover:text-white',
+              )}
+            >
+              <Icon className="h-4 w-4 shrink-0" aria-hidden />
+              <span className="truncate">{item.label}</span>
+            </button>
+          );
+        })}
+      </div>
+
       {/* Abas ---------------------------------------------------------- */}
       <div
         role="tablist"
-        aria-label="Tipo de ranking"
+        aria-label="Escopo do ranking"
         className="flex gap-1 rounded-xl border border-white/10 bg-night-900/60 p-1"
       >
         {abas.map((item) => {
@@ -141,7 +210,7 @@ function RankingContent() {
         </Card>
       )}
 
-      {!rows && !erro && (
+      {!lista && !erro && (
         <div className="space-y-2">
           {[0, 1, 2, 3, 4].map((indice) => (
             <div key={indice} className="h-16 animate-pulse rounded-xl bg-white/5" />
@@ -177,7 +246,7 @@ function RankingContent() {
         </Card>
       )}
 
-      {rows && rows.length === 0 && aba === 'global' && (
+      {modo === 'xp' && rows && rows.length === 0 && aba === 'global' && (
         <Card>
           <CardTitle>Ranking vazio</CardTitle>
           <p className="mt-2 text-sm text-slate-400">
@@ -186,8 +255,80 @@ function RankingContent() {
         </Card>
       )}
 
-      {/* Lista ---------------------------------------------------------- */}
-      {rows && rows.length > 0 && !semAmigos && (
+      {/* Ranqueada sem ninguem ------------------------------------------ */}
+      {modo === 'ranqueada' && ranqueada && ranqueada.length === 0 && !semAmigos && (
+        <Card className="text-center">
+          <span className="text-4xl" aria-hidden>
+            🛡️
+          </span>
+          <CardTitle className="mt-4">Ninguém jogou ainda nesta temporada</CardTitle>
+          <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-slate-400">
+            O leaderboard mostra só quem já disputou pelo menos uma partida ranqueada. Seja o
+            primeiro.
+          </p>
+          <div className="mt-6">
+            <LinkButton href="/ranqueado">
+              <Swords className="h-4 w-4" aria-hidden />
+              Jogar ranqueada
+            </LinkButton>
+          </div>
+        </Card>
+      )}
+
+      {/* Lista da ranqueada --------------------------------------------- */}
+      {modo === 'ranqueada' && ranqueada && ranqueada.length > 0 && !semAmigos && (
+        <ul className="space-y-2">
+          {ranqueada.map((linha, indice) => {
+            const euMesmo = linha.id === user?.id;
+            const tag = linha.equippedTagId ? tagById(linha.equippedTagId) : undefined;
+            return (
+              <li key={linha.id}>
+                <div
+                  className={cn(
+                    'flex items-center gap-3 rounded-xl border px-3 py-3 transition sm:gap-4 sm:px-4',
+                    euMesmo
+                      ? 'border-mint-500/50 bg-mint-500/[0.08] shadow-glow'
+                      : 'border-white/10 bg-white/[0.03]',
+                    indice < 3 && !euMesmo && 'border-amber-400/25 bg-amber-400/[0.04]',
+                  )}
+                >
+                  <span className="w-7 shrink-0 text-center text-lg font-bold sm:w-8">
+                    {indice < 3 ? (
+                      <span aria-label={`${indice + 1}º lugar`}>{medalhas[indice]}</span>
+                    ) : (
+                      <span className="text-sm text-slate-500">{indice + 1}</span>
+                    )}
+                  </span>
+
+                  <Avatar name={linha.name} url={linha.avatarUrl} />
+
+                  <LinhaDoRanking username={linha.username}>
+                    <p className="truncate font-semibold text-white">
+                      {linha.name}
+                      {euMesmo && <span className="ml-2 text-xs text-mint-300">(você)</span>}
+                    </p>
+                    <span className="mt-1 flex flex-wrap items-center gap-1.5">
+                      <PatamarBadge divisao={linha.divisao} tamanho="sm" />
+                      {tag && <TagBadge tag={tag} tamanho="sm" />}
+                    </span>
+                  </LinhaDoRanking>
+
+                  <div className="min-w-0 text-right">
+                    <p className="font-bold text-mint-300">{linha.elo}</p>
+                    <p className="text-[11px] uppercase tracking-wider text-slate-500">elo</p>
+                    <p className="text-xs text-slate-500">
+                      {linha.vitorias}V · {linha.derrotas}D
+                    </p>
+                  </div>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+
+      {/* Lista de XP ----------------------------------------------------- */}
+      {modo === 'xp' && rows && rows.length > 0 && !semAmigos && (
         <ul className="space-y-2">
           {rows.map((linha, indice) => {
             const euMesmo = linha.id === user?.id;
@@ -250,7 +391,7 @@ function RankingContent() {
       )}
 
       {/* Atalho para quem ja tem amigos --------------------------------- */}
-      {aba === 'amigos' && !semAmigos && rows && rows.length > 1 && (
+      {aba === 'amigos' && !semAmigos && lista && lista.length > 1 && (
         <div className="text-center">
           <LinkButton href="/amigos" variant="ghost" size="sm">
             Gerenciar amigos

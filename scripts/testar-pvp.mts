@@ -17,6 +17,7 @@
 import { readFileSync } from 'node:fs';
 import { PGlite } from '@electric-sql/pglite';
 import { normalizarResposta, pontuar, desfecho, sortearPerguntas } from '../src/lib/pvp/regras';
+import { embaralhar, embaralharComSemente } from '../src/lib/embaralhar';
 
 let passaram = 0;
 let falharam = 0;
@@ -66,6 +67,7 @@ for (const arquivo of [
   // lidar com bot. Ela entra aqui de proposito: o duelo entre amigos precisa
   // continuar passando nestes testes DEPOIS da mudanca.
   'supabase/migrations/0006_ranqueado.sql',
+  'supabase/migrations/0007_embaralhar_alternativas.sql',
   'supabase/seed.sql',
 ]) {
   await db.exec(ler(arquivo));
@@ -530,6 +532,171 @@ secao('regras puras (TypeScript)');
   ok(sorteadas.length === 5, 'o sorteio devolve a quantidade pedida');
   ok(new Set(sorteadas).size === 5, 'e nunca repete pergunta na mesma partida');
   ok(sortearPerguntas([1, 2], 5).length === 2, 'com poucas perguntas, devolve o que tem');
+}
+
+/* =========================================================================
+ * Embaralhamento das alternativas
+ *
+ * O banco de perguntas foi escrito com a resposta certa SEMPRE na primeira
+ * posicao (49 de 49). Sem embaralhar, dava para vencer um duelo inteiro
+ * clicando na primeira opcao cinco vezes.
+ *
+ * Quem embaralha e o servidor, em `pvp_pergunta` (0007). O que se verifica
+ * aqui e que (a) a posicao do gabarito varia entre exibicoes, (b) nenhuma
+ * alternativa some ou aparece do nada, (c) reentregar a MESMA exibicao devolve
+ * a mesma ordem e (d) a correcao da resposta continua certa depois disso.
+ * ====================================================================== */
+secao('alternativas embaralhadas');
+{
+  const pergunta = (
+    await db.query<{ id: string; answer: string; options: string[] }>(
+      `select id, answer, options from public.pvp_questions
+        where kind = 'multiple_choice' and jsonb_array_length(options) = 4
+        limit 1`,
+    )
+  ).rows[0];
+
+  const posicoes = new Map<number, number>();
+  const EXIBICOES = 40;
+  let permutacaoQuebrada = 0;
+  let respostaErrada = 0;
+
+  for (let i = 0; i < EXIBICOES; i += 1) {
+    await como(ANFITRIAO);
+    const partidaN = (
+      await db.query<{ id: string }>('select public.ranked_iniciar() as id')
+    ).rows[0].id;
+
+    // Forca a MESMA pergunta, para a comparacao ser entre exibicoes dela.
+    await db.query(
+      'update public.match_questions set question_id = $2 where match_id = $1 and ordem = 1',
+      [partidaN, pergunta.id],
+    );
+
+    const entrega = await db.query<{ alternativas: string[] }>(
+      'select * from public.pvp_pergunta($1, 1)',
+      [partidaN],
+    );
+    const mostradas = entrega.rows[0].alternativas;
+
+    posicoes.set(
+      mostradas.indexOf(pergunta.answer),
+      (posicoes.get(mostradas.indexOf(pergunta.answer)) ?? 0) + 1,
+    );
+
+    // Mesmas opcoes, so que em outra ordem - nada sumiu nem foi inventado.
+    if (
+      JSON.stringify([...mostradas].sort()) !== JSON.stringify([...pergunta.options].sort())
+    ) {
+      permutacaoQuebrada += 1;
+    }
+
+    // Reentrega (recarregar a pagina) devolve a MESMA ordem.
+    const denovo = await db.query<{ alternativas: string[] }>(
+      'select * from public.pvp_pergunta($1, 1)',
+      [partidaN],
+    );
+    if (JSON.stringify(denovo.rows[0].alternativas) !== JSON.stringify(mostradas)) {
+      permutacaoQuebrada += 1;
+    }
+
+    // E a correcao continua olhando o texto, nao a posicao.
+    const r = await db.query<{ correta: boolean }>(
+      'select * from public.pvp_responder($1, 1, $2::text)',
+      [partidaN, pergunta.answer],
+    );
+    if (r.rows[0].correta !== true) respostaErrada += 1;
+
+    await db.query(
+      "update public.matches set started_at = now() - interval '6 minutes' where id = $1",
+      [partidaN],
+    );
+  }
+
+  ok(permutacaoQuebrada === 0, 'a ordem muda, mas as alternativas sao sempre as mesmas');
+  ok(
+    posicoes.size > 1,
+    `a resposta certa NAO fica presa numa posicao (${[...posicoes.entries()]
+      .sort((a, b) => a[0] - b[0])
+      .map(([p, n]) => `pos ${p + 1}: ${n}x`)
+      .join(', ')})`,
+  );
+  ok(
+    (posicoes.get(0) ?? 0) < EXIBICOES,
+    `e nao cai sempre na primeira (${posicoes.get(0) ?? 0} de ${EXIBICOES})`,
+  );
+  ok(
+    posicoes.size === pergunta.options.length,
+    `em ${EXIBICOES} exibicoes ela passou por todas as ${pergunta.options.length} posicoes`,
+  );
+  ok(respostaErrada === 0, 'e responder com o texto certo continua acertando sempre');
+
+  // Cada jogador tem a propria exibicao: a ordem de um nao vaza para o outro.
+  await como(ANFITRIAO);
+  const dupla = (
+    await db.query<{ id: string }>("select public.pvp_convidar('convidado', 'python') as id")
+  ).rows[0].id;
+  await como(CONVIDADO);
+  await db.query('select public.pvp_responder_convite($1, true)', [dupla]);
+  await db.query(
+    'update public.match_questions set question_id = $2 where match_id = $1 and ordem = 1',
+    [dupla, pergunta.id],
+  );
+
+  await como(ANFITRIAO);
+  const doHost = (
+    await db.query<{ alternativas: string[] }>('select * from public.pvp_pergunta($1, 1)', [dupla])
+  ).rows[0].alternativas;
+  await como(CONVIDADO);
+  const doGuest = (
+    await db.query<{ alternativas: string[] }>('select * from public.pvp_pergunta($1, 1)', [dupla])
+  ).rows[0].alternativas;
+
+  const linhasGravadas = await db.query<{ n: number }>(
+    'select count(distinct alternativas)::int as n from public.match_answers where match_id = $1 and ordem = 1',
+    [dupla],
+  );
+  ok(
+    JSON.stringify([...doHost].sort()) === JSON.stringify([...doGuest].sort()),
+    'os dois jogadores veem as mesmas alternativas',
+  );
+  ok(
+    linhasGravadas.rows[0].n >= 1,
+    'cada jogador tem a propria ordem gravada (uma linha por exibicao)',
+  );
+
+  // Pergunta de completar nao tem alternativa nenhuma para embaralhar.
+  const semOpcoes = await db.query<{ n: number }>(
+    `select count(*)::int as n from public.pvp_questions where kind = 'fill_blank' and options is not null`,
+  );
+  ok(semOpcoes.rows[0].n === 0, 'pergunta de completar nao carrega alternativas');
+}
+
+secao('embaralhamento em TypeScript (modo demonstracao e trilha)');
+{
+  const lista = ['a', 'b', 'c', 'd', 'e'];
+
+  const mesmaSemente =
+    JSON.stringify(embaralharComSemente(lista, 12345)) ===
+    JSON.stringify(embaralharComSemente(lista, 12345));
+  ok(mesmaSemente, 'a mesma semente da sempre a mesma ordem (o React pode recalcular a vontade)');
+
+  const sementesDiferentes = new Set(
+    Array.from({ length: 50 }, (_, i) => JSON.stringify(embaralharComSemente(lista, i + 1))),
+  );
+  ok(sementesDiferentes.size > 1, `sementes diferentes dao ordens diferentes (${sementesDiferentes.size})`);
+
+  const original = ['a', 'b', 'c'];
+  embaralhar(original);
+  ok(JSON.stringify(original) === JSON.stringify(['a', 'b', 'c']), 'embaralhar nao mexe na lista original');
+
+  const posicaoDoPrimeiro = new Set(
+    Array.from({ length: 100 }, (_, i) => embaralharComSemente(lista, i + 1).indexOf('a')),
+  );
+  ok(
+    posicaoDoPrimeiro.size === lista.length,
+    `o primeiro item passa por todas as posicoes (${posicaoDoPrimeiro.size} de ${lista.length})`,
+  );
 }
 
 await db.close();

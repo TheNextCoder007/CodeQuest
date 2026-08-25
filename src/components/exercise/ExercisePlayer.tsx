@@ -9,6 +9,7 @@ import { MarkdownLite } from '@/components/content/MarkdownLite';
 import { CodeEditor, Terminal } from './CodeEditor';
 import { justRun, validateExercise, type ValidationResult } from '@/lib/exercises/validate';
 import { onPythonReady, pythonIsReady, warmUpPython } from '@/lib/python/runner';
+import { embaralharComSemente } from '@/lib/embaralhar';
 import { cn } from '@/lib/cn';
 
 /**
@@ -45,9 +46,33 @@ export function ExercisePlayer({
   const [showHint, setShowHint] = useState(false);
   const [pyReady, setPyReady] = useState(false);
 
+  /**
+   * Semente da exibicao atual das alternativas.
+   *
+   * O conteudo das licoes foi escrito com a resposta certa sempre na primeira
+   * posicao, entao mostrar `exercise.options` na ordem original permitiria
+   * "acertar" tudo clicando sempre na de cima, sem ler nada.
+   *
+   * Aqui NAO ha o que proteger em termos de seguranca: a licao roda offline e
+   * o gabarito ja viaja no pacote do aplicativo (diferente do duelo, onde o
+   * embaralhamento e do servidor, em `pvp_pergunta`). O problema e de ensino,
+   * e a correcao e embaralhar a cada exibicao.
+   *
+   * A ordem sai de uma semente guardada em estado, e nao de um `Math.random()`
+   * solto no meio do render: assim recalcular o `useMemo` nunca reordena as
+   * opcoes embaixo do dedo de quem esta respondendo.
+   */
+  const [sementeDasOpcoes, setSementeDasOpcoes] = useState(() => Date.now());
+
+  const alternativas = useMemo(
+    () => embaralharComSemente(exercise.options ?? [], sementeDasOpcoes),
+    [exercise.options, sementeDasOpcoes],
+  );
+
   // Reinicia o estado ao trocar de exercicio.
   useEffect(() => {
     setCode(exercise.starterCode ?? '');
+    setSementeDasOpcoes(Date.now());
     setChoice('');
     setBlank('');
     setResult(null);
@@ -128,7 +153,7 @@ export function ExercisePlayer({
       {/* Resposta ----------------------------------------------------- */}
       {exercise.validationType === 'multiple_choice' && (
         <div className="space-y-2">
-          {exercise.options?.map((option) => {
+          {alternativas.map((option) => {
             const selected = choice === option;
             const isCorrectOption = solved && option === exercise.expectedAnswer;
 

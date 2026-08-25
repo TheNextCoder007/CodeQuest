@@ -473,7 +473,12 @@ $$;
  * Serve para a tela mostrar "o adversario esta na pergunta 3" sem revelar
  * o que ele respondeu.
  */
-create or replace function public.pvp_estado(m uuid)
+-- `drop` antes do `create` de proposito: a 0006 troca esta funcao por uma que
+-- devolve tres colunas a mais, e `create or replace` NAO consegue mudar o tipo
+-- de retorno de uma funcao existente. Sem o drop, reaplicar os arquivos na
+-- ordem (0001..0007) quebraria aqui para quem ja rodou a 0006.
+drop function if exists public.pvp_estado(uuid);
+create function public.pvp_estado(m uuid)
 returns table (
   status text, total int, tema text,
   host_id uuid, guest_id uuid, winner_id uuid,

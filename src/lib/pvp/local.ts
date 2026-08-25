@@ -1,5 +1,6 @@
 'use client';
 
+import { embaralhar } from '@/lib/embaralhar';
 import {
   PERGUNTAS_POR_PARTIDA,
   desfecho,
@@ -84,6 +85,14 @@ interface RespostaLocal {
   ms: number | null;
   startedAt: number | null;
   answeredAt: number | null;
+  /**
+   * Ordem em que as alternativas foram mostradas NESTA exibicao.
+   *
+   * Espelha `match_answers.alternativas` do servidor: sorteada na primeira
+   * entrega e guardada, para recarregar a pagina nao reordenar as opcoes com
+   * o cronometro correndo.
+   */
+  alternativas?: string[] | null;
 }
 
 interface DueloLocal {
@@ -136,6 +145,7 @@ const respostaVazia = (): RespostaLocal => ({
   ms: null,
   startedAt: null,
   answeredAt: null,
+  alternativas: null,
 });
 
 /* -------------------------------------------------------------------------
@@ -149,11 +159,20 @@ export async function criarDueloLocal(
   tema: string,
   bot: PerfilDeBot = BOT_PADRAO,
   modo: ModoPartida = 'amistoso',
+  /**
+   * Sorteia so entre estes assuntos, ignorando `tema`.
+   *
+   * A ranqueada usa isto: la o `tema` nao e um assunto do seletor, e o nome do
+   * POOL que valeu naquela partida (ver `src/lib/ranked/temas.ts`).
+   */
+  temasPermitidos?: readonly string[],
 ): Promise<string> {
   // Import sob demanda: o banco de perguntas carrega os gabaritos junto, e
   // so o modo demonstracao precisa deles no dispositivo.
-  const { perguntasDoTema } = await import('@/content/pvp-questions');
-  const disponiveis = perguntasDoTema(tema);
+  const { perguntasDoTema, pvpQuestions } = await import('@/content/pvp-questions');
+  const disponiveis = temasPermitidos
+    ? pvpQuestions.filter((questao) => temasPermitidos.includes(questao.languageSlug))
+    : perguntasDoTema(tema);
   if (disponiveis.length < PERGUNTAS_POR_PARTIDA) {
     throw new Error(`Não há perguntas suficientes para o tema ${tema}.`);
   }
@@ -192,16 +211,30 @@ export async function perguntaLocal(id: string, n: number): Promise<PerguntaPvp>
   const questao = pvpQuestionById(duelo.perguntaIds[n - 1]);
   if (!questao) throw new Error('Pergunta não encontrada.');
 
-  if (duelo.minhas[n - 1].startedAt === null) {
-    duelo.minhas[n - 1].startedAt = Date.now();
-    salvar(duelo);
+  const minha = duelo.minhas[n - 1];
+  let mudou = false;
+
+  if (minha.startedAt === null) {
+    minha.startedAt = Date.now();
+    mudou = true;
   }
+
+  // Mesma regra do servidor (`pvp_pergunta` em 0007): a ordem e sorteada UMA
+  // vez por exibicao e guardada. Sem isso, a resposta certa cairia sempre na
+  // primeira posicao - o banco de perguntas foi escrito com o gabarito na
+  // frente.
+  if (!minha.alternativas && questao.options) {
+    minha.alternativas = embaralhar(questao.options);
+    mudou = true;
+  }
+
+  if (mudou) salvar(duelo);
 
   return {
     num: n,
     tipo: questao.kind,
     enunciado: questao.prompt,
-    alternativas: questao.options ?? null,
+    alternativas: minha.alternativas ?? null,
     total: duelo.perguntaIds.length,
   };
 }

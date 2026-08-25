@@ -18,6 +18,8 @@
  * esquecer da outra, o teste quebra.
  */
 
+import { embaralhar } from '@/lib/embaralhar';
+
 /** Quantas perguntas tem uma partida. */
 export const PERGUNTAS_POR_PARTIDA = 5;
 
@@ -86,11 +88,4 @@ export const sortearPerguntas = <T>(
   disponiveis: T[],
   quantidade = PERGUNTAS_POR_PARTIDA,
   aleatorio: () => number = Math.random,
-): T[] => {
-  const copia = [...disponiveis];
-  for (let i = copia.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(aleatorio() * (i + 1));
-    [copia[i], copia[j]] = [copia[j], copia[i]];
-  }
-  return copia.slice(0, Math.min(quantidade, copia.length));
-};
+): T[] => embaralhar(disponiveis, aleatorio).slice(0, Math.min(quantidade, disponiveis.length));

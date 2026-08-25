@@ -343,8 +343,9 @@ function DueloContent() {
             {venci ? 'Você venceu!' : empatou ? 'Empate!' : 'Você perdeu essa'}
           </CardTitle>
           <p className="mt-2 text-sm text-slate-400">
-            {ehRanqueada && 'Ranqueada · '}
-            Tema: {nomeDoTema(estado.tema)} · {estado.total} perguntas
+            {ehRanqueada
+              ? `Ranqueada · ${estado.total} perguntas`
+              : `Tema: ${nomeDoTema(estado.tema)} · ${estado.total} perguntas`}
           </p>
 
           <div className="mt-6 flex items-center justify-center gap-4">
@@ -463,8 +464,11 @@ function DueloContent() {
       <section className="cq-card bg-gradient-to-br from-electric-500/15 via-night-900/60 to-mint-600/10 p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="min-w-0">
+            {/* Na ranqueada o `tema` guarda o POOL que valeu (ver
+                `src/lib/ranked/temas.ts`), nao um assunto do seletor - entao
+                nao ha nome de tema para mostrar aqui. */}
             <Label>
-              {estado.modo === 'ranqueado' ? 'Ranqueada' : 'Duelo'} · {nomeDoTema(estado.tema)}
+              {estado.modo === 'ranqueado' ? 'Ranqueada' : `Duelo · ${nomeDoTema(estado.tema)}`}
             </Label>
             <p className="mt-1 text-lg font-extrabold text-white">
               Pergunta {pergunta.num} de {pergunta.total}

@@ -24,14 +24,17 @@ import {
   DIVISAO_MAXIMA,
   divisaoDoElo,
   ganhoDaVitoria,
+  nomeDaDivisao,
   novoElo,
   patamarDaDivisao,
   perdaDaDerrota,
   pisoDoPatamar,
   subnivelDaDivisao,
+  temSubnivel,
   type ResultadoRanqueada,
 } from '../src/lib/ranked/patamares';
 import { BOTS_POR_PATAMAR } from '../src/lib/ranked/bots';
+import { poolDoPatamar, temasDoPatamar } from '../src/lib/ranked/temas';
 
 let passaram = 0;
 let falharam = 0;
@@ -77,6 +80,7 @@ for (const arquivo of [
   'supabase/migrations/0004_perfis_publicos.sql',
   'supabase/migrations/0005_pvp.sql',
   'supabase/migrations/0006_ranqueado.sql',
+  'supabase/migrations/0007_embaralhar_alternativas.sql',
   'supabase/seed.sql',
 ]) {
   await db.exec(ler(arquivo));
@@ -112,11 +116,12 @@ const um = async <T,>(sql: string, params: unknown[] = []): Promise<T> =>
  * ====================================================================== */
 secao('paridade da escada (SQL x TypeScript)');
 
-// Cobre as bordas de cada divisao e de cada patamar, mais valores acima do
-// teto (o elo continua subindo depois de Mestre 3; a divisao trava).
+// Cobre as bordas de cada divisao e de cada patamar, com atencao especial a
+// entrada do Mestre (1800) - que e o unico patamar sem sub-niveis - e a
+// valores acima dela, onde o elo continua subindo e a divisao trava.
 const ELOS = [
   0, 1, 39, 40, 99, 100, 101, 250, 299, 300, 301, 599, 600, 899, 900, 1199, 1200, 1499, 1500,
-  1799, 1800, 1999, 2000, 2001, 2500, 5000,
+  1700, 1799, 1800, 1801, 1900, 2000, 2500, 5000,
 ];
 
 let divergencias = 0;
@@ -195,11 +200,77 @@ secao('a curva de progressao');
     `e a perda por derrota aumenta (${listaPerdas.join(' < ')})`,
   );
 
-  ok(divisaoDoElo(2100) === DIVISAO_MAXIMA, 'Mestre 3 e a divisao 20 (7 patamares x 3)');
+  ok(DIVISAO_MAXIMA === 18, `Mestre e a divisao 18 (6 patamares x 3 + 1) - ${DIVISAO_MAXIMA}`);
   const acimaDoTeto = await um<{ divisao: number }>(
     'select public.ranked_divisao(99999)::int as divisao',
   );
-  ok(acimaDoTeto.divisao === DIVISAO_MAXIMA, 'elo acima do teto continua em Mestre 3');
+  ok(acimaDoTeto.divisao === DIVISAO_MAXIMA, 'elo muito acima do teto continua no Mestre');
+}
+
+secao('Mestre e um patamar unico, sem sub-niveis');
+{
+  const noTopo = await um<{ divisao: number; sub: number; patamar: number }>(
+    `select public.ranked_divisao(1800)::int as divisao,
+            public.ranked_subnivel(public.ranked_divisao(1800))::int as sub,
+            public.ranked_patamar(public.ranked_divisao(1800))::int as patamar`,
+  );
+  ok(noTopo.divisao === 18 && noTopo.patamar === 6, '1800 de elo entra no Mestre');
+  ok(noTopo.sub === 0, 'e o Mestre nao tem sub-nivel (o SQL devolve 0)');
+  ok(subnivelDaDivisao(18) === 0, 'o TypeScript concorda');
+  ok(!temSubnivel(18), '`temSubnivel` marca o Mestre como sem sub-nivel');
+  ok(nomeDaDivisao(18) === 'Mestre', `o nome no topo e so "Mestre" (${nomeDaDivisao(18)})`);
+
+  const abaixo = await um<{ divisao: number; sub: number }>(
+    `select public.ranked_divisao(1799)::int as divisao,
+            public.ranked_subnivel(public.ranked_divisao(1799))::int as sub`,
+  );
+  ok(abaixo.divisao === 17 && abaixo.sub === 3, '1799 ainda e Lendario 3');
+  ok(nomeDaDivisao(17) === 'Lendário 3', 'e o patamar logo abaixo continua com sub-nivel');
+
+  // Nao ha "Mestre 2": ganhar mais elo la em cima nao muda de divisao.
+  const maisElo = await um<{ divisao: number }>(
+    'select public.ranked_divisao(2400)::int as divisao',
+  );
+  ok(maisElo.divisao === 18, 'ganhar elo dentro do Mestre nao cria divisao nova');
+
+  const piso = await um<{ piso: number }>('select public.ranked_piso(2400)::int as piso');
+  ok(piso.piso === 1800, 'e o piso do Mestre e a entrada dele (1800)');
+}
+
+secao('assuntos por patamar');
+{
+  let divergentes = 0;
+  for (let patamar = 0; patamar <= 6; patamar += 1) {
+    const linha = await um<{ temas: string[]; pool: string }>(
+      'select public.ranked_temas($1) as temas, public.ranked_pool($1) as pool',
+      [patamar],
+    );
+    const esperado = [...temasDoPatamar(patamar)].sort();
+    if (
+      JSON.stringify([...linha.temas].sort()) !== JSON.stringify(esperado) ||
+      linha.pool !== poolDoPatamar(patamar)
+    ) {
+      divergentes += 1;
+      console.error(`       patamar ${patamar}: SQL=${JSON.stringify(linha)}`);
+    }
+  }
+  ok(divergentes === 0, 'os assuntos de cada patamar batem em SQL e TypeScript');
+
+  const base = await um<{ temas: string[] }>('select public.ranked_temas(3) as temas');
+  ok(
+    base.temas.length === 3 && base.temas.includes('python') && base.temas.includes('javascript'),
+    `ate Diamante 3 caem so Python, Logica e JavaScript (${base.temas.join(', ')})`,
+  );
+  ok(
+    !base.temas.includes('java') && !base.temas.includes('cpp') && !base.temas.includes('csharp'),
+    'sem Java, C# nem C++ nos patamares de baixo',
+  );
+
+  const completo = await um<{ temas: string[] }>('select public.ranked_temas(4) as temas');
+  ok(completo.temas.length === 6, `do Mitico em diante entram as 6 linguagens (${completo.temas.length})`);
+
+  const mestre = await um<{ temas: string[] }>('select public.ranked_temas(6) as temas');
+  ok(mestre.temas.length === 6, 'e continuam valendo ate o Mestre');
 }
 
 secao('paridade dos bots');
@@ -266,35 +337,51 @@ ok(denovo.numero === 1, 'chamar de novo no mesmo dia nao cria temporada nova');
 secao('partida ranqueada');
 
 const partida = (
-  await um<{ ranked_iniciar: string }>("select public.ranked_iniciar('python') as ranked_iniciar")
+  await um<{ ranked_iniciar: string }>('select public.ranked_iniciar() as ranked_iniciar')
 ).ranked_iniciar;
 ok(Boolean(partida), 'a partida comeca sem precisar de convite');
 
 const linhaPartida = await um<{
   modo: string;
+  tema: string;
   status: string;
   guest_id: string | null;
   bot_nome: string;
   bot_acerto: string;
   season_numero: number;
-}>('select modo, status, guest_id, bot_nome, bot_acerto, season_numero from public.matches where id = $1', [
-  partida,
-]);
+}>(
+  `select modo, tema, status, guest_id, bot_nome, bot_acerto, season_numero
+     from public.matches where id = $1`,
+  [partida],
+);
 ok(linhaPartida.modo === 'ranqueado', 'a partida nasce marcada como ranqueada');
+// A funcao nao aceita tema. Nem chamando na mao da para pedir "so Python".
+const comTema = await erroDe(() => db.query("select public.ranked_iniciar('python')"));
+ok(comTema !== null, 'nao existe versao de `ranked_iniciar` que aceite tema');
 ok(linhaPartida.status === 'ativa', 'e ja comeca ativa');
 ok(linhaPartida.guest_id === null, 'sem `guest_id`: o adversario e um bot');
 ok(linhaPartida.bot_nome === 'Bit', `o bot e o do Bronze (${linhaPartida.bot_nome})`);
 ok(linhaPartida.season_numero === 1, 'a partida fica presa a temporada atual');
+ok(
+  linhaPartida.tema === 'ranqueada-base',
+  `no Bronze a partida usa o pool basico (${linhaPartida.tema})`,
+);
 
-const perguntasDaPartida = await um<{ n: number; temas: number }>(
-  `select count(*)::int as n, count(distinct q.language_slug)::int as temas
+const perguntasDaPartida = await um<{ n: number; fora: number }>(
+  `select count(*)::int as n,
+          count(*) filter (
+            where q.language_slug not in ('python', 'geral', 'javascript')
+          )::int as fora
      from public.match_questions mq
      join public.pvp_questions q on q.id = mq.question_id
     where mq.match_id = $1`,
   [partida],
 );
 ok(perguntasDaPartida.n === 5, 'sorteou 5 perguntas');
-ok(perguntasDaPartida.temas === 1, 'todas do tema escolhido');
+ok(
+  perguntasDaPartida.fora === 0,
+  'e nenhuma delas e de linguagem que so entra no Mitico',
+);
 
 const estadoInicial = await um<{ modo: string; adversario: string; meu_desfecho: string | null }>(
   'select * from public.pvp_estado($1)',
@@ -406,7 +493,7 @@ ok(
 secao('nao da para fugir da partida');
 
 const segunda = (
-  await um<{ ranked_iniciar: string }>("select public.ranked_iniciar('todas') as ranked_iniciar")
+  await um<{ ranked_iniciar: string }>('select public.ranked_iniciar() as ranked_iniciar')
 ).ranked_iniciar;
 
 const cancelando = await erroDe(() => db.query('select public.pvp_cancelar($1)', [segunda]));
@@ -416,7 +503,7 @@ ok(
 );
 
 const mesmaPartida = await um<{ ranked_iniciar: string }>(
-  "select public.ranked_iniciar('todas') as ranked_iniciar",
+  'select public.ranked_iniciar() as ranked_iniciar',
 );
 ok(
   mesmaPartida.ranked_iniciar === segunda,
@@ -432,7 +519,7 @@ await db.query(
 );
 
 const terceira = (
-  await um<{ ranked_iniciar: string }>("select public.ranked_iniciar('todas') as ranked_iniciar")
+  await um<{ ranked_iniciar: string }>('select public.ranked_iniciar() as ranked_iniciar')
 ).ranked_iniciar;
 ok(terceira !== segunda, 'passados os 5 minutos, a partida velha sai da frente');
 
@@ -716,8 +803,123 @@ ok(
 );
 
 await como(null);
-const semLogin = await erroDe(() => db.query("select public.ranked_iniciar('todas')"));
+const semLogin = await erroDe(() => db.query('select public.ranked_iniciar()'));
 ok(semLogin !== null, 'sem sessao nao da para comecar partida ranqueada');
+
+/* =========================================================================
+ * 8. Leaderboard
+ * ====================================================================== */
+secao('leaderboard da temporada');
+await como(JOGADOR);
+
+// A temporada corrente aqui ja e a 6 (o teste de ferias virou varias). Dois
+// jogadores com elo diferente, para conferir ordem e posicao.
+const temporadaAgora = (
+  await um<{ numero: number }>('select numero from public.ranked_temporada_atual()')
+).numero;
+
+await db.query(
+  `insert into public.ranked_stats (season_numero, user_id, elo, pico_elo, vitorias, derrotas, partidas)
+   values ($1, $2, 900, 900, 20, 4, 24), ($1, $3, 1850, 1900, 60, 9, 69)
+   on conflict (season_numero, user_id) do update
+     set elo = excluded.elo, pico_elo = excluded.pico_elo, vitorias = excluded.vitorias,
+         derrotas = excluded.derrotas, partidas = excluded.partidas`,
+  [temporadaAgora, JOGADOR, OUTRO],
+);
+
+const global = await db.query<{
+  posicao: number;
+  user_id: string;
+  elo: number;
+  divisao: number;
+  name: string;
+}>("select * from public.ranked_ranking('global', 50)");
+
+ok(global.rows.length === 2, `o leaderboard global lista quem jogou (${global.rows.length})`);
+ok(global.rows[0].user_id === OUTRO, 'quem tem mais elo fica em 1o lugar');
+ok(global.rows[0].posicao === 1 && global.rows[1].posicao === 2, 'as posicoes vem numeradas');
+ok(global.rows[0].divisao === 18, 'e a divisao vem junto (1850 = Mestre)');
+ok(global.rows[1].elo === 900, 'o segundo colocado tem o elo certo');
+
+// Ninguem e amigo de ninguem ainda: a aba de amigos mostra so voce.
+const soEu = await db.query<{ user_id: string }>("select * from public.ranked_ranking('amigos', 50)");
+ok(soEu.rows.length === 1 && soEu.rows[0].user_id === JOGADOR, 'sem amigos, a aba mostra so voce');
+
+await db.query(
+  `insert into public.friendships (user_id, friend_id, status) values ($1, $2, 'accepted')
+   on conflict do nothing`,
+  [JOGADOR, OUTRO],
+);
+const comAmigo = await db.query<{ user_id: string }>(
+  "select * from public.ranked_ranking('amigos', 50)",
+);
+ok(comAmigo.rows.length === 2, 'com amizade confirmada, o amigo aparece na aba');
+
+// Quem nunca jogou nao entra - senao a lista viraria um cadastro de contas.
+const NOVATO = '44444444-4444-4444-4444-444444444444';
+await criarConta(NOVATO, 'Novato', 'novato');
+await db.query(
+  `insert into public.ranked_stats (season_numero, user_id) values ($1, $2)
+   on conflict do nothing`,
+  [temporadaAgora, NOVATO],
+);
+const semNovato = await db.query<{ user_id: string }>(
+  "select * from public.ranked_ranking('global', 50)",
+);
+ok(
+  !semNovato.rows.some((linha) => linha.user_id === NOVATO),
+  'quem tem 0 partidas nao aparece no leaderboard',
+);
+
+await como(null);
+const rankingSemLogin = await erroDe(() => db.query("select * from public.ranked_ranking('global')"));
+ok(rankingSemLogin !== null, 'e sem sessao nao da para ler o leaderboard');
+
+/* =========================================================================
+ * 9. Reaplicar a migracao
+ *
+ * O arquivo 0006 e feito para ser colado no SQL Editor mais de uma vez sem
+ * medo. O caso delicado e a troca de assinatura de `ranked_iniciar`: quem
+ * rodou um rascunho anterior tem a versao que aceitava tema, e ela PRECISA
+ * sumir - senao continuaria existindo uma porta para escolher o assunto.
+ * ====================================================================== */
+secao('reaplicar a migracao e seguro');
+{
+  // Finge que este banco rodou o rascunho antigo.
+  await db.exec(`
+    create or replace function public.ranked_iniciar(tema_escolhido text default 'todas')
+    returns uuid language sql as $f$ select null::uuid $f$;
+  `);
+
+  const antesDeReaplicar = await um<{ n: number }>(
+    'select count(*)::int as n from public.ranked_stats',
+  );
+
+  await db.exec(ler('supabase/migrations/0006_ranqueado.sql'));
+  ok(true, 'o arquivo inteiro roda de novo sem erro');
+
+  const assinaturas = await db.query<{ args: string }>(
+    `select pg_get_function_identity_arguments(p.oid) as args
+       from pg_proc p
+       join pg_namespace n on n.oid = p.pronamespace
+      where n.nspname = 'public' and p.proname = 'ranked_iniciar'`,
+  );
+  ok(
+    assinaturas.rows.length === 1 && assinaturas.rows[0].args === '',
+    `sobra so a versao sem tema de ranked_iniciar (${assinaturas.rows.length} assinatura(s))`,
+  );
+
+  const depoisDeReaplicar = await um<{ n: number }>(
+    'select count(*)::int as n from public.ranked_stats',
+  );
+  ok(
+    depoisDeReaplicar.n === antesDeReaplicar.n,
+    `reaplicar nao apaga o elo de ninguem (${depoisDeReaplicar.n} linhas)`,
+  );
+
+  const temporadas = await um<{ n: number }>('select count(*)::int as n from public.seasons');
+  ok(temporadas.n > 0, 'nem as temporadas ja criadas');
+}
 
 console.log(`\n${passaram} passaram, ${falharam} falharam`);
 if (falharam > 0) {

@@ -2,15 +2,29 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Bot, Clock, Info, Shield, Swords, TrendingDown, TrendingUp } from 'lucide-react';
+import {
+  Bot,
+  Clock,
+  Info,
+  ListOrdered,
+  Lock,
+  Shield,
+  TrendingDown,
+  TrendingUp,
+} from 'lucide-react';
 import { AppShell } from '@/components/AppShell';
 import { PatamarBadge } from '@/components/ranked/PatamarBadge';
-import { Button } from '@/components/ui/Button';
+import { Button, LinkButton } from '@/components/ui/Button';
 import { Card, CardTitle, Label, Pill, ProgressBar } from '@/components/ui/Card';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { useToast } from '@/components/ui/Toast';
-import { TEMAS_PVP } from '@/content/pvp-temas';
+import { nomeDoTema } from '@/content/pvp-temas';
 import { botDoElo } from '@/lib/ranked/bots';
+import {
+  PATAMAR_TEMAS_COMPLETOS,
+  temTodosOsTemas,
+  temasDoPatamar,
+} from '@/lib/ranked/temas';
 import {
   buscarEstadoRanqueada,
   buscarHistoricoRanqueada,
@@ -19,6 +33,7 @@ import {
 import {
   ESTILO_PATAMAR,
   PATAMARES,
+  eloInicialDoPatamar,
   ganhoDaVitoria,
   nomeDaDivisao,
   patamarDaDivisao,
@@ -49,7 +64,6 @@ function RanqueadoContent() {
   const [historico, setHistorico] = useState<TemporadaPassada[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
-  const [tema, setTema] = useState('todas');
   const [iniciando, setIniciando] = useState(false);
 
   const meuId = user?.id ?? '';
@@ -83,7 +97,7 @@ function RanqueadoContent() {
     if (!meuId) return;
     setIniciando(true);
     try {
-      const matchId = await iniciarRanqueada(meuId, tema);
+      const matchId = await iniciarRanqueada(meuId);
       router.push(`/duelo/?m=${encodeURIComponent(matchId)}`);
     } catch (falha) {
       showToast({
@@ -118,6 +132,9 @@ function RanqueadoContent() {
   const ganho = ganhoDaVitoria(estado.elo);
   const perda = perdaDaDerrota(estado.elo);
   const adversario = botDoElo(estado.elo);
+  const assuntos = temasDoPatamar(patamarDaDivisao(estado.divisao));
+  const todosOsAssuntos = temTodosOsTemas(patamarDaDivisao(estado.divisao));
+  const eloDoMitico = eloInicialDoPatamar(PATAMAR_TEMAS_COMPLETOS);
 
   return (
     <div className="space-y-4">
@@ -164,14 +181,15 @@ function RanqueadoContent() {
           <ProgressBar value={progresso.fracao} tone={estilo.barra} />
           <p className="mt-2 text-xs text-slate-500">
             {progresso.noTopo
-              ? 'Você está no topo da escada. Não existe divisão acima de Mestre 3.'
+              ? 'Você está no topo da escada: Mestre é o patamar mais alto e não tem sub-níveis.'
               : `Faltam ${progresso.faltam} de elo para ${nomeDaDivisao(estado.divisao + 1)}.`}
           </p>
         </div>
 
         <p className="mt-4 text-xs leading-relaxed text-slate-500">
-          Você não cai abaixo de {ESTILO_PATAMAR[patamar].nome} 1 enquanto a temporada durar — o
-          patamar conquistado não se perde, só o sub-nível.
+          {progresso.noTopo
+            ? 'Você não cai abaixo de Mestre enquanto a temporada durar. O elo continua contando para a sua posição no leaderboard.'
+            : `Você não cai abaixo de ${ESTILO_PATAMAR[patamar].nome} 1 enquanto a temporada durar — o patamar conquistado não se perde, só o sub-nível.`}
         </p>
       </section>
 
@@ -209,36 +227,46 @@ function RanqueadoContent() {
         </p>
       </Card>
 
-      {/* Tema e comecar -------------------------------------------------- */}
+      {/* Assuntos e comecar ---------------------------------------------- */}
       <Card>
         <CardTitle>
-          <Swords className="mr-2 inline h-5 w-5 text-mint-400" aria-hidden />
-          Escolha o tema
+          <ListOrdered className="mr-2 inline h-5 w-5 text-mint-400" aria-hidden />
+          O que cai nesta partida
         </CardTitle>
         <p className="mt-1 text-sm text-slate-400">
-          5 perguntas cronometradas. Quem acerta mais — e mais rápido — vence.
+          5 perguntas cronometradas. Quem acerta mais — e mais rápido — vence.{' '}
+          <strong className="text-slate-300">Você não escolhe o assunto</strong>: quem decide é o
+          seu patamar.
         </p>
 
-        <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3">
-          {TEMAS_PVP.map((item) => (
-            <button
-              key={item.slug}
-              type="button"
-              onClick={() => setTema(item.slug)}
-              className={cn(
-                'flex min-h-[52px] min-w-0 items-center gap-2 rounded-xl border px-3 py-2 text-left text-sm transition',
-                tema === item.slug
-                  ? 'border-mint-500/60 bg-mint-500/10 text-white'
-                  : 'border-white/10 bg-white/[0.03] text-slate-300 hover:border-white/25',
-              )}
-            >
-              <span className="shrink-0 text-lg" aria-hidden>
-                {item.icon}
-              </span>
-              <span className="min-w-0 truncate font-semibold">{item.nome}</span>
-            </button>
+        <div className="mt-4 flex flex-wrap gap-2">
+          {assuntos.map((slug) => (
+            <Pill key={slug} tone="mint">
+              {nomeDoTema(slug)}
+            </Pill>
           ))}
         </div>
+
+        {!todosOsAssuntos && (
+          <p className="mt-4 flex gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5 text-xs leading-relaxed text-slate-400">
+            <Lock className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" aria-hidden />
+            <span>
+              A partir do <strong className="text-slate-200">Mítico 1</strong> ({eloDoMitico} de
+              elo) entram também Java, C# e C++. Até lá a ranqueada cobra só o que a trilha ensina —
+              ou vai ensinar em seguida.
+            </span>
+          </p>
+        )}
+
+        {todosOsAssuntos && (
+          <p className="mt-4 flex gap-2 rounded-xl border border-violet-400/30 bg-violet-500/[0.07] px-3 py-2.5 text-xs leading-relaxed text-violet-200">
+            <Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+            <span>
+              Do Mítico para cima valem as seis linguagens. Daqui não dá mais para se apoiar só no
+              que você estudou na trilha.
+            </span>
+          </p>
+        )}
 
         {!isSupabaseConfigured && (
           <p className="mt-4 rounded-xl border border-amber-400/30 bg-amber-400/[0.07] px-3 py-2 text-xs leading-relaxed text-amber-200">
@@ -255,6 +283,13 @@ function RanqueadoContent() {
           <p className="mt-2 text-center text-xs text-slate-500">
             Uma partida por vez. Sair no meio conta como derrota depois de 5 minutos.
           </p>
+        </div>
+
+        <div className="mt-4 border-t border-white/10 pt-4 text-center">
+          <LinkButton href="/ranking" size="sm" variant="ghost">
+            <ListOrdered className="h-4 w-4" aria-hidden />
+            Ver o leaderboard da temporada
+          </LinkButton>
         </div>
       </Card>
 
@@ -292,14 +327,25 @@ function RanqueadoContent() {
         <CardTitle>Como a escada funciona</CardTitle>
         <ul className="mt-3 space-y-2 text-sm leading-relaxed text-slate-400">
           <li>
-            São <strong className="text-slate-200">7 patamares com 3 sub-níveis cada</strong> —
-            Bronze 1 até Mestre 3, 21 divisões no total. Cada divisão custa 100 de elo.
+            São <strong className="text-slate-200">7 patamares</strong>, do Bronze ao Mestre. Os
+            seis primeiros têm 3 sub-níveis (Bronze 1, Bronze 2, Bronze 3, Prata 1…);{' '}
+            <strong className="text-slate-200">Mestre é um só</strong>, sem sub-níveis, e é o topo
+            absoluto. Cada divisão custa 100 de elo.
+          </li>
+          <li>
+            Dentro do Mestre o elo continua subindo e descendo — é ele que define a sua posição no
+            leaderboard —, mas não existe mais divisão para alcançar.
+          </li>
+          <li>
+            <strong className="text-slate-200">O assunto acompanha o patamar.</strong> Até Diamante
+            3 caem Python, Lógica e JavaScript; do Mítico 1 em diante entram Java, C# e C++
+            também.
           </li>
           <li>
             Quanto mais alto o patamar,{' '}
             <strong className="text-slate-200">menos elo cada vitória vale</strong>: 40 no Bronze,
-            10 no Mestre. Subir de Bronze 1 para Bronze 2 leva 3 vitórias; de Mestre 1 para Mestre 2
-            leva 10.
+            10 no Mestre. Subir de Bronze 1 para Bronze 2 leva 3 vitórias; de Lendário 2 para
+            Lendário 3, 7.
           </li>
           <li>
             A temporada dura <strong className="text-slate-200">15 dias</strong>. No fim, todo mundo

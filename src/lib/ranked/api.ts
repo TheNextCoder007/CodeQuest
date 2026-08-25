@@ -6,11 +6,14 @@ import {
   finalizarRanqueadaLocal,
   historicoRanqueadaLocal,
   iniciarRanqueadaLocal,
+  rankingRanqueadaLocal,
   resultadoRanqueadoLocal,
   temporadaAtualLocal,
 } from './local';
 import type {
+  EscopoRanking,
   EstadoRanqueada,
+  LinhaRankingRanqueada,
   ResultadoRanqueado,
   Temporada,
   TemporadaPassada,
@@ -175,12 +178,61 @@ export const buscarTemporada = async (): Promise<Temporada> => {
 /**
  * Comeca (ou retoma) uma partida ranqueada.
  *
- * Quem escolhe o adversario e a dificuldade e o servidor, a partir do patamar
- * atual. O tema e a unica coisa que o jogador decide.
+ * Nao ha nada a escolher: o adversario, a dificuldade E os assuntos saem todos
+ * do patamar atual, decididos pelo servidor. Repare que a RPC nao leva nenhum
+ * argumento - nem chamando na mao daria para pedir "so Python".
  */
-export const iniciarRanqueada = async (userId: string, tema: string): Promise<string> => {
-  if (!isSupabaseConfigured) return iniciarRanqueadaLocal(userId, tema);
-  return rpc<string>('ranked_iniciar', { tema_escolhido: tema });
+export const iniciarRanqueada = async (userId: string): Promise<string> => {
+  if (!isSupabaseConfigured) return iniciarRanqueadaLocal(userId);
+  return rpc<string>('ranked_iniciar', {});
+};
+
+interface LinhaRanking {
+  posicao: number;
+  user_id: string;
+  name: string;
+  username: string | null;
+  avatar_url: string | null;
+  elo: number;
+  divisao: number;
+  vitorias: number;
+  derrotas: number;
+  partidas: number;
+  equipped_tag_id: string | null;
+  is_developer: boolean;
+}
+
+/** Leaderboard da temporada corrente: 'global' ou 'amigos'. */
+export const buscarRankingRanqueada = async (
+  escopo: EscopoRanking,
+  demo?: { id: string; nome: string; username: string | null; avatarUrl: string | null },
+  limite = 50,
+): Promise<LinhaRankingRanqueada[]> => {
+  if (!isSupabaseConfigured) {
+    if (!demo) return [];
+    return rankingRanqueadaLocal(demo.id, demo.nome, demo.username, demo.avatarUrl);
+  }
+
+  try {
+    const linhas = await rpc<LinhaRanking[]>('ranked_ranking', { escopo, limite });
+    return (linhas ?? []).map((linha) => ({
+      posicao: linha.posicao,
+      id: linha.user_id,
+      name: linha.name,
+      username: linha.username,
+      avatarUrl: linha.avatar_url,
+      elo: linha.elo,
+      divisao: linha.divisao,
+      vitorias: linha.vitorias,
+      derrotas: linha.derrotas,
+      partidas: linha.partidas,
+      equippedTagId: linha.equipped_tag_id,
+      isDeveloper: linha.is_developer,
+    }));
+  } catch (falha) {
+    if (falha instanceof Error && migracaoPendente(falha.message)) return [];
+    throw falha;
+  }
 };
 
 interface LinhaResultado {

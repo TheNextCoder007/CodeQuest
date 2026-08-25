@@ -131,6 +131,7 @@ CodeQuest/
 │   ├── migrations/0004_perfis_publicos.sql # tags, perfil público, avatar
 │   ├── migrations/0005_pvp.sql   # duelo 1v1 (perguntas, partidas, placar)
 │   ├── migrations/0006_ranqueado.sql # temporadas, elo, patamares, bots
+│   ├── migrations/0007_embaralhar_alternativas.sql # ordem sorteada por exibição
 │   ├── diagnostico.sql           # consultas de conferência (só leitura)
 │   └── seed.sql                  # conteúdo das trilhas (GERADO)
 ├── android/                      # projeto Android (Capacitor)
@@ -186,10 +187,12 @@ O Supabase dá um Postgres gerenciado + autenticação no plano gratuito, **sem 
    Esse arquivo cria o duelo 1v1 (ver [seção 12](#12-duelo-1v1-pvp)).
 7. Abra outra query, cole **todo** o conteúdo de [`supabase/migrations/0006_ranqueado.sql`](supabase/migrations/0006_ranqueado.sql) e rode.
    Esse arquivo cria o modo ranqueado — temporadas, elo e bots (ver [seção 13](#13-modo-ranqueado-temporadas-e-patamares)).
-8. Abra mais uma query, cole **todo** o conteúdo de [`supabase/seed.sql`](supabase/seed.sql) e rode também.
+8. Abra outra query, cole **todo** o conteúdo de [`supabase/migrations/0007_embaralhar_alternativas.sql`](supabase/migrations/0007_embaralhar_alternativas.sql) e rode.
+   Esse arquivo faz o servidor **embaralhar as alternativas** de cada pergunta (ver [seção 12.7](#126-por-que-as-alternativas-são-embaralhadas-no-servidor)).
+9. Abra mais uma query, cole **todo** o conteúdo de [`supabase/seed.sql`](supabase/seed.sql) e rode também.
    Esse arquivo popula as 5 linguagens, 24 lições, 46 exercícios, 30 conquistas, 17 tags e 60 perguntas de duelo.
 
-> Os sete scripts podem ser executados quantas vezes você quiser: eles usam
+> Os oito scripts podem ser executados quantas vezes você quiser: eles usam
 > `if not exists` / `on conflict do update` e não duplicam nem apagam nada.
 > Isso não é só promessa: `npm run test:migrations` aplica todos eles **três vezes
 > seguidas** num PostgreSQL de verdade e confere que o progresso de um aluno
@@ -841,6 +844,10 @@ A tela de **Amigos** mostra uma bolinha verde em quem está com o app aberto, us
 Supabase Realtime — o estado vive só enquanto a aba existir e some sozinho quando ela fecha, sem
 tabela, sem escrita no banco e sem faxina agendada.
 
+Quem enviou o convite pode **cancelar** enquanto o outro não responde — o botão fica na lista
+"Duelos em andamento". Depois que a partida começa o botão some: aí desistir seria fugir de uma
+derrota, e quem recusa isso é o servidor (`pvp_cancelar`), não a tela.
+
 Ao lado de cada amigo há o botão **Duelar**, que abre a escolha do tema e envia o convite. O convite
 chega em tempo real numa faixa no topo (em qualquer tela) com **Aceitar** / **Recusar**. Só é
 possível convidar **amigos confirmados**, e só há um convite por dupla de cada vez.
@@ -861,7 +868,43 @@ aproveitamento e tema favorito. Os números vêm de `pvp_stats`, escrita **só**
 
 E quatro conquistas acompanham os marcos (1, 10, 50 e 100 vitórias).
 
-### 12.6 No modo demonstração
+### 12.6 Por que as alternativas são embaralhadas no servidor
+
+O banco de perguntas foi escrito com a resposta certa **sempre na primeira posição** — 49 de 49.
+Enquanto as alternativas eram entregues na ordem gravada, dava para vencer um duelo inteiro
+clicando cinco vezes na opção de cima, sem ler nada.
+
+A correção está em [`0007_embaralhar_alternativas.sql`](supabase/migrations/0007_embaralhar_alternativas.sql),
+dentro de `pvp_pergunta`. Embaralhar no cliente não resolveria: bastaria abrir a aba de rede do
+navegador e ler a resposta da API **antes** de o JavaScript embaralhar — a primeira da lista
+continuaria sendo a certa.
+
+A ordem sorteada é gravada em `match_answers.alternativas`, uma linha por
+**(partida, jogador, pergunta)**. Isso dá duas propriedades:
+
+- **cada exibição tem a sua ordem** — a mesma pergunta caindo em outra partida, ou para o outro
+  jogador da mesma partida, é embaralhada de novo, de forma independente;
+- **recarregar a página devolve a mesma ordem** — sem isso, com o cronômetro correndo, as
+  alternativas dançariam embaixo do dedo de quem está respondendo.
+
+**A conferência da resposta não precisou mudar**, e vale entender por quê: ela nunca dependeu de
+posição. O cliente envia o **texto** da alternativa escolhida, e `pvp_responder` compara esse texto
+com o gabarito. Como não existe "índice da resposta certa" guardado em lugar nenhum, não há como
+uma exibição se confundir com outra — as duas comparam contra o mesmo gabarito, e a ordem em que as
+opções apareceram é irrelevante para a correção.
+
+`npm run test:pvp` entrega a mesma pergunta 40 vezes e confere que o gabarito passa por **todas** as
+posições, que nenhuma alternativa some ou apareça do nada, que reentregar a mesma exibição devolve a
+mesma ordem, e que responder com o texto certo continua acertando em todas as 40.
+
+> **Na trilha o problema era o mesmo** (15 de 15 exercícios com a resposta na primeira posição), mas
+> a correção é de outra natureza: a lição roda 100% offline e o gabarito já viaja no pacote do app,
+> então não há segredo a proteger — embaralhar ali é questão de ensino, e acontece no
+> [`ExercisePlayer`](src/components/exercise/ExercisePlayer.tsx). A ordem sai de uma semente
+> guardada em estado (e não de um `Math.random()` solto no render), para nunca reordenar as opções
+> enquanto a pessoa responde.
+
+### 12.7 No modo demonstração
 
 Sem Supabase não existe ninguém do outro lado, então a partida roda contra um **adversário simulado**
 com perfil configurável de acerto e velocidade ([`src/lib/pvp/local.ts`](src/lib/pvp/local.ts)) — que
@@ -880,7 +923,8 @@ A partida em si é a mesma — 5 perguntas cronometradas, mesma pontuação, mes
 
 ### 13.1 A escada
 
-São **7 patamares com 3 sub-níveis cada**, 21 divisões no total:
+São **7 patamares**, 19 divisões no total. Os seis primeiros têm 3 sub-níveis; **Mestre é um só**,
+sem sub-níveis, e é o topo absoluto:
 
 | Patamar | Divisões | Elo | Vitória | Derrota |
 |---|---|---|---|---|
@@ -890,13 +934,13 @@ São **7 patamares com 3 sub-níveis cada**, 21 divisões no total:
 | 💎 Diamante 1–3 | 9–11 | 900–1199 | +25 | −18 |
 | 🔮 Mítico 1–3 | 12–14 | 1200–1499 | +20 | −20 |
 | 👑 Lendário 1–3 | 15–17 | 1500–1799 | +15 | −22 |
-| 🏅 Mestre 1–3 | 18–20 | 1800+ | +10 | −25 |
+| 🏅 **Mestre** | 18 | 1800+ | +10 | −25 |
 
 Cada divisão custa **100 de elo**, sempre. Quem faz a subida ficar mais lenta lá em cima não é o
 tamanho da divisão — é o ganho por vitória, que cai de 40 para 10. Na prática: subir de Bronze 1
-para Bronze 2 leva **3 vitórias**; de Mestre 1 para Mestre 2 leva **10**. É a mesma curva do Brawl
-Stars, mas com uma vantagem: a tela consegue dizer "faltam 60 de 100", que é muito mais fácil de
-entender do que "faltam 2 vitórias e meia".
+para Bronze 2 leva **3 vitórias**; de Lendário 2 para Lendário 3 leva **7**. É a mesma curva do
+Brawl Stars, mas com uma vantagem: a tela consegue dizer "faltam 60 de 100", que é muito mais fácil
+de entender do que "faltam 2 vitórias e meia".
 
 Duas regras que existem para a coisa não ficar frustrante:
 
@@ -907,10 +951,34 @@ Duas regras que existem para a coisa não ficar frustrante:
   a mesma pontuação até o bônus de velocidade), e punir um resultado que ninguém controla só
   geraria reclamação.
 
-Mestre 3 é o teto da escada. O elo continua subindo depois dele — é ele que ordena quem já chegou
-lá —, mas a divisão trava.
+**Mestre é o teto da escada, e não tem sub-níveis.** Chegar lá (1800 de elo) é o fim da
+progressão: não existe "Mestre 2" para alcançar. O elo continua subindo e descendo dentro do
+Mestre, porque é ele que define a sua posição no leaderboard — mas a divisão trava em 18.
 
-### 13.2 Temporadas
+### 13.2 O que cai em cada patamar
+
+**O jogador não escolhe o assunto da partida ranqueada.** Escolher o assunto seria escolher a
+dificuldade: todo mundo jogaria só no que já domina, e a escada deixaria de medir o que se propõe a
+medir. Quem decide é o patamar:
+
+| Patamar | Assuntos sorteados |
+|---|---|
+| Bronze 1 → Diamante 3 | 🐍 Python · 🧠 Lógica · 🟨 JavaScript |
+| Mítico 1 → Mestre | as **seis** linguagens (+ ☕ Java, 🎯 C#, ⚡ C++) |
+
+A ideia é que a ranqueada acompanhe a trilha. Hoje só a de Python está pronta (a de JavaScript vem
+em seguida), então os patamares de baixo cobram o que o aluno de fato estudou; do Mítico para cima
+o jogo passa a exigir repertório além da trilha — e isso é parte da dificuldade.
+
+Isso vive no servidor, em [`ranked_temas()`](supabase/migrations/0006_ranqueado.sql):
+`ranked_iniciar()` **não aceita parâmetro de tema**, então nem chamando a função na mão dá para
+pedir "só Python" quando se está no Mítico. O duelo com amigo continua com tema escolhido — lá a
+graça é justamente combinar o assunto com a outra pessoa.
+
+> **Nota:** o banco de perguntas ainda é pequeno fora de Python (60 perguntas no total), então nos
+> patamares de baixo há repetição. Ele cresce junto com as trilhas novas.
+
+### 13.3 Temporadas
 
 A temporada dura **15 dias corridos**. No fim, todo mundo volta para Bronze 1 e uma nova começa.
 
@@ -926,7 +994,7 @@ pessoa simplesmente ainda não tem linha — e quem não tem linha está em Bron
 linhas antigas ficam onde estão, e são elas o histórico: o perfil mostra "Temporadas passadas" com
 o patamar mais alto que você alcançou em cada uma.
 
-### 13.3 Os bots
+### 13.4 Os bots
 
 Enquanto o CodeQuest não tiver gente ranqueada suficiente para formar dupla na hora, a partida é
 contra um adversário da casa. Ele não tem inteligência nenhuma — responde com uma taxa de acerto e
@@ -955,7 +1023,7 @@ em `matches`, com `modo = 'ranqueado'`. Para trocar por duelo entre dois humanos
 preencher `guest_id` em vez de `bot_nome` na criação da partida — `pvp_finalizar` já aplica elo aos
 dois lados quando os dois existem. Nada de patamar, temporada ou histórico precisa ser reescrito.
 
-### 13.4 Como a validação no servidor funciona
+### 13.5 Como a validação no servidor funciona
 
 Mesma regra da Fase 3: o app é 100% client-side, então "validar no servidor" quer dizer **validar
 dentro do PostgreSQL** ([`0006_ranqueado.sql`](supabase/migrations/0006_ranqueado.sql)).
@@ -967,6 +1035,8 @@ dentro do PostgreSQL** ([`0006_ranqueado.sql`](supabase/migrations/0006_ranquead
   enviado pelo aparelho.
 - **As jogadas do bot não são legíveis** pelo cliente (`match_bot_answers` tem RLS ligado e zero
   policies): lê-las antes do fim entregaria o placar do adversário.
+- **Não dá para escolher o assunto.** `ranked_iniciar()` não tem parâmetro de tema; os assuntos
+  saem de `ranked_temas(patamar)`, dentro do banco.
 - **Não dá para fugir de uma derrota.** `pvp_cancelar` recusa partida ranqueada; só existe uma
   partida aberta por vez; e quem fecha o app ganhando leva a derrota assim mesmo — passados 5
   minutos a partida é encerrada com o placar parcial, e o bot completa as respostas dele.
@@ -975,12 +1045,28 @@ Isso tudo é testado, não prometido: `npm run test:ranqueado` sobe um PostgreSQ
 (PGlite), joga partidas inteiras pelas mesmas funções que o app chama, tenta cada uma dessas
 fugas, e confere por introspecção que nenhuma tabela de elo aceita escrita direta.
 
-### 13.5 Conquistas
+### 13.6 Leaderboard da temporada
+
+Em **`/ranking`** há um seletor entre **XP** e **Ranqueada**, e cada um mantém as abas
+**Global** e **Amigos** — as mesmas do ranking de XP.
+
+São duas listas diferentes de propósito: XP responde "quem mais estudou" (esforço acumulado, nunca
+zera) e Ranqueada responde "quem está jogando melhor agora" (patamar e elo da temporada corrente,
+zera a cada 15 dias). Juntar as duas numa lista só não faria sentido.
+
+Só aparece quem já jogou pelo menos uma partida ranqueada: uma lista com dezenas de contas
+empatadas em Bronze 1 com zero partidas não é um ranking, é ruído. O desempate é por vitórias e
+depois por nome, para a ordem ficar estável entre duas leituras.
+
+A consulta é `ranked_ranking(escopo, limite)`, `security definer` — a aba "Amigos" filtra pelas
+amizades confirmadas no próprio banco, e não no aparelho.
+
+### 13.7 Conquistas
 
 Uma conquista por **patamar alcançado** — "Alcançou Prata", "Alcançou Ouro", até "Alcançou
 Mestre". São 6 (Bronze fica de fora: é onde todo mundo começa).
 
-A escolha foi por patamar inteiro e não por sub-nível porque 21 divisões dariam 21 medalhas quase
+A escolha foi por patamar inteiro e não por sub-nível porque 19 divisões dariam 19 medalhas quase
 iguais, e a lista de conquistas viraria uma planilha. Chegar a Ouro 1 já conta como "alcançou
 Ouro".
 
@@ -991,7 +1077,7 @@ então o reset de 15 dias não apaga a medalha.
 isso não conta para as tags de duelo — senão "Imortal — 100 vitórias" viraria uma tarde de farm.
 Os dois cartéis são separados no perfil.
 
-### 13.6 No modo demonstração
+### 13.8 No modo demonstração
 
 Sem Supabase, a temporada e o elo ficam guardados no próprio aparelho
 ([`src/lib/ranked/local.ts`](src/lib/ranked/local.ts)), com a mesma escada, os mesmos bots e a

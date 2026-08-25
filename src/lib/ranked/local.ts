@@ -10,9 +10,12 @@ import {
 } from '@/lib/pvp/local';
 import type { DesfechoPessoal } from '@/lib/pvp/tipos';
 import { botDoElo } from './bots';
-import { divisaoDoElo, novoElo, type ResultadoRanqueada } from './patamares';
+import { divisaoDoElo, novoElo, patamarDaDivisao, type ResultadoRanqueada } from './patamares';
+import { poolDoPatamar, temasDoPatamar } from './temas';
 import type {
+  EscopoRanking,
   EstadoRanqueada,
+  LinhaRankingRanqueada,
   ResultadoRanqueado,
   Temporada,
   TemporadaPassada,
@@ -225,8 +228,10 @@ const ABANDONO_MS = 5 * 60 * 1000;
  * Mesma regra do servidor: uma partida por vez. Enquanto os 5 minutos nao
  * passam, pedir partida nova devolve a que ja estava aberta; passados eles, a
  * velha e encerrada com o placar parcial antes de comecar outra.
+ *
+ * O assunto tambem sai do patamar, como no servidor - nao ha o que escolher.
  */
-export const iniciarRanqueadaLocal = async (userId: string, tema: string): Promise<string> => {
+export const iniciarRanqueadaLocal = async (userId: string): Promise<string> => {
   const aberta = ranqueadaAbertaLocal(userId);
   if (aberta) {
     if (aberta.comecouHaMs < ABANDONO_MS) return aberta.id;
@@ -235,8 +240,53 @@ export const iniciarRanqueadaLocal = async (userId: string, tema: string): Promi
   }
 
   const { elo } = estadoRanqueadaLocal(userId);
+  const patamar = patamarDaDivisao(divisaoDoElo(elo));
   const bot = botDoElo(elo);
-  return criarDueloLocal(userId, `bot-${bot.patamar}`, bot.nome, tema, bot, 'ranqueado');
+
+  return criarDueloLocal(
+    userId,
+    `bot-${bot.patamar}`,
+    bot.nome,
+    poolDoPatamar(patamar),
+    bot,
+    'ranqueado',
+    temasDoPatamar(patamar),
+  );
+};
+
+/**
+ * Leaderboard no modo demonstracao.
+ *
+ * Sem servidor so existe uma conta neste aparelho, entao a lista tem no maximo
+ * uma linha - e ela some enquanto a pessoa nao jogar nenhuma partida, igual ao
+ * servidor. Serve para a tela poder ser demonstrada offline sem parecer
+ * quebrada.
+ */
+export const rankingRanqueadaLocal = (
+  userId: string,
+  nome: string,
+  username: string | null,
+  avatarUrl: string | null,
+): LinhaRankingRanqueada[] => {
+  const estado = estadoRanqueadaLocal(userId);
+  if (estado.partidas === 0) return [];
+
+  return [
+    {
+      posicao: 1,
+      id: userId,
+      name: nome,
+      username,
+      avatarUrl,
+      elo: estado.elo,
+      divisao: estado.divisao,
+      vitorias: estado.vitorias,
+      derrotas: estado.derrotas,
+      partidas: estado.partidas,
+      equippedTagId: null,
+      isDeveloper: false,
+    },
+  ];
 };
 
 /**

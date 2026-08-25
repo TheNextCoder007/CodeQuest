@@ -44,6 +44,25 @@ export interface TemporadaPassada {
   partidas: number;
 }
 
+/** Uma linha do leaderboard da ranqueada. */
+export interface LinhaRankingRanqueada {
+  posicao: number;
+  id: string;
+  name: string;
+  username: string | null;
+  avatarUrl: string | null;
+  elo: number;
+  divisao: number;
+  vitorias: number;
+  derrotas: number;
+  partidas: number;
+  equippedTagId: string | null;
+  isDeveloper: boolean;
+}
+
+/** As duas listas do leaderboard, iguais as do ranking de XP. */
+export type EscopoRanking = 'global' | 'amigos';
+
 /** O que mudou no elo por causa de uma partida ranqueada. */
 export interface ResultadoRanqueado {
   eloAntes: number;

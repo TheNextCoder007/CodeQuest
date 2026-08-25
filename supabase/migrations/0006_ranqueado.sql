@@ -27,6 +27,10 @@
 --     humano responde a mesma pergunta. O cliente nao sorteia nada.
 --   * `pvp_cancelar` passa a recusar partida ranqueada: sem isso daria para
 --     cancelar toda partida que estivesse perdendo.
+--   * A ranqueada NAO deixa escolher o assunto (ver `ranked_temas` e
+--     `ranked_iniciar`). Quem decide e o patamar, e a decisao e do servidor:
+--     `ranked_iniciar` nem aceita parametro de tema, entao nao adianta chamar
+--     a funcao na mao pedindo "so Python".
 --
 -- ---------------------------------------------------------------------------
 -- O QUE ESTE ARQUIVO SUBSTITUI DA 0005
@@ -258,25 +262,35 @@ create policy "elo de ranqueada e publico"
 -- ESPELHO de `src/lib/ranked/patamares.ts`. `npm run test:ranqueado` roda as
 -- duas versoes lado a lado e falha se elas discordarem em qualquer valor.
 --
--- 7 patamares x 3 sub-niveis = 21 divisoes (0 = Bronze 1 ... 20 = Mestre 3).
+-- Os SEIS primeiros patamares tem 3 sub-niveis; **Mestre nao tem** - e um
+-- patamar unico e o topo absoluto. Sao 6 x 3 + 1 = 19 divisoes
+-- (0 = Bronze 1 ... 17 = Lendario 3, 18 = Mestre).
+--
 -- Cada divisao custa 100 de elo. O que faz a subida ficar mais lenta la em
 -- cima nao e o tamanho da divisao, e o ganho por vitoria: 40 no Bronze (2,5
--- vitorias por divisao) contra 10 no Mestre (10 vitorias por divisao).
+-- vitorias por divisao) contra 10 no Mestre.
+--
+-- Dentro do Mestre o elo continua subindo e descendo - e ele que ordena o
+-- leaderboard entre quem ja chegou la -, mas nao ha mais divisao a alcancar.
 -- ---------------------------------------------------------------------------
 
 create or replace function public.ranked_divisao(elo int)
 returns int language sql immutable as $$
-  select least(20, greatest(0, coalesce(elo, 0)) / 100);
+  select least(18, greatest(0, coalesce(elo, 0)) / 100);
 $$;
 
 create or replace function public.ranked_patamar(divisao int)
 returns int language sql immutable as $$
-  select least(20, greatest(0, coalesce(divisao, 0))) / 3;
+  select least(18, greatest(0, coalesce(divisao, 0))) / 3;
 $$;
 
+/** 1, 2 ou 3 - e **0** no Mestre, que nao tem sub-nivel. */
 create or replace function public.ranked_subnivel(divisao int)
 returns int language sql immutable as $$
-  select (least(20, greatest(0, coalesce(divisao, 0))) % 3) + 1;
+  select case when least(18, greatest(0, coalesce(divisao, 0))) >= 18
+              then 0
+              else (least(18, greatest(0, coalesce(divisao, 0))) % 3) + 1
+         end;
 $$;
 
 /** Elo ganho por uma vitoria com esse elo. Diminui conforme o patamar sobe. */
@@ -329,6 +343,33 @@ returns text language sql immutable as $$
            when 'derrota' then 'vitoria'
            else 'empate'
          end;
+$$;
+
+/**
+ * Quais assuntos caem na partida ranqueada, conforme o patamar.
+ *
+ * ESPELHO de `src/lib/ranked/temas.ts`.
+ *
+ *   Bronze 1 ate Diamante 3 (patamares 0 a 3) -> Python, Logica e JavaScript
+ *   Mitico 1 em diante      (patamares 4 a 6) -> as seis linguagens
+ *
+ * A ranqueada acompanha a trilha: os patamares de baixo cobram o que o aluno
+ * de fato estudou (JavaScript entra porque a trilha dela vem em seguida), e do
+ * Mitico para cima o jogo passa a exigir repertorio alem dela. Isso e parte da
+ * dificuldade, e por isso vive AQUI, no servidor.
+ */
+create or replace function public.ranked_temas(patamar int)
+returns text[] language sql immutable as $$
+  select case when coalesce(patamar, 0) >= 4
+              then array['python', 'geral', 'javascript', 'java', 'csharp', 'cpp']
+              else array['python', 'geral', 'javascript']
+         end;
+$$;
+
+/** Nome do pool gravado em `matches.tema`, para saber o regime da partida. */
+create or replace function public.ranked_pool(patamar int)
+returns text language sql immutable as $$
+  select case when coalesce(patamar, 0) >= 4 then 'ranqueada-total' else 'ranqueada-base' end;
 $$;
 
 -- ---------------------------------------------------------------------------
@@ -499,7 +540,21 @@ $$;
 -- 8. Comecar uma partida ranqueada
 -- ---------------------------------------------------------------------------
 
-create or replace function public.ranked_iniciar(tema_escolhido text default 'todas')
+-- A versao anterior aceitava o tema; a de agora nao. O `drop` deixa a troca
+-- segura para quem chegou a rodar um rascunho deste arquivo.
+drop function if exists public.ranked_iniciar(text);
+
+/**
+ * Comeca (ou retoma) uma partida ranqueada.
+ *
+ * Repare que NAO ha parametro de tema. Os assuntos saem de `ranked_temas()`, a
+ * partir do patamar do jogador - escolher o assunto seria escolher a
+ * dificuldade, e a escada deixaria de medir o que se propoe a medir.
+ *
+ * O duelo com amigo (`pvp_convidar`) continua com tema escolhido: la a graca e
+ * justamente combinar o assunto com a outra pessoa.
+ */
+create or replace function public.ranked_iniciar()
 returns uuid
 language plpgsql
 security definer
@@ -509,6 +564,8 @@ declare
   eu           uuid := auth.uid();
   temporada    public.seasons;
   meu_elo      int;
+  meu_patamar  int;
+  temas        text[];
   aberta       public.matches;
   adversario   record;
   nova         uuid;
@@ -548,25 +605,28 @@ begin
     perform public.pvp_finalizar(aberta.id);
   end if;
 
+  meu_patamar := public.ranked_patamar(public.ranked_divisao(meu_elo));
+  temas       := public.ranked_temas(meu_patamar);
+
   select count(*) into disponiveis
     from public.pvp_questions q
-   where tema_escolhido = 'todas' or q.language_slug = tema_escolhido;
+   where q.language_slug = any (temas);
 
   if disponiveis < quantidade then
-    raise exception 'Nao ha perguntas suficientes para o tema %', tema_escolhido;
+    raise exception 'Nao ha perguntas suficientes para uma partida ranqueada';
   end if;
 
   -- A dificuldade do bot sai do patamar do jogador, decidida AQUI. O cliente
   -- nao escolhe contra quem joga.
-  select * into adversario
-    from public.ranked_bot(public.ranked_patamar(public.ranked_divisao(meu_elo)));
+  select * into adversario from public.ranked_bot(meu_patamar);
 
   insert into public.matches (
     tema, status, modo, host_id, guest_id, total_perguntas, season_numero,
     bot_nome, bot_acerto, bot_ms_min, bot_ms_max, started_at
   )
   values (
-    tema_escolhido, 'ativa', 'ranqueado', eu, null, quantidade, temporada.numero,
+    public.ranked_pool(meu_patamar), 'ativa', 'ranqueado', eu, null, quantidade,
+    temporada.numero,
     adversario.nome, adversario.acerto, adversario.ms_min, adversario.ms_max, now()
   )
   returning id into nova;
@@ -575,7 +635,7 @@ begin
   select nova, row_number() over (), q.id
     from (
       select id from public.pvp_questions
-       where tema_escolhido = 'todas' or language_slug = tema_escolhido
+       where language_slug = any (temas)
        order by random()
        limit quantidade
     ) q;
@@ -694,6 +754,80 @@ begin
        and s.numero < t.numero
      order by s.numero desc
      limit greatest(1, least(50, coalesce(limite, 12)));
+end;
+$$;
+
+/**
+ * Leaderboard da temporada corrente.
+ *
+ * `escopo` e 'global' ou 'amigos' - a mesma divisao do ranking de XP. Em
+ * 'amigos' entram as amizades confirmadas mais a propria pessoa.
+ *
+ * So aparece quem ja jogou (`partidas > 0`): uma lista com dezenas de contas
+ * empatadas em Bronze 1 com zero partidas nao e um ranking, e so ruido.
+ *
+ * O desempate e por vitorias e depois por nome, para a ordem ser estavel entre
+ * duas leituras seguidas.
+ */
+create or replace function public.ranked_ranking(escopo text default 'global', limite int default 50)
+returns table (
+  posicao          int,
+  user_id          uuid,
+  name             text,
+  username         text,
+  avatar_url       text,
+  elo              int,
+  divisao          int,
+  vitorias         int,
+  derrotas         int,
+  partidas         int,
+  equipped_tag_id  text,
+  is_developer     boolean
+)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  eu uuid := auth.uid();
+  t  public.seasons;
+begin
+  if eu is null then
+    raise exception 'Precisa estar autenticado';
+  end if;
+
+  t := public.ranked_temporada_atual();
+
+  return query
+    select (row_number() over (order by r.elo desc, r.vitorias desc, p.name asc))::int,
+           p.id,
+           p.name,
+           p.username,
+           p.avatar_url,
+           r.elo,
+           public.ranked_divisao(r.elo),
+           r.vitorias,
+           r.derrotas,
+           r.partidas,
+           p.equipped_tag_id,
+           p.is_developer
+      from public.ranked_stats r
+      join public.profiles p on p.id = r.user_id
+     where r.season_numero = t.numero
+       and r.partidas > 0
+       and (
+         escopo is distinct from 'amigos'
+         or p.id = eu
+         or exists (
+           select 1
+             from public.friendships f
+            where f.status = 'accepted'
+              and ((f.user_id = eu and f.friend_id = p.id)
+                or (f.user_id = p.id and f.friend_id = eu))
+         )
+       )
+     order by r.elo desc, r.vitorias desc, p.name asc
+     limit greatest(1, least(200, coalesce(limite, 50)));
 end;
 $$;
 
@@ -986,9 +1120,10 @@ revoke all on function public.ranked_bot_completar(uuid, int)           from pub
 revoke all on function public.ranked_bot_completar(uuid, int)           from authenticated;
 
 grant execute on function public.ranked_temporada_atual()          to authenticated;
-grant execute on function public.ranked_iniciar(text)              to authenticated;
+grant execute on function public.ranked_iniciar()                  to authenticated;
 grant execute on function public.ranked_estado(uuid)               to authenticated;
 grant execute on function public.ranked_historico(uuid, int)       to authenticated;
+grant execute on function public.ranked_ranking(text, int)         to authenticated;
 grant execute on function public.ranked_resultado(uuid)            to authenticated;
 grant execute on function public.pvp_estado(uuid)                  to authenticated;
 grant execute on function public.pvp_finalizar(uuid)               to authenticated;

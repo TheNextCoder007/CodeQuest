@@ -1,11 +1,6 @@
 'use client';
 
-import {
-  ESTILO_PATAMAR,
-  PATAMARES,
-  patamarDaDivisao,
-  subnivelDaDivisao,
-} from '@/lib/ranked/patamares';
+import { ESTILO_PATAMAR, PATAMARES, nomeDaDivisao, patamarDaDivisao } from '@/lib/ranked/patamares';
 import { cn } from '@/lib/cn';
 
 /**
@@ -37,9 +32,8 @@ export function PatamarBadge({
       )}
     >
       <span aria-hidden>{estilo.emoji}</span>
-      <span className="min-w-0 truncate">
-        {estilo.nome} {subnivelDaDivisao(divisao)}
-      </span>
+      {/* `nomeDaDivisao` ja resolve o Mestre, que nao tem sub-nivel. */}
+      <span className="min-w-0 truncate">{nomeDaDivisao(divisao)}</span>
     </span>
   );
 }

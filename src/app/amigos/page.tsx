@@ -20,7 +20,7 @@ import { displayUsername } from '@/lib/username';
 import { TagBadge } from '@/components/social/TagBadge';
 import { ConviteDuelo } from '@/components/pvp/ConviteDuelo';
 import { usePresenca } from '@/lib/presenca';
-import { partidasAbertas } from '@/lib/pvp/api';
+import { cancelarPartida, partidasAbertas } from '@/lib/pvp/api';
 import { nomeDoTema } from '@/content/pvp-temas';
 import type { ResumoPartida } from '@/lib/pvp/tipos';
 import { tagById } from '@/content/tags';
@@ -122,9 +122,32 @@ function AmigosContent() {
   /** Duelo: quem esta online agora e qual convite esta sendo montado. */
   const [convidando, setConvidando] = useState<PublicProfile | null>(null);
   const [emAndamento, setEmAndamento] = useState<ResumoPartida[]>([]);
+  /** Id do convite que esta sendo cancelado agora (trava o botao). */
+  const [cancelando, setCancelando] = useState<string | null>(null);
 
   const meuId = user?.id ?? '';
   const online = usePresenca(meuId || undefined, state?.profile.username);
+
+  /**
+   * Desiste de um convite que EU enviei e que ainda nao foi respondido.
+   *
+   * Quem decide se pode e o servidor (`pvp_cancelar`): partida ranqueada e
+   * partida ja em andamento sao recusadas la, nao so escondendo o botao.
+   */
+  const cancelarConvite = useCallback(
+    async (matchId: string) => {
+      setCancelando(matchId);
+      try {
+        await cancelarPartida(matchId);
+        setEmAndamento((atuais) => atuais.filter((partida) => partida.id !== matchId));
+      } catch (falha) {
+        setErro(falha instanceof Error ? falha.message : 'Não foi possível cancelar o convite.');
+      } finally {
+        setCancelando(null);
+      }
+    },
+    [],
+  );
 
   const recarregarPartidas = useCallback(() => {
     if (!meuId) return;
@@ -266,13 +289,27 @@ function AmigosContent() {
                         : 'convite esperando você'
                       : 'partida em andamento'}
                   </span>
-                  <LinkButton
-                    href={`/duelo/?m=${encodeURIComponent(partida.id)}`}
-                    size="sm"
-                    variant={esperando && souAnfitriao ? 'ghost' : 'primary'}
-                  >
-                    {esperando && souAnfitriao ? 'Ver' : 'Entrar'}
-                  </LinkButton>
+                  {/* Quem convidou pode desistir enquanto o outro nao responde.
+                      Depois que a partida comeca o botao some: ai desistir
+                      seria fugir de uma derrota. */}
+                  {esperando && souAnfitriao ? (
+                    <Button
+                      size="sm"
+                      variant="danger"
+                      loading={cancelando === partida.id}
+                      onClick={() => void cancelarConvite(partida.id)}
+                    >
+                      <X className="h-4 w-4" aria-hidden />
+                      Cancelar convite
+                    </Button>
+                  ) : (
+                    <LinkButton
+                      href={`/duelo/?m=${encodeURIComponent(partida.id)}`}
+                      size="sm"
+                    >
+                      Entrar
+                    </LinkButton>
+                  )}
                 </li>
               );
             })}

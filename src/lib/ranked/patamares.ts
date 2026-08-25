@@ -23,8 +23,13 @@
 /**
  * Os sete patamares, do mais baixo ao mais alto.
  *
- * Cada um tem 3 sub-niveis (Bronze 1, Bronze 2, Bronze 3, Prata 1...), o que
- * da 21 divisoes no total. Mestre 3 e o teto.
+ * Os seis primeiros tem 3 sub-niveis (Bronze 1, Bronze 2, Bronze 3, Prata 1...).
+ * **Mestre nao tem sub-nivel**: e um patamar unico e o topo absoluto da escada.
+ * Sao 6 x 3 + 1 = 19 divisoes.
+ *
+ * Chegar a Mestre nao para o elo: ele continua subindo e descendo, porque e
+ * ele que ordena o leaderboard entre quem ja chegou la. O que acaba e a
+ * progressao - nao existe "Mestre 2" para alcancar.
  */
 export const PATAMARES = [
   'bronze',
@@ -40,8 +45,11 @@ export type Patamar = (typeof PATAMARES)[number];
 
 export const SUBNIVEIS_POR_PATAMAR = 3;
 
-/** 21 divisoes: 0 = Bronze 1 ... 20 = Mestre 3. */
-export const TOTAL_DIVISOES = PATAMARES.length * SUBNIVEIS_POR_PATAMAR;
+/** Indice do Mestre (6). E o unico patamar sem sub-niveis. */
+export const PATAMAR_MESTRE = PATAMARES.length - 1;
+
+/** 19 divisoes: 0 = Bronze 1 ... 17 = Lendario 3, 18 = Mestre. */
+export const TOTAL_DIVISOES = PATAMAR_MESTRE * SUBNIVEIS_POR_PATAMAR + 1;
 export const DIVISAO_MAXIMA = TOTAL_DIVISOES - 1;
 
 /**
@@ -88,10 +96,11 @@ const limitar = (valor: number, minimo: number, maximo: number): number =>
   Math.max(minimo, Math.min(maximo, valor));
 
 /**
- * Divisao (0 a 20) correspondente a um elo.
+ * Divisao (0 a 18) correspondente a um elo.
  *
- * O elo continua crescendo depois de Mestre 3 - e ele que ordena o ranking
- * entre quem ja chegou ao teto -, mas a divisao trava em 20.
+ * O elo continua crescendo depois que a pessoa entra em Mestre - e ele que
+ * ordena o leaderboard entre quem ja chegou ao teto -, mas a divisao trava
+ * em 18.
  */
 export const divisaoDoElo = (elo: number): number =>
   limitar(Math.floor(Math.max(0, elo) / ELO_POR_DIVISAO), 0, DIVISAO_MAXIMA);
@@ -100,9 +109,20 @@ export const divisaoDoElo = (elo: number): number =>
 export const patamarDaDivisao = (divisao: number): number =>
   Math.floor(limitar(divisao, 0, DIVISAO_MAXIMA) / SUBNIVEIS_POR_PATAMAR);
 
-/** Sub-nivel dentro do patamar: 1, 2 ou 3. */
-export const subnivelDaDivisao = (divisao: number): number =>
-  (limitar(divisao, 0, DIVISAO_MAXIMA) % SUBNIVEIS_POR_PATAMAR) + 1;
+/** Mestre e o unico patamar sem sub-niveis. */
+export const temSubnivel = (divisao: number): boolean =>
+  limitar(divisao, 0, DIVISAO_MAXIMA) < DIVISAO_MAXIMA;
+
+/**
+ * Sub-nivel dentro do patamar: 1, 2 ou 3.
+ *
+ * Devolve **0** no Mestre, que nao tem sub-nivel. Quem for escrever na tela
+ * deve usar `nomeDaDivisao`, que ja trata isso.
+ */
+export const subnivelDaDivisao = (divisao: number): number => {
+  const segura = limitar(divisao, 0, DIVISAO_MAXIMA);
+  return temSubnivel(segura) ? (segura % SUBNIVEIS_POR_PATAMAR) + 1 : 0;
+};
 
 export const patamarDoElo = (elo: number): Patamar =>
   PATAMARES[patamarDaDivisao(divisaoDoElo(elo))];
@@ -148,11 +168,11 @@ export const deltaDaPartida = (elo: number, resultado: ResultadoRanqueada): numb
 export interface ProgressoDivisao {
   /** Elo acumulado dentro da divisao atual (0 a 99). */
   atual: number;
-  /** Sempre `ELO_POR_DIVISAO`, exceto em Mestre 3, onde nao ha proximo. */
+  /** Sempre `ELO_POR_DIVISAO`, exceto no Mestre, onde nao ha proximo. */
   alvo: number;
-  /** 0 a 1, para a barra. Em Mestre 3 fica cheia. */
+  /** 0 a 1, para a barra. No Mestre fica cheia. */
   fracao: number;
-  /** Quanto falta para a proxima divisao (0 em Mestre 3). */
+  /** Quanto falta para a proxima divisao (0 no Mestre). */
   faltam: number;
   /** true quando ja esta no teto da escada. */
   noTopo: boolean;
@@ -256,10 +276,11 @@ export const ESTILO_PATAMAR: Record<Patamar, EstiloPatamar> = {
   },
 };
 
-/** Ex.: "Ouro 2". */
+/** Ex.: "Ouro 2" - e so "Mestre" no topo, que nao tem sub-nivel. */
 export const nomeDaDivisao = (divisao: number): string => {
   const patamar = PATAMARES[patamarDaDivisao(divisao)];
-  return `${ESTILO_PATAMAR[patamar].nome} ${subnivelDaDivisao(divisao)}`;
+  const nome = ESTILO_PATAMAR[patamar].nome;
+  return temSubnivel(divisao) ? `${nome} ${subnivelDaDivisao(divisao)}` : nome;
 };
 
 /** Ex.: "Ouro 2" a partir do elo. */
