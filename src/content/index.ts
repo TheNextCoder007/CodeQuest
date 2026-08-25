@@ -6,13 +6,24 @@ import { repeticoes } from './python/04-repeticoes';
 import { funcoes } from './python/05-funcoes';
 import { desafios } from './python/06-desafios';
 import { projetoFinal } from './python/07-projeto-final';
+import { fundamentos as jsFundamentos } from './javascript/01-fundamentos';
+import { variaveis as jsVariaveis } from './javascript/02-variaveis';
+import { condicionais as jsCondicionais } from './javascript/03-condicionais';
+import { repeticoes as jsRepeticoes } from './javascript/04-repeticoes';
+import { funcoes as jsFuncoes } from './javascript/05-funcoes';
+import { desafios as jsDesafios } from './javascript/06-desafios';
+import { projetoFinal as jsProjetoFinal } from './javascript/07-projeto-final';
 
 /**
  * Catalogo de linguagens do CodeQuest.
  *
- * No MVP apenas Python tem conteudo populado (`available: true`). As demais
+ * Python e JavaScript tem conteudo populado (`available: true`). As demais
  * ficam com a estrutura pronta no catalogo e no banco, prontas para receber
  * modulos sem nenhuma mudanca de codigo.
+ *
+ * Os exercicios de codigo de cada trilha sao executados no proprio
+ * dispositivo: Python via Pyodide, JavaScript via um Web Worker com o motor
+ * do navegador. Quem decide isso e `@/lib/exercises/runtime`.
  */
 export const languages: Language[] = [
   {
@@ -31,9 +42,17 @@ export const languages: Language[] = [
     slug: 'javascript',
     icon: '🟨',
     accent: 'from-amber-400 to-orange-500',
-    description: 'A linguagem da web. Trilha em produção.',
-    available: false,
-    modules: [],
+    description: 'A linguagem da web, presente em todo navegador. Trilha completa disponível.',
+    available: true,
+    modules: [
+      jsFundamentos,
+      jsVariaveis,
+      jsCondicionais,
+      jsRepeticoes,
+      jsFuncoes,
+      jsDesafios,
+      jsProjetoFinal,
+    ],
   },
   {
     id: 'java',

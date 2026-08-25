@@ -72,6 +72,7 @@ Para ligar a nuvem (contas reais, progresso sincronizado entre celular/PC/site),
 | `npm run typecheck` | Confere os tipos do TypeScript |
 | `npm run content:check` | Valida a estrutura do currículo (ids, ordens, alternativas) |
 | `npm run content:verify-python` | Roda as soluções de referência no Python real e compara com as saídas esperadas |
+| `npm run content:verify-js` | O mesmo para JavaScript, usando o runtime de produção (`public/js-runtime.js`) |
 | `npm run test:amigos` | Testa o fluxo de amizades (busca, pedido, aceite, remoção, ranking) |
 | `npm run test:tags` | Testa as tags, os segredos e as regras do @username |
 | `npm run test:pvp` | Joga uma partida 1v1 num Postgres real e testa as tentativas de trapaça |
@@ -110,6 +111,7 @@ CodeQuest/
 │   ├── components/               # UI reutilizável (cards, editor, toasts…)
 │   ├── content/                  # 📚 O CURRÍCULO (fonte da verdade)
 │   │   ├── python/01-fundamentos.ts … 07-projeto-final.ts
+│   │   ├── javascript/01-fundamentos.ts … 07-projeto-final.ts
 │   │   └── achievements.ts
 │   └── lib/                      # regras de negócio
 │       ├── auth/                 # sessão, Google OAuth, deep link
@@ -119,11 +121,15 @@ CodeQuest/
 │       ├── tags.ts               # regras das tags de perfil
 │       ├── pvp/                  # duelo 1v1: regras, chamadas ao banco e modo demo
 │       ├── ranked/               # ranqueada: patamares, elo, temporadas e bots
+│       ├── runtime/              # gerenciador de worker (timeout, recriação)
 │       ├── python/               # ponte com o Pyodide
-│       ├── exercises/            # validação das respostas
+│       ├── javascript/           # ponte com o worker de JavaScript
+│       ├── exercises/            # validação das respostas e escolha do motor
 │       ├── gamification.ts       # nível, streak, critérios de conquista
 │       └── progression.ts        # regras de desbloqueio da trilha
 ├── public/pyodide-worker.js      # executa o Python do aluno (Web Worker)
+├── public/js-worker.js           # executa o JavaScript do aluno (Web Worker)
+├── public/js-runtime.js          # console.log, prompt e erros — usado pelo worker E pelos testes
 ├── supabase/
 │   ├── migrations/0001_init.sql  # tabelas + RLS + gatilhos
 │   ├── migrations/0002_amigos.sql # @username + amizades + RLS
@@ -140,7 +146,11 @@ CodeQuest/
 └── .github/workflows/            # CI e geração dos instaladores
 ```
 
-### Trilha de Python incluída no MVP
+### Trilhas disponíveis
+
+Duas trilhas completas, com a mesma estrutura de sete módulos.
+
+**🐍 Python**
 
 | # | Módulo | Lições | Exercícios |
 | --- | --- | --- | --- |
@@ -153,8 +163,26 @@ CodeQuest/
 | 07 | 🏆 Projeto Final | 1 | 3 |
 | | **Total** | **24** | **46** |
 
-JavaScript, Java, C# e C++ já existem no catálogo e no banco, mas sem conteúdo populado — é só
-escrever os módulos, sem mexer em código.
+**🟨 JavaScript**
+
+| # | Módulo | Lições | Exercícios | Assuntos próprios da linguagem |
+| --- | --- | --- | --- | --- |
+| 01 | 🐣 Fundamentos | 5 | 10 | ponto e vírgula automático, tipos de erro |
+| 02 | 📦 Variáveis | 4 | 8 | `let`/`const`/`var`, template literals, `NaN` |
+| 03 | 🔀 Condicionais | 4 | 9 | `switch`, **`==` vs `===`**, truthy/falsy |
+| 04 | 🔁 Repetições | 4 | 8 | `for...of` vs `for...in`, arrays |
+| 05 | 🧩 Funções | 4 | 8 | **arrow functions**, escopo de bloco |
+| 06 | 🏆 Desafios | 3 | 6 | métodos de texto, **`map`/`filter`/`reduce`** |
+| 07 | 🚀 Projeto Final | 2 | 5 | objetos e array de objetos |
+| | **Total** | **26** | **54** | |
+
+A teoria da trilha de JavaScript foi escrita do zero, não traduzida da de Python: o que ganha
+espaço é justamente o que a linguagem tem de próprio (a coerção do `+`, os oito valores falsy, a
+diferença entre `map` e um `for`). Onde o conceito é o mesmo, o bloco poliglota mostra as três
+sintaxes lado a lado.
+
+Java, C# e C++ já existem no catálogo e no banco, mas sem conteúdo populado — é só escrever os
+módulos, sem mexer em código.
 
 ---
 
@@ -190,7 +218,7 @@ O Supabase dá um Postgres gerenciado + autenticação no plano gratuito, **sem 
 8. Abra outra query, cole **todo** o conteúdo de [`supabase/migrations/0007_embaralhar_alternativas.sql`](supabase/migrations/0007_embaralhar_alternativas.sql) e rode.
    Esse arquivo faz o servidor **embaralhar as alternativas** de cada pergunta (ver [seção 12.7](#126-por-que-as-alternativas-são-embaralhadas-no-servidor)).
 9. Abra mais uma query, cole **todo** o conteúdo de [`supabase/seed.sql`](supabase/seed.sql) e rode também.
-   Esse arquivo popula as 5 linguagens, 24 lições, 46 exercícios, 30 conquistas, 17 tags e 60 perguntas de duelo.
+   Esse arquivo popula as 5 linguagens, 50 lições, 100 exercícios, 37 conquistas, 17 tags e 88 perguntas de duelo.
 
 > Os oito scripts podem ser executados quantas vezes você quiser: eles usam
 > `if not exists` / `on conflict do update` e não duplicam nem apagam nada.
@@ -799,9 +827,21 @@ corrigir. Num duelo isso significaria carregar o Pyodide (uns 6 MB) antes de cad
 deixar a correção no cliente, onde ela pode ser burlada.
 
 Os dois formatos escolhidos se conferem com uma comparação de texto, o que permite manter o gabarito
-dentro do banco de dados e corrigir no servidor. São **60 perguntas** em
-[`src/content/pvp-questions.ts`](src/content/pvp-questions.ts), divididas em 6 temas: Python,
-JavaScript, Java, C#, C++ e Lógica.
+dentro do banco de dados e corrigir no servidor. São **88 perguntas** em
+[`src/content/pvp-questions.ts`](src/content/pvp-questions.ts), divididas em 6 temas:
+
+| Tema | Perguntas |
+| --- | --- |
+| 🟨 JavaScript | 40 |
+| 🐍 Python | 12 |
+| ☕ Java | 10 |
+| 🧠 Lógica | 10 |
+| 🎯 C# | 8 |
+| ⚡ C++ | 8 |
+
+O bloco de JavaScript cresceu de 12 para 40 junto com a trilha, cobrando o que ela ensina — `===`,
+truthy/falsy, `map`/`filter`/`reduce`, escopo. `npm run content:check` recusa qualquer tema com
+menos de 5 perguntas, que é o mínimo para uma partida não repetir.
 
 ### 12.2 Pontuação
 
@@ -966,17 +1006,18 @@ medir. Quem decide é o patamar:
 | Bronze 1 → Diamante 3 | 🐍 Python · 🧠 Lógica · 🟨 JavaScript |
 | Mítico 1 → Mestre | as **seis** linguagens (+ ☕ Java, 🎯 C#, ⚡ C++) |
 
-A ideia é que a ranqueada acompanhe a trilha. Hoje só a de Python está pronta (a de JavaScript vem
-em seguida), então os patamares de baixo cobram o que o aluno de fato estudou; do Mítico para cima
-o jogo passa a exigir repertório além da trilha — e isso é parte da dificuldade.
+A ideia é que a ranqueada acompanhe a trilha. Python e JavaScript já estão prontas, então os
+patamares de baixo cobram o que o aluno de fato estudou; do Mítico para cima o jogo passa a exigir
+repertório além da trilha — e isso é parte da dificuldade.
 
 Isso vive no servidor, em [`ranked_temas()`](supabase/migrations/0006_ranqueado.sql):
 `ranked_iniciar()` **não aceita parâmetro de tema**, então nem chamando a função na mão dá para
 pedir "só Python" quando se está no Mítico. O duelo com amigo continua com tema escolhido — lá a
 graça é justamente combinar o assunto com a outra pessoa.
 
-> **Nota:** o banco de perguntas ainda é pequeno fora de Python (60 perguntas no total), então nos
-> patamares de baixo há repetição. Ele cresce junto com as trilhas novas.
+> **Nota:** o banco tem 88 perguntas, sendo 40 de JavaScript e 12 de Python. Java, C# e C++
+> continuam pequenos, então a repetição hoje se concentra do Mítico para cima. Ele cresce junto
+> com as trilhas novas.
 
 ### 13.3 Temporadas
 
@@ -1178,8 +1219,9 @@ e por isso um erro de digitação aparece na hora, com autocompletar.
 3. Rode as verificações e regere o seed:
 
 ```bash
-npm run content:check           # ids, ordem, alternativas
+npm run content:check           # ids, ordem, alternativas, banco de perguntas
 npm run content:verify-python   # confere as saídas esperadas no Python real
+npm run content:verify-js       # o mesmo para JavaScript
 npm run seed:gen                # atualiza supabase/seed.sql
 ```
 
@@ -1189,12 +1231,12 @@ npm run seed:gen                # atualiza supabase/seed.sql
 
 | `validationType` | Como o aluno responde | Como é corrigido |
 | --- | --- | --- |
-| `output_match` | escrevendo código no editor | o Python roda no dispositivo (Pyodide) e a saída é comparada com `expectedAnswer` |
+| `output_match` | escrevendo código no editor | o código roda no dispositivo (Pyodide ou o motor do navegador, conforme a trilha) e a saída é comparada com `expectedAnswer` |
 | `multiple_choice` | escolhendo uma alternativa | comparação com `expectedAnswer` (que precisa estar em `options`) |
 | `fill_blank` | digitando uma palavra | comparação tolerante; aceite variações separando com `\|` |
 
-Em `output_match` você pode simular respostas do usuário com `stdin: ['18']` — o `input()` do
-exercício consome esses valores em ordem.
+Em `output_match` você pode simular respostas do usuário com `stdin: ['18']` — o `input()` (Python)
+ou o `prompt()` (JavaScript) do exercício consome esses valores em ordem.
 
 ### Escrever a teoria
 
@@ -1217,6 +1259,7 @@ O campo opcional `polyglot` gera as abas "o conceito é o mesmo, a sintaxe muda"
 | Banco e login | Supabase | Postgres + OAuth do Google prontos, plano gratuito sem cartão |
 | Hospedagem | Vercel Hobby | deploy automático a cada push, gratuito |
 | Executar Python | **Pyodide** (WebAssembly) | roda no dispositivo do aluno: **custo zero por execução** e funciona sem servidor |
+| Executar JavaScript | **Web Worker + o motor do próprio navegador** | já está instalado em todo aparelho: zero download, zero dependência, zero custo |
 | Android | Capacitor | reaproveita o site inteiro dentro de um WebView nativo |
 | Desktop | **Tauri** (e não Electron) | instalador de ~5 MB em vez de ~120 MB |
 
@@ -1244,12 +1287,68 @@ uma *Edge Function* do Supabase resolveria isso de vez.
 
 ### Execução de código
 
-O Python roda dentro de um **Web Worker** ([`public/pyodide-worker.js`](public/pyodide-worker.js)):
+Duas linguagens da trilha têm exercícios em que o aluno escreve código de verdade, e as duas
+rodam **no dispositivo dele**, dentro de um **Web Worker**. Nenhuma linha é enviada para servidor
+nenhum — o que atende ao requisito de custo zero e faz os exercícios funcionarem offline no `.apk`
+e no `.exe`.
 
-- laços infinitos não travam a interface — o worker é encerrado após **8 segundos**;
-- o Pyodide (~10 MB) baixa da CDN jsDelivr apenas na primeira execução e fica em cache;
-- `input()` é substituído por uma versão que consome as entradas simuladas do exercício,
-  imprimindo o prompt exatamente como um terminal faria.
+| Trilha | Quem executa | Arquivo | Tempo limite |
+| --- | --- | --- | --- |
+| 🐍 Python | Pyodide (CPython em WebAssembly) | [`public/pyodide-worker.js`](public/pyodide-worker.js) | 8 s |
+| 🟨 JavaScript | o motor do próprio navegador | [`public/js-worker.js`](public/js-worker.js) | 4 s |
+
+Os dois falam o mesmo protocolo de mensagens, então quem os controla é o mesmo gerenciador
+([`src/lib/runtime/executor.ts`](src/lib/runtime/executor.ts)): ele sobe o worker uma vez, reaproveita
+entre execuções e, quando um programa não termina, chama `terminate()` e recria. Quem escolhe o
+motor de cada trilha é [`src/lib/exercises/runtime.ts`](src/lib/exercises/runtime.ts) — a lição
+passa o slug da linguagem e o resto do app não precisa saber de nada.
+
+#### Por que um Web Worker para JavaScript, se o navegador já é JavaScript
+
+A pergunta é justa: o código poderia rodar direto na página. Duas razões decidiram:
+
+1. **Laço infinito.** `while (true) {}` na thread principal congela a aba inteira — e não adianta
+   agendar um timeout para interromper, porque o próprio timer nunca chega a rodar. É o problema
+   que o módulo de Repetições provoca de propósito. Em um worker, basta encerrá-lo de fora.
+2. **Isolamento.** O worker não alcança o DOM nem o `localStorage` (onde ficam a sessão e o
+   progresso). Por cima disso, [`js-worker.js`](public/js-worker.js) apaga `fetch`,
+   `XMLHttpRequest`, `WebSocket`, `indexedDB` e afins **antes** de qualquer código de aluno rodar.
+   Isso é uma tranca contra acidente, não um sandbox de segurança — quem executa é a própria
+   pessoa, no navegador dela.
+
+**E por que não um interpretador em WebAssembly** (QuickJS, por exemplo), que seria um sandbox de
+verdade? Porque custaria cerca de 1 MB de download para proteger o aluno dele mesmo, enquanto o
+motor que já existe no aparelho custa zero e roda instantaneamente. O Pyodide só paga esse preço
+porque não há Python nenhum no navegador.
+
+#### O contrato de saída
+
+`console.log` de verdade imprime objetos de um jeito em cada navegador, e os exercícios
+`output_match` comparam a saída caractere por caractere. Por isso a formatação é nossa e
+determinística, e vive em [`public/js-runtime.js`](public/js-runtime.js):
+
+- `console.log(a, b)` vira uma linha com os valores separados por espaço;
+- arrays saem como `[1, 2, 3]`, objetos como `{ nome: "Ana" }`, referência circular vira
+  `[circular]` em vez de estourar a pilha;
+- `prompt()` faz o papel do `input()`: escreve a pergunta **sem** quebrar linha e devolve sempre
+  texto — preservando a pegadinha de `prompt() + 1` concatenar em vez de somar, que a lição de
+  conversão de tipos usa;
+- o código roda em `"use strict"`, de propósito: sem ele, `nome = "Ana"` sem `let` criaria uma
+  variável global em silêncio, em vez do `ReferenceError` que a lição ensina a ler;
+- erros saem como `Linha 2: ReferenceError: ...`, com o trecho da linha. O deslocamento de linhas
+  introduzido pelo `new Function` é **medido** na carga com uma sonda, em vez de chutado — o valor
+  muda entre motores.
+
+Esse arquivo é carregado em dois lugares: pelo worker, no navegador, e pelo
+[verificador de conteúdo](scripts/verificar-saidas-js.mjs), no Node. Sendo o mesmo arquivo nos
+dois, o que `npm run content:verify-js` aprova é exatamente o que o aluno vê — não há espaço para
+o teste passar e o app divergir.
+
+#### Como o conteúdo é conferido
+
+As 33 soluções de referência da trilha de JavaScript são executadas de verdade a cada
+`npm run content:verify-js`, e comparadas com a saída esperada usando a mesma normalização do app.
+Nenhum `expectedAnswer` foi escrito de cabeça.
 
 ### Consumo dos planos gratuitos
 

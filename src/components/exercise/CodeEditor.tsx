@@ -9,20 +9,30 @@ import { cn } from '@/lib/cn';
  * realce de sintaxe. Sem dependencia externa - o que mantem o bundle leve
  * para o .apk e o .exe.
  *
- * Dois confortos importantes para quem esta aprendendo Python:
+ * Dois confortos importantes para quem esta aprendendo a programar:
  *  - Tab insere 4 espacos (em vez de sair do campo);
- *  - Enter mantem a indentacao da linha e adiciona um nivel depois de ":".
+ *  - Enter mantem a indentacao da linha e adiciona um nivel depois de um
+ *    abre-bloco, que muda com a linguagem (":" em Python, "{" em JavaScript).
  */
 export function CodeEditor({
   value,
   onChange,
   disabled,
   className,
+  arquivo = 'main.py',
+  abreBloco = /:$/,
+  linguagem = 'Python',
 }: {
   value: string;
   onChange: (value: string) => void;
   disabled?: boolean;
   className?: string;
+  /** Nome mostrado na aba do editor. */
+  arquivo?: string;
+  /** Fim de linha que faz o Enter indentar um nivel a mais. */
+  abreBloco?: RegExp;
+  /** Usado apenas no rotulo de acessibilidade. */
+  linguagem?: string;
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -53,7 +63,7 @@ export function CodeEditor({
       const before = value.slice(0, textarea.selectionStart);
       const currentLine = before.slice(before.lastIndexOf('\n') + 1);
       const indent = currentLine.match(/^[ \t]*/)?.[0] ?? '';
-      const extra = currentLine.trimEnd().endsWith(':') ? '    ' : '';
+      const extra = abreBloco.test(currentLine.trimEnd()) ? '    ' : '';
 
       if (indent || extra) {
         event.preventDefault();
@@ -76,7 +86,7 @@ export function CodeEditor({
     >
       <div className="flex items-center justify-between border-b border-white/10 px-3 py-1.5">
         <span className="font-mono text-[10px] uppercase tracking-widest text-slate-500">
-          main.py
+          {arquivo}
         </span>
         <span className="text-[10px] text-slate-600">Tab = 4 espaços</span>
       </div>
@@ -101,7 +111,7 @@ export function CodeEditor({
           autoCapitalize="off"
           autoCorrect="off"
           autoComplete="off"
-          aria-label="Editor de código Python"
+          aria-label={`Editor de código ${linguagem}`}
           className="cq-editor absolute inset-0 h-full w-full resize-none whitespace-pre-wrap break-words bg-transparent p-4 font-mono text-[13px] leading-relaxed text-transparent caret-mint-300 outline-none"
         />
       </div>
@@ -115,11 +125,14 @@ export function Terminal({
   error,
   running,
   empty = 'Clique em Executar para ver a saída do seu programa.',
+  carregando = 'Carregando o interpretador...',
 }: {
   output?: string;
   error?: string | null;
   running?: boolean;
   empty?: string;
+  /** Texto exibido enquanto o motor da linguagem esta subindo. */
+  carregando?: string;
 }) {
   const hasContent = Boolean(output?.length) || Boolean(error);
 
@@ -145,7 +158,7 @@ export function Terminal({
             {error && <span className="text-rose-300">{error}</span>}
           </>
         ) : (
-          <span className="text-slate-600">{running ? 'Carregando o Python...' : empty}</span>
+          <span className="text-slate-600">{running ? carregando : empty}</span>
         )}
       </pre>
     </div>

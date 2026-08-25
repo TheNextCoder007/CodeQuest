@@ -18,6 +18,7 @@ import { readFileSync } from 'node:fs';
 import { PGlite } from '@electric-sql/pglite';
 import { normalizarResposta, pontuar, desfecho, sortearPerguntas } from '../src/lib/pvp/regras';
 import { embaralhar, embaralharComSemente } from '../src/lib/embaralhar';
+import { pvpQuestions } from '../src/content/pvp-questions';
 
 let passaram = 0;
 let falharam = 0;
@@ -105,7 +106,12 @@ await criarConta(CONVIDADO, 'Convidado', 'convidado');
 await criarConta(ESTRANHO, 'Estranho', 'estranho');
 
 const banco = await db.query<{ n: number }>('select count(*)::int as n from public.pvp_questions');
-ok(banco.rows[0].n === 60, `o seed populou o banco de perguntas (${banco.rows[0].n})`);
+// Derivado do curriculo, e nao de um numero fixo: o banco de perguntas cresce
+// junto com as trilhas, e uma constante aqui envelhece a cada lote novo.
+ok(
+  banco.rows[0].n === pvpQuestions.length,
+  `o seed populou o banco de perguntas (${banco.rows[0].n} de ${pvpQuestions.length})`,
+);
 
 const temas = await db.query<{ language_slug: string; n: number }>(
   'select language_slug, count(*)::int as n from public.pvp_questions group by 1 order by 1',

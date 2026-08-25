@@ -12,7 +12,7 @@
     "build:static": "cross-env NEXT_OUTPUT=export next build",
     "seed:gen": "tsx scripts/generate-seed.ts",
     "content:check": "tsx scripts/validar-conteudo.ts",
-    "content:verify-python": "tsx scripts/dump-exercises.ts > .exercises.json && python scripts/verificar_saidas.py .exercises.json",
+    "content:verify-python": "tsx scripts/dump-exercises.ts python > .exercises.json && python scripts/verificar_saidas.py .exercises.json",
     "test:amigos": "tsx scripts/testar-amigos.mts",
     "cap:sync": "npm run build:static && npx cap sync android",
     "cap:open": "npx cap open android",
@@ -27,7 +27,8 @@
     "test:pvp": "tsx scripts/testar-pvp.mts",
     "test:ranqueado": "tsx scripts/testar-ranqueado.mts",
     "og:gen": "node scripts/gerar-og.mjs",
-    "test:seo": "tsx scripts/testar-seo.mts"
+    "test:seo": "tsx scripts/testar-seo.mts",
+    "content:verify-js": "tsx scripts/dump-exercises.ts javascript > .exercises-js.json && node scripts/verificar-saidas-js.mjs .exercises-js.json"
   },
   "dependencies": {
     "@capacitor/android": "^6.2.0",

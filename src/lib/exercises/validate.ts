@@ -1,11 +1,13 @@
 import type { Exercise } from '@/types/content';
-import { runPython } from '@/lib/python/runner';
+import { LINGUAGEM_PADRAO, runtimeDaLinguagem } from './runtime';
 
 /**
  * Validacao das respostas.
  *
- * Nenhum servico externo e usado: Python roda no proprio dispositivo via
- * Pyodide e os demais tipos de exercicio sao comparados localmente.
+ * Nenhum servico externo e usado: o codigo do aluno roda no proprio
+ * dispositivo (Pyodide para Python, o motor do navegador para JavaScript) e os
+ * demais tipos de exercicio sao comparados localmente. Ver
+ * `@/lib/exercises/runtime` para quem executa cada linguagem.
  */
 
 export interface ValidationResult {
@@ -55,8 +57,21 @@ export const checkFillBlank = (answer: string, exercise: Exercise): ValidationRe
   };
 };
 
-export const checkOutputMatch = async (code: string, exercise: Exercise): Promise<ValidationResult> => {
-  const result = await runPython(code, exercise.stdin ?? []);
+export const checkOutputMatch = async (
+  code: string,
+  exercise: Exercise,
+  languageSlug: string = LINGUAGEM_PADRAO,
+): Promise<ValidationResult> => {
+  const runtime = runtimeDaLinguagem(languageSlug);
+
+  if (!runtime) {
+    return {
+      correct: false,
+      message: `Ainda não há como executar código de ${languageSlug} no aplicativo.`,
+    };
+  }
+
+  const result = await runtime.executar(code, exercise.stdin ?? []);
 
   if (!result.ok) {
     return {
@@ -80,14 +95,27 @@ export const checkOutputMatch = async (code: string, exercise: Exercise): Promis
 };
 
 /** Executa o codigo sem julgar a resposta (botao "Executar"). */
-export const justRun = async (code: string, exercise: Exercise) => {
-  const result = await runPython(code, exercise.stdin ?? []);
-  return result;
+export const justRun = async (
+  code: string,
+  exercise: Exercise,
+  languageSlug: string = LINGUAGEM_PADRAO,
+) => {
+  const runtime = runtimeDaLinguagem(languageSlug);
+  if (!runtime) {
+    return {
+      ok: false,
+      stdout: '',
+      error: `Ainda não há como executar código de ${languageSlug} no aplicativo.`,
+      timedOut: false,
+    };
+  }
+  return runtime.executar(code, exercise.stdin ?? []);
 };
 
 export const validateExercise = async (
   exercise: Exercise,
   answer: string,
+  languageSlug: string = LINGUAGEM_PADRAO,
 ): Promise<ValidationResult> => {
   switch (exercise.validationType) {
     case 'multiple_choice':
@@ -95,7 +123,7 @@ export const validateExercise = async (
     case 'fill_blank':
       return checkFillBlank(answer, exercise);
     case 'output_match':
-      return checkOutputMatch(answer, exercise);
+      return checkOutputMatch(answer, exercise, languageSlug);
     default:
       return { correct: false, message: 'Tipo de exercício desconhecido.' };
   }

@@ -8,7 +8,7 @@ import { Card, Pill } from '@/components/ui/Card';
 import { MarkdownLite } from '@/components/content/MarkdownLite';
 import { CodeEditor, Terminal } from './CodeEditor';
 import { justRun, validateExercise, type ValidationResult } from '@/lib/exercises/validate';
-import { onPythonReady, pythonIsReady, warmUpPython } from '@/lib/python/runner';
+import { LINGUAGEM_PADRAO, runtimeDaLinguagem } from '@/lib/exercises/runtime';
 import { embaralharComSemente } from '@/lib/embaralhar';
 import { cn } from '@/lib/cn';
 
@@ -23,6 +23,7 @@ export function ExercisePlayer({
   onSolved,
   onNext,
   isLast,
+  languageSlug = LINGUAGEM_PADRAO,
 }: {
   exercise: Exercise;
   index: number;
@@ -31,8 +32,14 @@ export function ExercisePlayer({
   onSolved: (attempts: number) => void;
   onNext: () => void;
   isLast: boolean;
+  /**
+   * Linguagem da trilha a que este exercicio pertence. Decide quem executa o
+   * codigo (Pyodide ou o motor do navegador) e como o editor se comporta.
+   */
+  languageSlug?: string;
 }) {
   const isCode = exercise.validationType === 'output_match';
+  const runtime = runtimeDaLinguagem(languageSlug);
 
   const [code, setCode] = useState(exercise.starterCode ?? '');
   const [choice, setChoice] = useState('');
@@ -44,7 +51,7 @@ export function ExercisePlayer({
   const [attempts, setAttempts] = useState(0);
   const [solved, setSolved] = useState(false);
   const [showHint, setShowHint] = useState(false);
-  const [pyReady, setPyReady] = useState(false);
+  const [motorPronto, setMotorPronto] = useState(false);
 
   /**
    * Semente da exibicao atual das alternativas.
@@ -82,13 +89,14 @@ export function ExercisePlayer({
     setShowHint(false);
   }, [exercise.id, exercise.starterCode]);
 
-  // O Pyodide comeca a carregar assim que um exercicio de codigo aparece.
+  // O motor da linguagem comeca a subir assim que um exercicio de codigo
+  // aparece, para que o primeiro clique em Executar nao espere o download.
   useEffect(() => {
-    if (!isCode) return;
-    warmUpPython();
-    setPyReady(pythonIsReady());
-    return onPythonReady(() => setPyReady(true));
-  }, [isCode]);
+    if (!isCode || !runtime) return;
+    runtime.aquecer();
+    setMotorPronto(runtime.pronto());
+    return runtime.aoFicarPronto(() => setMotorPronto(true));
+  }, [isCode, runtime]);
 
   const answer = useMemo(() => {
     if (exercise.validationType === 'multiple_choice') return choice;
@@ -101,7 +109,7 @@ export function ExercisePlayer({
   const handleRun = async () => {
     setRunning(true);
     setResult(null);
-    const output = await justRun(code, exercise);
+    const output = await justRun(code, exercise, languageSlug);
     setRunOutput({ stdout: output.stdout, error: output.error });
     setRunning(false);
   };
@@ -114,7 +122,7 @@ export function ExercisePlayer({
     const nextAttempts = attempts + 1;
     setAttempts(nextAttempts);
 
-    const validation = await validateExercise(exercise, answer);
+    const validation = await validateExercise(exercise, answer, languageSlug);
     setResult(validation);
     if (validation.stdout !== undefined) {
       setRunOutput({ stdout: validation.stdout, error: validation.error ?? null });
@@ -212,12 +220,22 @@ export function ExercisePlayer({
 
       {isCode && (
         <div className="space-y-3">
-          <CodeEditor value={code} onChange={setCode} disabled={solved} />
+          <CodeEditor
+            value={code}
+            onChange={setCode}
+            disabled={solved}
+            arquivo={runtime?.arquivo}
+            abreBloco={runtime?.abreBloco}
+            linguagem={runtime?.nome}
+          />
 
           {exercise.stdin && exercise.stdin.length > 0 && (
             <p className="text-xs text-slate-500">
-              Entradas simuladas para o <code className="font-mono text-slate-400">input()</code>:{' '}
-              <span className="font-mono text-aqua-300">{exercise.stdin.join(', ')}</span>
+              Entradas simuladas para o{' '}
+              <code className="font-mono text-slate-400">
+                {runtime?.funcaoDeEntrada ?? 'input()'}
+              </code>
+              : <span className="font-mono text-aqua-300">{exercise.stdin.join(', ')}</span>
             </p>
           )}
 
@@ -225,10 +243,11 @@ export function ExercisePlayer({
             output={runOutput?.stdout}
             error={runOutput?.error}
             running={running || (busy && !result)}
+            carregando={runtime?.preparando}
             empty={
-              pyReady
+              motorPronto
                 ? 'Clique em Executar para ver a saída do seu programa.'
-                : 'Preparando o Python (isso acontece só na primeira vez)...'
+                : (runtime?.preparando ?? 'Preparando o interpretador...')
             }
           />
         </div>

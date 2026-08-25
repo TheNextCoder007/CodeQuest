@@ -119,6 +119,64 @@ export const achievements: AchievementDefinition[] = [
     icon: '🏆',
     criteria: { kind: 'language_completed', languageSlug: 'python' },
   },
+
+  /* ---------------------------------------------------------------------
+   * Trilha de JavaScript
+   *
+   * Mesma estrutura da de Python: uma medalha por modulo (menos o projeto
+   * final, coberto pela medalha da trilha inteira). Os ids sao proprios
+   * porque as duas trilhas podem ser percorridas em qualquer ordem - e
+   * quem terminar as duas fica com os dois conjuntos.
+   * ------------------------------------------------------------------ */
+  {
+    id: 'js-modulo-fundamentos',
+    title: 'Primeiros passos no JavaScript',
+    description: 'Você concluiu todo o módulo 🐣 Fundamentos da trilha de JavaScript.',
+    icon: '🐣',
+    criteria: { kind: 'module_completed', moduleId: 'js-fundamentos' },
+  },
+  {
+    id: 'js-modulo-variaveis',
+    title: 'let, const e você',
+    description: 'Você concluiu todo o módulo 📦 Variáveis da trilha de JavaScript.',
+    icon: '📦',
+    criteria: { kind: 'module_completed', moduleId: 'js-variaveis' },
+  },
+  {
+    id: 'js-modulo-condicionais',
+    title: 'Time do ===',
+    description: 'Você concluiu todo o módulo 🔀 Condicionais e sabe por que não usar ==.',
+    icon: '🔀',
+    criteria: { kind: 'module_completed', moduleId: 'js-condicionais' },
+  },
+  {
+    id: 'js-modulo-repeticoes',
+    title: 'Laços sob controle',
+    description: 'Você concluiu todo o módulo 🔁 Repetições da trilha de JavaScript.',
+    icon: '🔁',
+    criteria: { kind: 'module_completed', moduleId: 'js-repeticoes' },
+  },
+  {
+    id: 'js-modulo-funcoes',
+    title: 'Arqueiro das arrow functions',
+    description: 'Você concluiu todo o módulo 🧩 Funções e domina o =>.',
+    icon: '🏹',
+    criteria: { kind: 'module_completed', moduleId: 'js-funcoes' },
+  },
+  {
+    id: 'js-modulo-desafios',
+    title: 'map, filter, reduce',
+    description: 'Você concluiu todo o módulo 🏆 Desafios da trilha de JavaScript.',
+    icon: '🧮',
+    criteria: { kind: 'module_completed', moduleId: 'js-desafios' },
+  },
+  {
+    id: 'trilha-javascript',
+    title: 'Trilha de JavaScript concluída',
+    description: 'Você terminou os sete módulos da trilha de JavaScript. A web é sua.',
+    icon: '🟨',
+    criteria: { kind: 'language_completed', languageSlug: 'javascript' },
+  },
   {
     id: 'streak-3',
     title: '3 dias de streak',

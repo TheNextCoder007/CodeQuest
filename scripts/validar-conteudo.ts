@@ -8,6 +8,8 @@
 
 import { languages } from '../src/content/index';
 import { achievements } from '../src/content/achievements';
+import { pvpQuestions } from '../src/content/pvp-questions';
+import { TEMAS_PVP } from '../src/content/pvp-temas';
 
 const problemas: string[] = [];
 const idsVistos = new Map<string, string>();
@@ -144,6 +146,53 @@ for (const achievement of achievements) {
   }
 }
 
+/* ---------------------------------------------------------------------------
+ * Banco de perguntas do duelo/ranqueada
+ *
+ * Nao passava por validacao nenhuma ate a trilha de JavaScript dobrar de
+ * tamanho. Os erros que isto pega sao os mesmos da trilha: id repetido,
+ * gabarito que nao esta entre as alternativas, tema inexistente.
+ * ------------------------------------------------------------------------ */
+const temasValidos = new Set<string>(
+  TEMAS_PVP.map((tema) => tema.slug).filter((slug) => slug !== 'todas'),
+);
+const porTema = new Map<string, number>();
+
+for (const pergunta of pvpQuestions) {
+  registrarId(pergunta.id, `pergunta de duelo ${pergunta.id}`);
+
+  if (!temasValidos.has(pergunta.languageSlug)) {
+    problemas.push(`pergunta ${pergunta.id} tem tema inexistente (${pergunta.languageSlug})`);
+  }
+  porTema.set(pergunta.languageSlug, (porTema.get(pergunta.languageSlug) ?? 0) + 1);
+
+  if (!pergunta.prompt.trim()) problemas.push(`pergunta ${pergunta.id} sem enunciado`);
+  if (!pergunta.answer.trim()) problemas.push(`pergunta ${pergunta.id} sem gabarito`);
+  if (!pergunta.explanation.trim()) problemas.push(`pergunta ${pergunta.id} sem explicacao`);
+
+  if (pergunta.kind === 'multiple_choice') {
+    if (!pergunta.options || pergunta.options.length < 2) {
+      problemas.push(`pergunta ${pergunta.id} precisa de pelo menos 2 alternativas`);
+    } else if (!pergunta.options.includes(pergunta.answer)) {
+      problemas.push(`pergunta ${pergunta.id}: o gabarito nao esta entre as alternativas`);
+    } else if (new Set(pergunta.options).size !== pergunta.options.length) {
+      problemas.push(`pergunta ${pergunta.id} tem alternativas repetidas`);
+    }
+  } else if (pergunta.options) {
+    problemas.push(`pergunta ${pergunta.id}: fill_blank nao deve ter alternativas`);
+  }
+}
+
+/*
+ * A ranqueada sorteia 5 perguntas por partida dentro do tema. Com menos de 5
+ * o sorteio nao consegue nem preencher uma partida sem repetir.
+ */
+for (const [tema, quantidade] of porTema) {
+  if (quantidade < 5) {
+    problemas.push(`tema ${tema} tem so ${quantidade} pergunta(s) - a partida sorteia 5`);
+  }
+}
+
 const totalLicoes = languages.reduce(
   (total, language) => total + language.modules.reduce((soma, module) => soma + module.lessons.length, 0),
   0,
@@ -166,4 +215,10 @@ if (problemas.length > 0) {
 
 console.log(
   `Curriculo validado: ${languages.length} linguagens, ${totalLicoes} licoes, ${totalExercicios} exercicios, ${achievements.length} conquistas.`,
+);
+console.log(
+  `Duelo: ${pvpQuestions.length} perguntas (${[...porTema.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .map(([tema, quantidade]) => `${tema} ${quantidade}`)
+    .join(', ')}).`,
 );

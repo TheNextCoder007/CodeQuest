@@ -198,6 +198,7 @@ function LessonContent({ lessonId }: { lessonId: string }) {
       {phase === 'exercises' && (
         <>
           <ExercisePlayer
+            languageSlug={language.slug}
             key={lesson.exercises[current].id}
             exercise={lesson.exercises[current]}
             index={current}

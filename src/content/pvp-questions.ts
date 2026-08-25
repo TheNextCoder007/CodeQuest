@@ -275,6 +275,329 @@ export const pvpQuestions: PvpQuestion[] = [
     explanation: '`let` e `const` respeitam blocos `{}`; `var` vaza para a função inteira.',
     difficulty: 2,
   },
+  {
+    id: 'pvp-js-13',
+    languageSlug: 'javascript',
+    kind: 'multiple_choice',
+    prompt: 'O que `console.log(typeof null)` mostra?',
+    options: ['null', 'object', 'undefined', 'NaN'],
+    answer: 'object',
+    explanation:
+      'É um defeito histórico da linguagem, mantido por compatibilidade: `typeof null` devolve `"object"`. Para testar nulo mesmo, use `valor === null`.',
+    difficulty: 3,
+  },
+  {
+    id: 'pvp-js-14',
+    languageSlug: 'javascript',
+    kind: 'multiple_choice',
+    prompt: 'O que `console.log(typeof NaN)` mostra?',
+    options: ['NaN', 'undefined', 'number', 'object'],
+    answer: 'number',
+    explanation:
+      '`NaN` significa "não é um número", mas o tipo dele é `number`. Para detectá-lo use `Number.isNaN(valor)` — a comparação `NaN === NaN` é `false`.',
+    difficulty: 3,
+  },
+  {
+    id: 'pvp-js-15',
+    languageSlug: 'javascript',
+    kind: 'multiple_choice',
+    prompt: 'O que `console.log([1, 2, 10].sort())` mostra?',
+    options: ['[1, 2, 10]', '[1, 10, 2]', '[10, 2, 1]', 'erro'],
+    answer: '[1, 10, 2]',
+    explanation:
+      'Sem argumento, `sort` converte tudo para texto e ordena alfabeticamente — e `"10"` vem antes de `"2"`. Para números use `sort((a, b) => a - b)`.',
+    difficulty: 3,
+  },
+  {
+    id: 'pvp-js-16',
+    languageSlug: 'javascript',
+    kind: 'multiple_choice',
+    prompt: 'Qual é o valor devolvido por `prompt()` quando a pessoa digita 42?',
+    options: ['O número 42', 'O texto "42"', 'true', 'undefined'],
+    answer: 'O texto "42"',
+    explanation:
+      '`prompt()` sempre devolve string. Sem `Number()` antes, `prompt() + 1` concatena em vez de somar.',
+    difficulty: 1,
+  },
+  {
+    id: 'pvp-js-17',
+    languageSlug: 'javascript',
+    kind: 'multiple_choice',
+    prompt: 'O que `console.log(Number("abc"))` mostra?',
+    options: ['0', 'null', 'NaN', 'undefined'],
+    answer: 'NaN',
+    explanation:
+      'Texto que não representa número vira `NaN`. O programa não para — ele segue com um valor inválido, e toda conta a partir dali também dá `NaN`.',
+    difficulty: 2,
+  },
+  {
+    id: 'pvp-js-18',
+    languageSlug: 'javascript',
+    kind: 'multiple_choice',
+    prompt: 'O que `console.log(Number(""))` mostra?',
+    options: ['NaN', '0', 'undefined', 'erro'],
+    answer: '0',
+    explanation:
+      'Texto vazio converte para `0`, não para `NaN`. É por isso que um campo de formulário em branco pode passar despercebido por uma validação numérica.',
+    difficulty: 3,
+  },
+  {
+    id: 'pvp-js-19',
+    languageSlug: 'javascript',
+    kind: 'fill_blank',
+    prompt:
+      'Complete para interpolar a variável dentro do texto:\n\n`` console.log(`Olá, ____{nome}`); ``',
+    answer: '$',
+    explanation:
+      'Dentro de crases, `${...}` insere o valor da expressão. Sem o cifrão, `{nome}` seria apenas texto.',
+    difficulty: 2,
+  },
+  {
+    id: 'pvp-js-20',
+    languageSlug: 'javascript',
+    kind: 'multiple_choice',
+    prompt: 'O que `console.log(10 % 3)` mostra?',
+    options: ['3.33', '1', '3', '0'],
+    answer: '1',
+    explanation:
+      'O `%` devolve o **resto** da divisão, não o quociente. É a ferramenta padrão para testar múltiplos: `n % 2 === 0` é par.',
+    difficulty: 1,
+  },
+  {
+    id: 'pvp-js-21',
+    languageSlug: 'javascript',
+    kind: 'multiple_choice',
+    prompt: 'Dentro de um laço, qual a diferença entre `break` e `continue`?',
+    options: [
+      'break encerra o laço; continue pula só a volta atual',
+      'break pula a volta atual; continue encerra o laço',
+      'os dois encerram o laço',
+      'os dois pulam a volta atual',
+    ],
+    answer: 'break encerra o laço; continue pula só a volta atual',
+    explanation:
+      '`break` sai do laço inteiro — útil ao encontrar o que procurava. `continue` abandona apenas a iteração atual e segue para a próxima.',
+    difficulty: 2,
+  },
+  {
+    id: 'pvp-js-22',
+    languageSlug: 'javascript',
+    kind: 'multiple_choice',
+    prompt: 'O que uma função sem `return` devolve?',
+    options: ['undefined', 'null', '0', 'Um erro'],
+    answer: 'undefined',
+    explanation:
+      'Toda função sem `return` explícito devolve `undefined`. Se um resultado seu apareceu como `undefined`, a primeira suspeita é um `return` esquecido.',
+    difficulty: 2,
+  },
+  {
+    id: 'pvp-js-23',
+    languageSlug: 'javascript',
+    kind: 'multiple_choice',
+    prompt: 'O que `console.log(((n) => { n * 2 })(5))` mostra?',
+    options: ['10', 'undefined', 'NaN', 'erro de sintaxe'],
+    answer: 'undefined',
+    explanation:
+      'Com chaves, a arrow function precisa de `return` explícito. Aqui a multiplicação é calculada e descartada. Sem as chaves, `(n) => n * 2` devolveria 10.',
+    difficulty: 3,
+  },
+  {
+    id: 'pvp-js-24',
+    languageSlug: 'javascript',
+    kind: 'multiple_choice',
+    prompt: 'Qual método percorre um array **transformando** cada item e devolve um array novo?',
+    options: ['filter', 'reduce', 'map', 'forEach'],
+    answer: 'map',
+    explanation:
+      '`map` devolve um array do mesmo tamanho com cada item transformado. `filter` seleciona, `reduce` junta tudo num valor e `forEach` não devolve nada.',
+    difficulty: 2,
+  },
+  {
+    id: 'pvp-js-25',
+    languageSlug: 'javascript',
+    kind: 'multiple_choice',
+    prompt: 'O que `console.log([1, 2, 3].reduce((total, n) => total + n, 0))` mostra?',
+    options: ['6', '[1, 2, 3]', '3', '0'],
+    answer: '6',
+    explanation:
+      '`reduce` acumula: o retorno de cada volta vira o `total` da próxima. O `0` no final é o valor inicial — omiti-lo quebra quando o array está vazio.',
+    difficulty: 2,
+  },
+  {
+    id: 'pvp-js-26',
+    languageSlug: 'javascript',
+    kind: 'fill_blank',
+    prompt:
+      'Complete para percorrer os **valores** de um array:\n\n`for (const item ____ lista) { }`',
+    answer: 'of',
+    explanation:
+      '`for...of` entrega os valores; `for...in` entrega os índices. Em arrays você quase sempre quer `of`.',
+    difficulty: 2,
+  },
+  {
+    id: 'pvp-js-27',
+    languageSlug: 'javascript',
+    kind: 'multiple_choice',
+    prompt: 'O que `console.log(["a", "b", "c"].join("-"))` mostra?',
+    options: ['a-b-c', '["a","b","c"]', 'abc', 'a,b,c'],
+    answer: 'a-b-c',
+    explanation:
+      '`join` transforma o array em um único texto, colocando o separador entre os itens. Sem argumento, o separador padrão é a vírgula.',
+    difficulty: 1,
+  },
+  {
+    id: 'pvp-js-28',
+    languageSlug: 'javascript',
+    kind: 'multiple_choice',
+    prompt: 'O que `console.log("  Ana  ".trim())` mostra?',
+    options: ['"Ana"', 'Ana', '  Ana  ', 'ana'],
+    answer: 'Ana',
+    explanation:
+      '`trim` remove os espaços das duas pontas. Ele devolve um texto novo — o original não muda, porque strings são imutáveis em JavaScript.',
+    difficulty: 1,
+  },
+  {
+    id: 'pvp-js-29',
+    languageSlug: 'javascript',
+    kind: 'multiple_choice',
+    prompt: 'O que `console.log("CodeQuest".slice(0, 4))` mostra?',
+    options: ['Code', 'CodeQ', 'Quest', 'odeQ'],
+    answer: 'Code',
+    explanation:
+      '`slice(início, fim)` vai do índice inicial até **antes** do final. Começando em 0 e parando antes do 4, saem os caracteres 0, 1, 2 e 3.',
+    difficulty: 2,
+  },
+  {
+    id: 'pvp-js-30',
+    languageSlug: 'javascript',
+    kind: 'multiple_choice',
+    prompt: 'O que acontece com `const aluno = { nome: "Ana" }; aluno.nome = "Luiz";`?',
+    options: [
+      'Funciona: const impede trocar o objeto, não mudar propriedades',
+      'TypeError: Assignment to constant variable',
+      'A propriedade fica undefined',
+      'SyntaxError',
+    ],
+    answer: 'Funciona: const impede trocar o objeto, não mudar propriedades',
+    explanation:
+      '`const` protege a **ligação** entre o nome e o objeto. O conteúdo continua editável. `aluno = {}` daria TypeError; `aluno.nome = "Luiz"` não.',
+    difficulty: 3,
+  },
+  {
+    id: 'pvp-js-31',
+    languageSlug: 'javascript',
+    kind: 'multiple_choice',
+    prompt: 'O que `console.log({ nome: "Ana" }.idade)` mostra?',
+    options: ['undefined', 'null', 'ReferenceError', 'Uma string vazia'],
+    answer: 'undefined',
+    explanation:
+      'Propriedade inexistente devolve `undefined`, sem erro. Por isso um nome de propriedade digitado errado passa despercebido até o problema aparecer bem depois.',
+    difficulty: 2,
+  },
+  {
+    id: 'pvp-js-32',
+    languageSlug: 'javascript',
+    kind: 'multiple_choice',
+    prompt: 'Em um `switch`, o que acontece se faltar o `break` no `case` escolhido?',
+    options: [
+      'A execução continua nos cases seguintes',
+      'O programa para com erro',
+      'Nada: o break é opcional',
+      'O switch reinicia',
+    ],
+    answer: 'A execução continua nos cases seguintes',
+    explanation:
+      'É o *fall-through*: sem `break`, o JavaScript segue executando os `case` de baixo mesmo sem eles baterem com o valor.',
+    difficulty: 2,
+  },
+  {
+    id: 'pvp-js-33',
+    languageSlug: 'javascript',
+    kind: 'multiple_choice',
+    prompt: 'O que `console.log("7" * "2")` mostra?',
+    options: ['14', '72', 'NaN', 'erro'],
+    answer: '14',
+    explanation:
+      'Diferente do `+`, o `*` não tem versão para texto — então o JavaScript converte os dois lados para número. Só o `+` concatena.',
+    difficulty: 2,
+  },
+  {
+    id: 'pvp-js-34',
+    languageSlug: 'javascript',
+    kind: 'multiple_choice',
+    prompt: 'O que `console.log(parseInt("3.9"))` mostra?',
+    options: ['4', '3.9', '3', 'NaN'],
+    answer: '3',
+    explanation:
+      '`parseInt` corta na parte inteira, sem arredondar. Para arredondar use `Math.round("3.9")`; para manter as casas, `Number("3.9")`.',
+    difficulty: 2,
+  },
+  {
+    id: 'pvp-js-35',
+    languageSlug: 'javascript',
+    kind: 'multiple_choice',
+    prompt: 'O que `console.log(Boolean("false"))` mostra?',
+    options: ['true', 'false', 'undefined', 'NaN'],
+    answer: 'true',
+    explanation:
+      'Qualquer texto não vazio é truthy — inclusive `"false"` e `"0"`. Os falsy são apenas `false`, `0`, `-0`, `0n`, `""`, `null`, `undefined` e `NaN`.',
+    difficulty: 3,
+  },
+  {
+    id: 'pvp-js-36',
+    languageSlug: 'javascript',
+    kind: 'fill_blank',
+    prompt:
+      'Complete para selecionar só os números pares:\n\n`const pares = numeros.______((n) => n % 2 === 0);`',
+    answer: 'filter',
+    explanation:
+      '`filter` mantém os itens cuja função devolve `true` e descarta o resto, gerando um array menor ou igual ao original.',
+    difficulty: 2,
+  },
+  {
+    id: 'pvp-js-37',
+    languageSlug: 'javascript',
+    kind: 'multiple_choice',
+    prompt: 'Qual método remove e devolve o **último** item de um array?',
+    options: ['shift', 'pop', 'slice', 'splice'],
+    answer: 'pop',
+    explanation:
+      '`pop` tira do fim e `shift` tira do começo. `push` e `unshift` são os que acrescentam, nas mesmas pontas.',
+    difficulty: 2,
+  },
+  {
+    id: 'pvp-js-38',
+    languageSlug: 'javascript',
+    kind: 'multiple_choice',
+    prompt: 'O que `console.log([1, 2, 3].indexOf(2))` mostra?',
+    options: ['1', '2', 'true', '-1'],
+    answer: '1',
+    explanation:
+      '`indexOf` devolve a **posição**, e a contagem começa em 0 — o número 2 está no índice 1. Quando não encontra, devolve `-1`.',
+    difficulty: 2,
+  },
+  {
+    id: 'pvp-js-39',
+    languageSlug: 'javascript',
+    kind: 'multiple_choice',
+    prompt: 'O que `console.log(2 ** 3)` mostra?',
+    options: ['6', '8', '9', '23'],
+    answer: '8',
+    explanation:
+      'O `**` é o operador de potência: 2 elevado a 3. Ele substitui o antigo `Math.pow(2, 3)`.',
+    difficulty: 2,
+  },
+  {
+    id: 'pvp-js-40',
+    languageSlug: 'javascript',
+    kind: 'multiple_choice',
+    prompt: 'Qual palavra-chave declara uma variável que **vaza** do bloco onde foi criada?',
+    options: ['var', 'let', 'const', 'block'],
+    answer: 'var',
+    explanation:
+      '`var` tem escopo de função e ignora `{}` — um `var` declarado dentro de um `for` continua existindo depois dele. É o motivo de `let` e `const` terem substituído seu uso.',
+    difficulty: 3,
+  },
 
   /* =====================================================================
    * JAVA
