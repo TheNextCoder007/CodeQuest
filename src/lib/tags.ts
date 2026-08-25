@@ -27,6 +27,8 @@ export interface TagState {
   pvpVitorias?: number;
   /** Vitorias por tema - alimenta a tag de "especialista". */
   pvpVitoriasPorTema?: Record<string, number>;
+  /** Desafios diarios concluidos no total (contado pelo servidor). */
+  desafiosDiarios?: number;
 }
 
 const trilhaCompleta = (languageSlug: string, completed: Set<string>): boolean => {
@@ -45,6 +47,8 @@ const atendeCriterio = (tag: TagDefinition, state: TagState): boolean => {
       return state.isDeveloper;
     case 'pvp_wins':
       return (state.pvpVitorias ?? 0) >= tag.criteria.count;
+    case 'daily_challenges':
+      return (state.desafiosDiarios ?? 0) >= tag.criteria.count;
     case 'pvp_tema': {
       // Basta UM tema atingir a marca: a tag e de especialista, nao de
       // colecionador.

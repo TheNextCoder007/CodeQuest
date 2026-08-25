@@ -108,6 +108,11 @@ export interface AchievementState {
   /** Vitorias acumuladas no duelo 1v1. */
   pvpVitorias?: number;
   /**
+   * Desafios diarios concluidos no total. Vem de `desafio_estado()` - tabela
+   * que so o servidor escreve.
+   */
+  desafiosDiarios?: number;
+  /**
    * Maior patamar ja alcancado na ranqueada, em QUALQUER temporada
    * (0 = Bronze ... 6 = Mestre). Ver `patamarMaximoAlcancado` em
    * `src/lib/ranked/tipos.ts`.
@@ -148,6 +153,8 @@ const meetsCriteria = (achievement: AchievementDefinition, state: AchievementSta
       return state.flawlessLesson === true;
     case 'pvp_wins':
       return (state.pvpVitorias ?? 0) >= criteria.count;
+    case 'daily_challenges':
+      return (state.desafiosDiarios ?? 0) >= criteria.count;
     case 'ranked_tier':
       return (state.rankedPatamarMax ?? 0) >= criteria.patamar;
     case 'secret': {

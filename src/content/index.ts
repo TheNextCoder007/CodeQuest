@@ -1,4 +1,4 @@
-import type { Language, Lesson, Module } from '@/types/content';
+import type { Exercise, Language, Lesson, Module } from '@/types/content';
 import { fundamentos } from './python/01-fundamentos';
 import { variaveis } from './python/02-variaveis';
 import { condicionais } from './python/03-condicionais';
@@ -98,6 +98,16 @@ export const moduleById = (id: string): Module | undefined =>
 
 export const lessonById = (id: string): Lesson | undefined =>
   allLessons().find((lesson) => lesson.id === id);
+
+/** Um exercicio pelo id, de qualquer trilha. Usado pelo desafio diario. */
+export const exerciseById = (id: string): Exercise | undefined =>
+  allLessons()
+    .flatMap((lesson) => lesson.exercises)
+    .find((exercise) => exercise.id === id);
+
+/** A licao a que um exercicio pertence - para mostrar de onde ele veio. */
+export const lessonOfExercise = (exerciseId: string): Lesson | undefined =>
+  allLessons().find((lesson) => lesson.exercises.some((item) => item.id === exerciseId));
 
 export const languageOfModule = (moduleId: string): Language | undefined =>
   languages.find((language) => language.modules.some((module) => module.id === moduleId));

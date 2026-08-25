@@ -24,6 +24,7 @@ export function ExercisePlayer({
   onNext,
   isLast,
   languageSlug = LINGUAGEM_PADRAO,
+  rotuloFinal = 'Concluir lição',
 }: {
   exercise: Exercise;
   index: number;
@@ -37,6 +38,8 @@ export function ExercisePlayer({
    * codigo (Pyodide ou o motor do navegador) e como o editor se comporta.
    */
   languageSlug?: string;
+  /** Texto do botao que aparece no ultimo exercicio. */
+  rotuloFinal?: string;
 }) {
   const isCode = exercise.validationType === 'output_match';
   const runtime = runtimeDaLinguagem(languageSlug);
@@ -325,7 +328,7 @@ export function ExercisePlayer({
       <div className="flex flex-wrap items-center gap-3">
         {solved ? (
           <Button onClick={onNext} size="lg" className="w-full sm:w-auto">
-            {isLast ? 'Concluir lição' : 'Próximo desafio'}
+            {isLast ? rotuloFinal : 'Próximo desafio'}
           </Button>
         ) : (
           <>

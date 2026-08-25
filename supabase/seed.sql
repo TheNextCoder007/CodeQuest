@@ -4778,6 +4778,18 @@ insert into public.achievements (id, title, description, icon, criteria) values 
 insert into public.achievements (id, title, description, icon, criteria) values ('trilha-javascript', 'Trilha de JavaScript concluída', 'Você terminou os sete módulos da trilha de JavaScript. A web é sua.', '🟨', '{"kind":"language_completed","languageSlug":"javascript"}'::jsonb)
   on conflict (id) do update set title = excluded.title, description = excluded.description,
   icon = excluded.icon, criteria = excluded.criteria;
+insert into public.achievements (id, title, description, icon, criteria) values ('desafio-primeiro', 'Primeiro desafio do dia', 'Você concluiu o seu primeiro desafio diário.', '📅', '{"kind":"daily_challenges","count":1}'::jsonb)
+  on conflict (id) do update set title = excluded.title, description = excluded.description,
+  icon = excluded.icon, criteria = excluded.criteria;
+insert into public.achievements (id, title, description, icon, criteria) values ('desafio-10', '10 desafios diários', 'Dez desafios do dia concluídos. Virou hábito.', '🗓️', '{"kind":"daily_challenges","count":10}'::jsonb)
+  on conflict (id) do update set title = excluded.title, description = excluded.description,
+  icon = excluded.icon, criteria = excluded.criteria;
+insert into public.achievements (id, title, description, icon, criteria) values ('desafio-50', '50 desafios diários', 'Cinquenta desafios do dia. Isso é constância de verdade.', '⏳', '{"kind":"daily_challenges","count":50}'::jsonb)
+  on conflict (id) do update set title = excluded.title, description = excluded.description,
+  icon = excluded.icon, criteria = excluded.criteria;
+insert into public.achievements (id, title, description, icon, criteria) values ('desafio-100', '100 desafios diários', 'Cem desafios do dia concluídos. Poucas pessoas chegam aqui.', '🌠', '{"kind":"daily_challenges","count":100}'::jsonb)
+  on conflict (id) do update set title = excluded.title, description = excluded.description,
+  icon = excluded.icon, criteria = excluded.criteria;
 insert into public.achievements (id, title, description, icon, criteria) values ('streak-3', '3 dias de streak', 'Três dias seguidos estudando.', '🔥', '{"kind":"streak","days":3}'::jsonb)
   on conflict (id) do update set title = excluded.title, description = excluded.description,
   icon = excluded.icon, criteria = excluded.criteria;
@@ -4892,6 +4904,26 @@ begin
     icon = excluded.icon, rarity = excluded.rarity, criteria = excluded.criteria,
     secret = excluded.secret, order_index = excluded.order_index;
   insert into public.tags (id, name, description, icon, rarity, criteria, secret, order_index) values ('pvp-imortal', 'Imortal', '100 vitórias em duelos.', '💀', 'lendario', '{"kind":"pvp_wins","count":100}'::jsonb, false, 15)
+    on conflict (id) do update set name = excluded.name, description = excluded.description,
+    icon = excluded.icon, rarity = excluded.rarity, criteria = excluded.criteria,
+    secret = excluded.secret, order_index = excluded.order_index;
+  insert into public.tags (id, name, description, icon, rarity, criteria, secret, order_index) values ('diarista', 'Diarista', 'Concluiu o primeiro desafio diário.', '📅', 'comum', '{"kind":"daily_challenges","count":1}'::jsonb, false, 30)
+    on conflict (id) do update set name = excluded.name, description = excluded.description,
+    icon = excluded.icon, rarity = excluded.rarity, criteria = excluded.criteria,
+    secret = excluded.secret, order_index = excluded.order_index;
+  insert into public.tags (id, name, description, icon, rarity, criteria, secret, order_index) values ('diarista-constante', 'Constante', '10 desafios diários concluídos. Aparecer todo dia é meio caminho.', '🗓️', 'raro', '{"kind":"daily_challenges","count":10}'::jsonb, false, 31)
+    on conflict (id) do update set name = excluded.name, description = excluded.description,
+    icon = excluded.icon, rarity = excluded.rarity, criteria = excluded.criteria,
+    secret = excluded.secret, order_index = excluded.order_index;
+  insert into public.tags (id, name, description, icon, rarity, criteria, secret, order_index) values ('diarista-disciplinado', 'Disciplinado', '25 desafios diários. Mais de três semanas sem falhar um dia sequer.', '⏳', 'epico', '{"kind":"daily_challenges","count":25}'::jsonb, false, 32)
+    on conflict (id) do update set name = excluded.name, description = excluded.description,
+    icon = excluded.icon, rarity = excluded.rarity, criteria = excluded.criteria,
+    secret = excluded.secret, order_index = excluded.order_index;
+  insert into public.tags (id, name, description, icon, rarity, criteria, secret, order_index) values ('diarista-inabalavel', 'Inabalável', '50 desafios diários concluídos.', '🧱', 'mitico', '{"kind":"daily_challenges","count":50}'::jsonb, false, 33)
+    on conflict (id) do update set name = excluded.name, description = excluded.description,
+    icon = excluded.icon, rarity = excluded.rarity, criteria = excluded.criteria,
+    secret = excluded.secret, order_index = excluded.order_index;
+  insert into public.tags (id, name, description, icon, rarity, criteria, secret, order_index) values ('diarista-lendario', 'Diarista Lendário', '100 desafios diários. São no mínimo 100 dias de CodeQuest.', '🌠', 'lendario', '{"kind":"daily_challenges","count":100}'::jsonb, false, 34)
     on conflict (id) do update set name = excluded.name, description = excluded.description,
     icon = excluded.icon, rarity = excluded.rarity, criteria = excluded.criteria,
     secret = excluded.secret, order_index = excluded.order_index;

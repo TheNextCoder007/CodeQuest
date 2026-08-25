@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { ArrowRight, Check, Lock } from 'lucide-react';
 import { AppShell } from '@/components/AppShell';
 import { ChamadaRanqueada } from '@/components/ranked/ChamadaRanqueada';
+import { ChamadaDesafio } from '@/components/desafios/ChamadaDesafio';
 import { Card, CardTitle, Label, Pill, ProgressBar, StatCard } from '@/components/ui/Card';
 import { LinkButton } from '@/components/ui/Button';
 import { useAuth } from '@/lib/auth/AuthProvider';
@@ -145,6 +146,8 @@ function DashboardContent() {
         * cinco itens e um sexto nao caberia num Android de 360px com a fonte
         * ampliada (ver o comentario em `AppShell`).
         * ------------------------------------------------------------- */}
+      <ChamadaDesafio />
+
       <ChamadaRanqueada />
 
       <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">

@@ -9,6 +9,7 @@ import { GaleriaTags } from '@/components/social/GaleriaTags';
 import { TagBadge } from '@/components/social/TagBadge';
 import { Button, LinkButton } from '@/components/ui/Button';
 import { Card, CardTitle, Label, Pill, ProgressBar, StatCard } from '@/components/ui/Card';
+import { buscarTotalDeDesafios } from '@/lib/desafios/api';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { usePlayer } from '@/lib/player/PlayerProvider';
 import { languageBySlug } from '@/content';
@@ -55,6 +56,7 @@ function PerfilContent() {
     equipTag,
     sincronizarPvp,
     sincronizarRanqueada,
+    sincronizarDesafios,
   } = usePlayer();
   const router = useRouter();
 
@@ -112,6 +114,36 @@ function PerfilContent() {
       ativo = false;
     };
   }, [idAtual, sincronizarPvp]);
+
+  /*
+   * Desafios diarios concluidos.
+   *
+   * O numero vem de `desafio_total()`, no banco - a tabela de conclusoes nao
+   * tem policy de escrita, entao nao ha como o aparelho inflar esse contador.
+   * A sincronizacao acontece aqui tambem (e nao so ao concluir um desafio)
+   * para que quem jogou no celular receba a tag ao abrir o perfil no
+   * computador.
+   */
+  const [desafiosDiarios, setDesafiosDiarios] = useState(0);
+
+  useEffect(() => {
+    if (!idAtual) return;
+    let ativo = true;
+
+    buscarTotalDeDesafios(idAtual)
+      .then((total) => {
+        if (!ativo) return;
+        setDesafiosDiarios(total);
+        if (total > 0) void sincronizarDesafios(total);
+      })
+      .catch(() => {
+        /* migracao 0008 ainda nao aplicada: o cartao mostra zero */
+      });
+
+    return () => {
+      ativo = false;
+    };
+  }, [idAtual, sincronizarDesafios]);
 
   // Ranqueada: patamar da temporada atual e o historico das passadas. Como as
   // estatisticas de duelo, vem de tabela que so o servidor escreve.
@@ -355,7 +387,7 @@ function PerfilContent() {
       </section>
 
       {/* Metricas ----------------------------------------------------- */}
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         <StatCard icon="⭐" label="XP total" value={profile.xp_total} />
         <StatCard icon="🔥" label="Streak" value={`${streak} dias`} tone="amber" hint={profile.last_study_date ? `Último estudo: ${profile.last_study_date}` : 'Nenhum estudo ainda'} />
         <StatCard
@@ -369,6 +401,17 @@ function PerfilContent() {
           label="Conquistas"
           value={`${desbloqueadas}/${conquistas.length}`}
           tone="violet"
+        />
+        <StatCard
+          icon="📅"
+          label="Desafios diários"
+          value={desafiosDiarios}
+          tone="amber"
+          hint={
+            desafiosDiarios === 0
+              ? 'Nenhum desafio diário ainda'
+              : `${desafiosDiarios} ${desafiosDiarios === 1 ? 'concluído' : 'concluídos'}`
+          }
         />
       </section>
 

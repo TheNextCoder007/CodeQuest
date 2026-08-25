@@ -36,7 +36,9 @@ export type TagCriteria =
   /** Vitorias acumuladas no modo 1v1. */
   | { kind: 'pvp_wins'; count: number }
   /** Vitorias no MESMO tema (vira "especialista" naquela linguagem). */
-  | { kind: 'pvp_tema'; count: number };
+  | { kind: 'pvp_tema'; count: number }
+  /** Desafios diarios concluidos, no total. */
+  | { kind: 'daily_challenges'; count: number };
 
 /**
  * Identificadores das acoes secretas.
@@ -217,6 +219,64 @@ export const tags: TagDefinition[] = [
     criteria: { kind: 'pvp_wins', count: 100 },
     secret: false,
     orderIndex: 15,
+  },
+
+  /* ---------------------------------------------------------------------
+   * Desafios diarios - premiam constancia, nao velocidade
+   *
+   * A escala e mais espacada que a do duelo de proposito: um desafio por dia
+   * e o teto, entao 100 desafios sao no minimo 100 dias. A tag lendaria aqui
+   * custa mais tempo do que qualquer outra do jogo.
+   * ------------------------------------------------------------------ */
+  {
+    id: 'diarista',
+    name: 'Diarista',
+    description: 'Concluiu o primeiro desafio diário.',
+    icon: '📅',
+    rarity: 'comum',
+    criteria: { kind: 'daily_challenges', count: 1 },
+    secret: false,
+    orderIndex: 30,
+  },
+  {
+    id: 'diarista-constante',
+    name: 'Constante',
+    description: '10 desafios diários concluídos. Aparecer todo dia é meio caminho.',
+    icon: '🗓️',
+    rarity: 'raro',
+    criteria: { kind: 'daily_challenges', count: 10 },
+    secret: false,
+    orderIndex: 31,
+  },
+  {
+    id: 'diarista-disciplinado',
+    name: 'Disciplinado',
+    description: '25 desafios diários. Mais de três semanas sem falhar um dia sequer.',
+    icon: '⏳',
+    rarity: 'epico',
+    criteria: { kind: 'daily_challenges', count: 25 },
+    secret: false,
+    orderIndex: 32,
+  },
+  {
+    id: 'diarista-inabalavel',
+    name: 'Inabalável',
+    description: '50 desafios diários concluídos.',
+    icon: '🧱',
+    rarity: 'mitico',
+    criteria: { kind: 'daily_challenges', count: 50 },
+    secret: false,
+    orderIndex: 33,
+  },
+  {
+    id: 'diarista-lendario',
+    name: 'Diarista Lendário',
+    description: '100 desafios diários. São no mínimo 100 dias de CodeQuest.',
+    icon: '🌠',
+    rarity: 'lendario',
+    criteria: { kind: 'daily_challenges', count: 100 },
+    secret: false,
+    orderIndex: 34,
   },
 
   /* ---------------------------------------------------------------------

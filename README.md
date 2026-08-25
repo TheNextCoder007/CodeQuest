@@ -36,10 +36,11 @@ Play ou na Microsoft Store (que cobram taxa de desenvolvedor).
 11. [Tags, perfil público e foto](#11-tags-perfil-público-e-foto)
 12. [Duelo 1v1 (PvP)](#12-duelo-1v1-pvp)
 13. [Modo ranqueado (temporadas e patamares)](#13-modo-ranqueado-temporadas-e-patamares)
-14. [Aparecer no Google (SEO)](#14-aparecer-no-google-seo)
-15. [Editar e criar conteúdo](#15-editar-e-criar-conteúdo)
-16. [Decisões técnicas](#16-decisões-técnicas)
-17. [Problemas comuns](#17-problemas-comuns)
+14. [Desafio diário](#14-desafio-diário)
+15. [Aparecer no Google (SEO)](#15-aparecer-no-google-seo)
+16. [Editar e criar conteúdo](#16-editar-e-criar-conteúdo)
+17. [Decisões técnicas](#17-decisões-técnicas)
+18. [Problemas comuns](#18-problemas-comuns)
 
 ---
 
@@ -76,6 +77,7 @@ Para ligar a nuvem (contas reais, progresso sincronizado entre celular/PC/site),
 | `npm run test:amigos` | Testa o fluxo de amizades (busca, pedido, aceite, remoção, ranking) |
 | `npm run test:tags` | Testa as tags, os segredos e as regras do @username |
 | `npm run test:pvp` | Joga uma partida 1v1 num Postgres real e testa as tentativas de trapaça |
+| `npm run test:desafios` | Desafio diário: sorteio determinístico, XP pago uma vez só e RLS |
 | `npm run test:ranqueado` | Testa a escada de patamares, o elo, as temporadas e os bots num Postgres real |
 | `npm run test:seo` | Confere sitemap, robots.txt e as meta tags do build |
 | `npm run og:gen` | Regera a imagem de prévia do link (`public/og.jpg`) |
@@ -138,6 +140,7 @@ CodeQuest/
 │   ├── migrations/0005_pvp.sql   # duelo 1v1 (perguntas, partidas, placar)
 │   ├── migrations/0006_ranqueado.sql # temporadas, elo, patamares, bots
 │   ├── migrations/0007_embaralhar_alternativas.sql # ordem sorteada por exibição
+│   ├── migrations/0008_desafios_diarios.sql # um exercício por dia, igual para todos
 │   ├── diagnostico.sql           # consultas de conferência (só leitura)
 │   └── seed.sql                  # conteúdo das trilhas (GERADO)
 ├── android/                      # projeto Android (Capacitor)
@@ -216,11 +219,13 @@ O Supabase dá um Postgres gerenciado + autenticação no plano gratuito, **sem 
 7. Abra outra query, cole **todo** o conteúdo de [`supabase/migrations/0006_ranqueado.sql`](supabase/migrations/0006_ranqueado.sql) e rode.
    Esse arquivo cria o modo ranqueado — temporadas, elo e bots (ver [seção 13](#13-modo-ranqueado-temporadas-e-patamares)).
 8. Abra outra query, cole **todo** o conteúdo de [`supabase/migrations/0007_embaralhar_alternativas.sql`](supabase/migrations/0007_embaralhar_alternativas.sql) e rode.
-   Esse arquivo faz o servidor **embaralhar as alternativas** de cada pergunta (ver [seção 12.7](#126-por-que-as-alternativas-são-embaralhadas-no-servidor)).
-9. Abra mais uma query, cole **todo** o conteúdo de [`supabase/seed.sql`](supabase/seed.sql) e rode também.
-   Esse arquivo popula as 5 linguagens, 50 lições, 100 exercícios, 37 conquistas, 17 tags e 88 perguntas de duelo.
+   Esse arquivo faz o servidor **embaralhar as alternativas** de cada pergunta (ver [seção 12.6](#126-por-que-as-alternativas-são-embaralhadas-no-servidor)).
+9. Abra outra query, cole **todo** o conteúdo de [`supabase/migrations/0008_desafios_diarios.sql`](supabase/migrations/0008_desafios_diarios.sql) e rode.
+   Esse arquivo cria o **desafio diário** — um exercício por dia, igual para todo mundo (ver [seção 14](#14-desafio-diário)).
+10. Abra mais uma query, cole **todo** o conteúdo de [`supabase/seed.sql`](supabase/seed.sql) e rode também.
+   Esse arquivo popula as 5 linguagens, 50 lições, 100 exercícios, 41 conquistas, 22 tags e 88 perguntas de duelo.
 
-> Os oito scripts podem ser executados quantas vezes você quiser: eles usam
+> Os nove scripts podem ser executados quantas vezes você quiser: eles usam
 > `if not exists` / `on conflict do update` e não duplicam nem apagam nada.
 > Isso não é só promessa: `npm run test:migrations` aplica todos eles **três vezes
 > seguidas** num PostgreSQL de verdade e confere que o progresso de um aluno
@@ -1128,11 +1133,122 @@ o teste quebra.
 
 ---
 
-## 14. Aparecer no Google (SEO)
+## 14. Desafio diário
+
+Um exercício de código por dia, **o mesmo para todo mundo**, valendo **120 XP**. Não acumula: à
+meia-noite ele é trocado e o de ontem não volta.
+
+### 14.1 De onde vem o exercício
+
+Não existe um banco separado de desafios: o exercício sai da própria trilha, do conjunto que
+[`desafio_pool()`](supabase/migrations/0008_desafios_diarios.sql) define. Foi a escolha mais barata
+e a mais sustentável — cada exercício novo entra no rodízio sozinho, e não há um segundo currículo
+para manter em dia.
+
+O pool tem duas regras, e as duas têm motivo:
+
+- **só exercícios de código** (`output_match`), porque o desafio diário é para escrever programa,
+  não para marcar alternativa;
+- **sem o Projeto Final**, porque os exercícios dele são "Etapa 1", "Etapa 2", "Etapa 3" de um
+  projeto único e não se sustentam soltos, fora da lição.
+
+Hoje isso dá **54 exercícios**, entre Python e JavaScript.
+
+> A alternativa seria sortear entre os exercícios que **aquele aluno** já desbloqueou. Ela foi
+> descartada por contradizer o próprio pedido: se cada pessoa recebe um exercício diferente, não há
+> como comparar com os amigos quem fez o desafio do dia.
+
+### 14.2 Como o desafio troca de dia — sem cron
+
+**Ninguém agenda nada.** A linha do dia é criada na primeira vez que alguém pergunta pelo desafio
+naquele dia, dentro de `desafio_do_dia()`. É o mesmo padrão preguiçoso da virada de temporada da
+ranqueada ([seção 13.3](#133-temporadas)), pelo mesmo motivo: o plano gratuito do Supabase não
+garante execução agendada, e depender disso seria depender de algo que pode simplesmente não rodar.
+
+A diferença é que aqui nem `while` é preciso. A temporada é uma sequência encadeada — a próxima
+começa onde a anterior terminou —, então pular meses exige criar as do meio. O desafio diário não:
+cada dia é independente, e a **data já diz qual é o exercício**.
+
+~~~
+posição = (dias desde 1970-01-01) × 7919  mod  (tamanho do pool)
+~~~
+
+7919 é primo e maior que o pool, então `mdc(7919, 54) = 1` e a sequência **percorre todos os 54
+exercícios antes de repetir qualquer um**. Não há sorteio aleatório, e isso dá três propriedades:
+
+1. duas pessoas que abrem o app no mesmo instante, com a linha do dia ainda não criada, calculam o
+   **mesmo** exercício — a corrida entre elas não tem como produzir desafios diferentes (e o
+   `on conflict do nothing` cuida da segunda inserção);
+2. dá para saber qual foi o desafio de qualquer dia passado sem consultar o banco, o que ajuda a
+   investigar um problema;
+3. se o app ficar uma semana sem ser aberto, simplesmente não existem linhas daqueles dias — e não
+   faz falta, porque um desafio que ninguém jogou não precisa existir.
+
+**O dia vira à meia-noite de Brasília**, e não no fuso do aparelho. Se cada um virasse no próprio
+fuso, "o desafio de hoje" seria coisas diferentes ao mesmo tempo e comparar com amigos perderia o
+sentido. Quem decide é `desafio_hoje()`, no banco — a data nunca vem do cliente.
+
+### 14.3 O que o cliente não consegue fazer
+
+| Tentativa | Por que não funciona |
+| --- | --- |
+| marcar conclusão para outra pessoa | `desafio_concluir()` **não recebe usuário** — usa `auth.uid()` |
+| marcar conclusão para outro dia | também **não recebe data** — usa `desafio_hoje()` |
+| fazer o desafio de ontem hoje | a chave é `(dia, user_id)` e o dia é sempre o de hoje |
+| ganhar XP duas vezes | `on conflict do nothing` + `row_count` decidem se paga |
+| escrever direto na tabela | RLS ligada e **sem policy de INSERT/UPDATE/DELETE** |
+| ler quem mais concluiu | a policy de SELECT compara com `auth.uid()` |
+
+O XP também é concedido **pelo servidor**: `desafio_concluir()` atualiza `xp_total` e `level`
+dentro do banco e devolve os números já calculados. O cliente não soma nada — ele copia. É mais
+fechado do que a trilha, onde o XP ainda é escrito pelo aparelho (com o teto do
+`guard_profile_update`, [seção 9](#9-como-a-gamificação-funciona)).
+
+O que continua no cliente é decidir se a **resposta** do exercício está certa — isso é inerente ao
+projeto, onde o código do aluno roda no aparelho dele.
+
+### 14.4 Onde aparece
+
+- **painel** — uma faixa mostrando se o desafio de hoje está disponível ou já foi feito;
+- **`/desafio`** — a tela do desafio, com o contador regressivo, a lição de origem e a lista de
+  **quais amigos já fizeram hoje**;
+- **perfil** — o total histórico ("23 desafios diários concluídos").
+
+A comparação com amigos passa por `desafio_amigos()`, uma função `security definer` que faz a
+junção no servidor e devolve **só o booleano e o total** — nenhuma outra linha de conclusão é
+exposta, e nada de e-mail.
+
+### 14.5 Conquistas e tags
+
+| Marco | Conquista | Tag | Raridade |
+| --- | --- | --- | --- |
+| 1 | Primeiro desafio do dia | Diarista | Comum |
+| 10 | 10 desafios diários | Constante | Raro |
+| 25 | — | Disciplinado | Épico |
+| 50 | 50 desafios diários | Inabalável | Mítico |
+| 100 | 100 desafios diários | Diarista Lendário | Lendário |
+
+A escala é mais espaçada que a do duelo de propósito: **um desafio por dia é o teto**, então 100
+desafios são no mínimo 100 dias. A tag lendária daqui custa mais tempo do que qualquer outra do
+jogo — não dá para acelerar jogando a noite inteira.
+
+### 14.6 No modo demonstração
+
+Sem Supabase, a mesma regra roda no aparelho ([`src/lib/desafios/local.ts`](src/lib/desafios/local.ts)):
+o exercício sai da data, o dia vira à meia-noite de Brasília e concluir paga uma vez só. O que não
+dá para reproduzir é a **garantia** — sem banco, quem guarda a lista de dias concluídos é o próprio
+`localStorage`. A lista de amigos vem vazia, porque não há com quem comparar.
+
+`npm run test:desafios` compara as duas implementações **dia a dia ao longo de 400 dias**: se
+alguém mexer no SQL e esquecer do TypeScript (ou o contrário), o teste quebra.
+
+---
+
+## 15. Aparecer no Google (SEO)
 
 Tudo o que está aqui é gratuito e funciona no domínio da Vercel — não precisa de domínio próprio.
 
-### 14.1 O endereço do site
+### 15.1 O endereço do site
 
 Sitemap, robots.txt e as tags de prévia precisam de **URL absoluta**. Ela vem, nesta ordem:
 
@@ -1145,7 +1261,7 @@ propósito: sem essa regra, esquecer de trocar a variável publicaria um sitemap
 para a sua máquina. E não usamos `VERCEL_URL`, que muda a cada deploy
 (`projeto-a1b2c3.vercel.app`) e colocaria um endereço descartável dentro do sitemap.
 
-### 14.2 Sitemap e robots.txt
+### 15.2 Sitemap e robots.txt
 
 Gerados pelo Next a partir de [`src/app/sitemap.ts`](src/app/sitemap.ts) e
 [`src/app/robots.ts`](src/app/robots.ts) — ficam em `/sitemap.xml` e `/robots.txt`.
@@ -1160,7 +1276,7 @@ evita a visita, o meta evita a indexação caso o Google chegue por um link de f
 > landing no build: o HTML entregue tem cerca de **9.800 caracteres de texto visível**, não uma
 > casca vazia. Dá para conferir abrindo `out/index.html` depois de `npm run build:static`.
 
-### 14.3 Título, descrição e prévia do link
+### 15.3 Título, descrição e prévia do link
 
 O layout raiz ([`src/app/layout.tsx`](src/app/layout.tsx)) define o título e a descrição da landing
 e serve de padrão para o site. Cada rota pública tem um `layout.tsx` próprio com o texto dela — as
@@ -1182,7 +1298,7 @@ npm run og:gen
 JPEG e não PNG de propósito: o mesmo desenho em PNG dava 440 KB por causa dos gradientes, e o
 WhatsApp costuma desistir de gerar a prévia acima de ~300 KB. Em JPEG a 90% fica em **69 KB**.
 
-### 14.4 Cadastrar no Google Search Console
+### 15.4 Cadastrar no Google Search Console
 
 1. Publique na Vercel e confirme o endereço em **Vercel › Project › Domains** (algo como
    `https://codequest.vercel.app`).
@@ -1197,7 +1313,7 @@ WhatsApp costuma desistir de gerar a prévia acima de ~300 KB. Em JPEG a 90% fic
 > A indexação leva de alguns dias a algumas semanas. Use **Inspeção de URL › Solicitar indexação**
 > para acelerar a landing.
 
-### 14.5 Verificação automática
+### 15.5 Verificação automática
 
 `npm run test:seo` cobre a resolução do endereço (inclusive o caso de esquecer a variável), e —
 quando `out/` existe — confere no resultado do build: o sitemap é XML válido, só tem URL absoluta
@@ -1207,7 +1323,7 @@ imagem de prévia cabe no limite do WhatsApp.
 
 ---
 
-## 15. Editar e criar conteúdo
+## 16. Editar e criar conteúdo
 
 O currículo é **TypeScript**, não banco de dados — por isso funciona offline no `.apk` e no `.exe`,
 e por isso um erro de digitação aparece na hora, com autocompletar.
@@ -1249,7 +1365,7 @@ O campo opcional `polyglot` gera as abas "o conceito é o mesmo, a sintaxe muda"
 
 ---
 
-## 16. Decisões técnicas
+## 17. Decisões técnicas
 
 ### Por que esta stack
 
@@ -1358,7 +1474,7 @@ limites do plano gratuito. A execução de código não custa nada porque aconte
 
 ---
 
-## 17. Problemas comuns
+## 18. Problemas comuns
 
 **O app mostra "modo demonstração" mesmo com o `.env.local` preenchido**
 Reinicie o `npm run dev` — variáveis `NEXT_PUBLIC_*` são lidas na inicialização. Confira também se

@@ -77,6 +77,30 @@ interface PlayerContextValue {
    * conquistas novas, para a tela poder comemorar.
    */
   sincronizarRanqueada: (patamarMax: number) => Promise<AchievementDefinition[]>;
+  /**
+   * Concede as tags e conquistas de desafio diario e, quando o desafio acabou
+   * de ser concluido, espelha o XP que o servidor pagou.
+   *
+   * `total` vem de `desafio_estado()` - tabela que so o servidor escreve, e
+   * cuja unica porta de escrita (`desafio_concluir`) nao aceita usuario nem
+   * data. Aqui so avaliamos os criterios e gravamos o que faltar.
+   *
+   * `xp` e opcional: o perfil chama isto so para conferir premios pendentes
+   * (sem mexer no XP), enquanto a tela do desafio passa os numeros que
+   * `desafio_concluir()` devolveu. O cliente NAO soma nada - ele apenas copia
+   * o que o servidor ja gravou.
+   *
+   * As duas coisas ficam na MESMA funcao de proposito: sao uma unica escrita
+   * de estado. Separadas, a segunda gravaria por cima da primeira no modo
+   * demonstracao, desfazendo o XP.
+   */
+  sincronizarDesafios: (
+    total: number,
+    xp?: { total: number; nivel: number },
+  ) => Promise<{
+    tags: TagDefinition[];
+    conquistas: AchievementDefinition[];
+  }>;
   setCurrentLanguage: (slug: string) => Promise<void>;
   updateName: (name: string) => Promise<void>;
   /** Troca a foto de perfil (ja redimensionada e enviada por `enviarAvatar`). */
@@ -784,6 +808,96 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     [user, state],
   );
 
+  const sincronizarDesafios = useCallback(
+    async (
+      total: number,
+      xp?: { total: number; nivel: number },
+    ): Promise<{ tags: TagDefinition[]; conquistas: AchievementDefinition[] }> => {
+      const vazio = { tags: [] as TagDefinition[], conquistas: [] as AchievementDefinition[] };
+      if (!user || !state) return vazio;
+
+      const perfil = xp
+        ? { ...state.profile, xp_total: xp.total, level: xp.nivel }
+        : state.profile;
+
+      const novasTags = evaluateTags(
+        {
+          level: state.profile.level,
+          completedLessonIds: state.completedLessonIds,
+          isDeveloper: state.profile.is_developer,
+          desafiosDiarios: total,
+        },
+        state.unlockedTagIds,
+      );
+
+      const unlockedTagIds = [...state.unlockedTagIds, ...novasTags.map((tag) => tag.id)];
+      const novasConquistas = evaluateAchievements(
+        {
+          completedLessonIds: state.completedLessonIds,
+          xpTotal: state.profile.xp_total,
+          streak: displayStreak(state.profile.last_study_date, state.profile.streak_count),
+          flawlessLesson: state.flawlessLessonIds.length > 0,
+          unlockedTagIds,
+          desafiosDiarios: total,
+        },
+        state.unlockedAchievementIds,
+      );
+
+      const mudouOPerfil = perfil !== state.profile;
+      if (novasTags.length === 0 && novasConquistas.length === 0 && !mudouOPerfil) return vazio;
+
+      const nextState: PlayerState = {
+        ...state,
+        profile: perfil,
+        unlockedTagIds,
+        unlockedAchievementIds: [
+          ...state.unlockedAchievementIds,
+          ...novasConquistas.map((conquista) => conquista.id),
+        ],
+      };
+      setState(nextState);
+
+      if (!isSupabaseConfigured) {
+        localState.save(user.id, nextState);
+        return { tags: novasTags, conquistas: novasConquistas };
+      }
+
+      const supabase = getSupabase()!;
+      try {
+        await comRetentativas(async () => {
+          if (novasTags.length > 0) {
+            await supabase.from('user_tags').upsert(
+              novasTags.map((tag) => ({
+                user_id: user.id,
+                tag_id: tag.id,
+                unlocked_at: new Date().toISOString(),
+              })),
+              { onConflict: 'user_id,tag_id' },
+            );
+          }
+          if (novasConquistas.length > 0) {
+            await supabase.from('user_achievements').upsert(
+              novasConquistas.map((conquista) => ({
+                user_id: user.id,
+                achievement_id: conquista.id,
+                unlocked_at: new Date().toISOString(),
+              })),
+              { onConflict: 'user_id,achievement_id' },
+            );
+          }
+        });
+      } catch (falha) {
+        console.error('[CodeQuest] falha ao gravar premios do desafio diario', falha);
+      }
+
+      // Repare que o XP nao e enviado ao Supabase aqui: quem gravou
+      // `xp_total` e `level` foi `desafio_concluir()`, dentro do banco. O que
+      // este bloco escreve sao apenas as tags e conquistas.
+      return { tags: novasTags, conquistas: novasConquistas };
+    },
+    [user, state],
+  );
+
   const sincronizarRanqueada = useCallback(
     async (patamarMax: number): Promise<AchievementDefinition[]> => {
       if (!user || !state) return [];
@@ -850,6 +964,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       registrarSegredo,
       sincronizarPvp,
       sincronizarRanqueada,
+      sincronizarDesafios,
       setCurrentLanguage,
       updateName,
       updateAvatar,
@@ -866,6 +981,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       registrarSegredo,
       sincronizarPvp,
       sincronizarRanqueada,
+      sincronizarDesafios,
       setCurrentLanguage,
       updateName,
       updateAvatar,

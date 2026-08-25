@@ -25,6 +25,13 @@ export type AchievementCriteria =
   /** Vitorias no modo 1v1. */
   | { kind: 'pvp_wins'; count: number }
   /**
+   * Desafios diarios concluidos, no total.
+   *
+   * O contador vive no banco (`daily_challenge_completions`) e chega aqui por
+   * `sincronizarDesafios` - o cliente nao tem por onde inflar esse numero.
+   */
+  | { kind: 'daily_challenges'; count: number }
+  /**
    * Chegar a um patamar do modo ranqueado.
    *
    * `patamar` e o indice em `PATAMARES` (`src/lib/ranked/patamares.ts`):
@@ -177,6 +184,38 @@ export const achievements: AchievementDefinition[] = [
     icon: '🟨',
     criteria: { kind: 'language_completed', languageSlug: 'javascript' },
   },
+  /* ---------------------------------------------------------------------
+   * Desafios diarios - a mesma progressao 1 / 10 / 50 / 100 do duelo
+   * ------------------------------------------------------------------ */
+  {
+    id: 'desafio-primeiro',
+    title: 'Primeiro desafio do dia',
+    description: 'Você concluiu o seu primeiro desafio diário.',
+    icon: '📅',
+    criteria: { kind: 'daily_challenges', count: 1 },
+  },
+  {
+    id: 'desafio-10',
+    title: '10 desafios diários',
+    description: 'Dez desafios do dia concluídos. Virou hábito.',
+    icon: '🗓️',
+    criteria: { kind: 'daily_challenges', count: 10 },
+  },
+  {
+    id: 'desafio-50',
+    title: '50 desafios diários',
+    description: 'Cinquenta desafios do dia. Isso é constância de verdade.',
+    icon: '⏳',
+    criteria: { kind: 'daily_challenges', count: 50 },
+  },
+  {
+    id: 'desafio-100',
+    title: '100 desafios diários',
+    description: 'Cem desafios do dia concluídos. Poucas pessoas chegam aqui.',
+    icon: '🌠',
+    criteria: { kind: 'daily_challenges', count: 100 },
+  },
+
   {
     id: 'streak-3',
     title: '3 dias de streak',
