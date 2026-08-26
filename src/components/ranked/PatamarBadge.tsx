@@ -14,7 +14,7 @@ export function PatamarBadge({
   tamanho = 'md',
   className,
 }: {
-  /** 0 a 20 (Bronze 1 ... Mestre 3). */
+  /** 0 a 21 (Bronze 1 ... Mestre 3, Elite). */
   divisao: number;
   tamanho?: 'sm' | 'md';
   className?: string;
@@ -32,7 +32,7 @@ export function PatamarBadge({
       )}
     >
       <span aria-hidden>{estilo.emoji}</span>
-      {/* `nomeDaDivisao` ja resolve o Mestre, que nao tem sub-nivel. */}
+      {/* `nomeDaDivisao` ja resolve o Elite, que nao tem sub-nivel. */}
       <span className="min-w-0 truncate">{nomeDaDivisao(divisao)}</span>
     </span>
   );

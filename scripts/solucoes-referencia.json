@@ -1,0 +1,246 @@
+{
+  "py-fund-02-e1": {
+    "lang": "python",
+    "codigo": "print(\"Olá, CodeQuest!\")"
+  },
+  "py-fund-02-e2": {
+    "lang": "python",
+    "codigo": "print(\"Meu nome é Dev\")\nprint(\"Estou aprendendo Python\")"
+  },
+  "py-fund-03-e2": {
+    "lang": "python",
+    "codigo": "# print(\"teste temporário\")\nprint(\"Relatório final\")"
+  },
+  "py-fund-04-e2": {
+    "lang": "python",
+    "codigo": "mensagem = \"Tudo certo!\"\nprint(mensagem)"
+  },
+  "py-fund-05-e1": {
+    "lang": "python",
+    "codigo": "cidade = input(\"De qual cidade você é? \")\nprint(\"Boa viagem para\", cidade)"
+  },
+  "py-var-01-e1": {
+    "lang": "python",
+    "codigo": "nome = \"Ana\"\nprint(nome)"
+  },
+  "py-var-02-e2": {
+    "lang": "python",
+    "codigo": "print(\"10\" + \"5\")\nprint(10 + 5)"
+  },
+  "py-var-03-e1": {
+    "lang": "python",
+    "codigo": "numero = int(input(\"Digite um número: \"))\nprint(numero + 10)"
+  },
+  "py-var-04-e1": {
+    "lang": "python",
+    "codigo": "nome = \"Ana\"\nnota1 = 7.0\nnota2 = 9.0\nprint(f\"A média de {nome} é {(nota1 + nota2) / 2}\")"
+  },
+  "py-cond-01-e2": {
+    "lang": "python",
+    "codigo": "compra = 150\n\nif compra > 100:\n    print(\"Tem desconto\")"
+  },
+  "py-cond-02-e1": {
+    "lang": "python",
+    "codigo": "idade = int(input(\"Digite sua idade: \"))\n\nif idade >= 18:\n    print(\"Maior de idade\")\nelse:\n    print(\"Menor de idade\")"
+  },
+  "py-cond-02-e2": {
+    "lang": "python",
+    "codigo": "idade = int(input(\"Digite sua idade: \"))\n\nif idade >= 18:\n    print(\"Maior de idade\")\nelse:\n    print(\"Menor de idade\")"
+  },
+  "py-cond-03-e1": {
+    "lang": "python",
+    "codigo": "temperatura = 12\n\nif temperatura > 30:\n    print(\"Calor\")\nelif temperatura >= 15:\n    print(\"Ameno\")\nelse:\n    print(\"Frio\")"
+  },
+  "py-cond-04-e1": {
+    "lang": "python",
+    "codigo": "idade = 22\ntem_habilitacao = False\n\nif idade >= 18 and tem_habilitacao:\n    print(\"Pode dirigir\")\nelse:\n    print(\"Não pode dirigir\")"
+  },
+  "py-rep-01-e1": {
+    "lang": "python",
+    "codigo": "for numero in range(1, 6):\n    print(numero)"
+  },
+  "py-rep-02-e1": {
+    "lang": "python",
+    "codigo": "contador = 3\n\nwhile contador >= 1:\n    print(contador)\n    contador -= 1\n\nprint(\"Fim\")"
+  },
+  "py-rep-03-e1": {
+    "lang": "python",
+    "codigo": "soma = 0\n\nfor numero in range(1, 101):\n    soma += numero\n\nprint(soma)"
+  },
+  "py-rep-03-e2": {
+    "lang": "python",
+    "codigo": "quantidade = 0\n\nfor numero in range(1, 21):\n    if numero % 3 == 0:\n        quantidade += 1\n\nprint(quantidade)"
+  },
+  "py-rep-04-e1": {
+    "lang": "python",
+    "codigo": "for numero in range(1, 11):\n    if numero == 7:\n        continue\n    print(numero)"
+  },
+  "py-func-01-e1": {
+    "lang": "python",
+    "codigo": "def abrir_jogo():\n    print(\"Partida iniciada\")\n\nabrir_jogo()\nabrir_jogo()"
+  },
+  "py-func-02-e1": {
+    "lang": "python",
+    "codigo": "def calcular_media(a, b):\n    return (a + b) / 2\n\nprint(calcular_media(7, 9))"
+  },
+  "py-func-03-e1": {
+    "lang": "python",
+    "codigo": "def eh_par(numero):\n    return numero % 2 == 0\n\nprint(eh_par(4))\nprint(eh_par(7))"
+  },
+  "py-des-01-e1": {
+    "lang": "python",
+    "codigo": "for numero in range(1, 16):\n    if numero % 3 == 0 and numero % 5 == 0:\n        print(\"FizzBuzz\")\n    elif numero % 3 == 0:\n        print(\"Fizz\")\n    elif numero % 5 == 0:\n        print(\"Buzz\")\n    else:\n        print(numero)"
+  },
+  "py-des-02-e1": {
+    "lang": "python",
+    "codigo": "def validar_senha(senha):\n    if len(senha) < 8:\n        return \"Senha muito curta\"\n    if senha == \"12345678\":\n        return \"Senha óbvia demais\"\n    return \"Senha aceita\"\n\nprint(validar_senha(\"abc\"))\nprint(validar_senha(\"12345678\"))\nprint(validar_senha(\"codequest2026\"))"
+  },
+  "py-des-03-e1": {
+    "lang": "python",
+    "codigo": "notas = [7.0, 9.5, 4.0, 8.5]\nmaior = notas[0]\nsoma = 0\n\nfor nota in notas:\n    soma += nota\n    if nota > maior:\n        maior = nota\n\nprint(f\"Maior: {maior}\")\nprint(f\"Média: {soma / len(notas)}\")"
+  },
+  "py-proj-01-e1": {
+    "lang": "python",
+    "codigo": "def situacao(media):\n    if media >= 7:\n        return \"Aprovado\"\n    elif media >= 5:\n        return \"Recuperação\"\n    return \"Reprovado\"\n\nprint(situacao(8.0))\nprint(situacao(6.0))\nprint(situacao(3.0))"
+  },
+  "py-proj-01-e2": {
+    "lang": "python",
+    "codigo": "def situacao(media):\n    if media >= 7:\n        return \"Aprovado\"\n    elif media >= 5:\n        return \"Recuperação\"\n    return \"Reprovado\"\n\nturma = [\n    [\"Ana\", 7.0, 9.0],\n    [\"Luiz\", 4.0, 5.0],\n    [\"Kauan\", 6.0, 6.0],\n]\n\nfor aluno in turma:\n    media = (aluno[1] + aluno[2]) / 2\n    print(f\"{aluno[0]}: média {media} - {situacao(media)}\")"
+  },
+  "py-proj-01-e3": {
+    "lang": "python",
+    "codigo": "def situacao(media):\n    if media >= 7:\n        return \"Aprovado\"\n    elif media >= 5:\n        return \"Recuperação\"\n    return \"Reprovado\"\n\nturma = [\n    [\"Ana\", 7.0, 9.0],\n    [\"Luiz\", 4.0, 5.0],\n    [\"Kauan\", 6.0, 6.0],\n]\n\nsoma_medias = 0\naprovados = 0\n\nfor aluno in turma:\n    media = (aluno[1] + aluno[2]) / 2\n    print(f\"{aluno[0]}: média {media} - {situacao(media)}\")\n    soma_medias += media\n    if situacao(media) == \"Aprovado\":\n        aprovados += 1\n\nprint(\"---\")\nprint(f\"Média da turma: {round(soma_medias / len(turma), 2)}\")\nprint(f\"Aprovados: {aprovados} de {len(turma)}\")"
+  },
+  "js-fund-02-e1": {
+    "lang": "javascript",
+    "codigo": "console.log(\"Olá, CodeQuest!\");"
+  },
+  "js-fund-02-e2": {
+    "lang": "javascript",
+    "codigo": "console.log(\"Meu nome é Dev\");\nconsole.log(\"Estou aprendendo JavaScript\");"
+  },
+  "js-fund-03-e2": {
+    "lang": "javascript",
+    "codigo": "// console.log(\"teste temporário\");\nconsole.log(\"Relatório final\");"
+  },
+  "js-fund-04-e2": {
+    "lang": "javascript",
+    "codigo": "let mensagem = \"Tudo certo!\";\nconsole.log(mensagem);"
+  },
+  "js-fund-05-e1": {
+    "lang": "javascript",
+    "codigo": "const cidade = prompt(\"De qual cidade você é? \");\nconsole.log(\"Boa viagem para \" + cidade);"
+  },
+  "js-var-01-e1": {
+    "lang": "javascript",
+    "codigo": "const nome = \"Ana\";\nconsole.log(nome);"
+  },
+  "js-var-02-e2": {
+    "lang": "javascript",
+    "codigo": "console.log(\"10\" + 5);\nconsole.log(10 + 5);"
+  },
+  "js-var-03-e1": {
+    "lang": "javascript",
+    "codigo": "const numero = Number(prompt(\"Digite um número: \"));\nconsole.log(numero + 10);"
+  },
+  "js-var-04-e1": {
+    "lang": "javascript",
+    "codigo": "const nome = \"Ana\";\nconst nota1 = 7;\nconst nota2 = 9;\nconsole.log(`A média de ${nome} é ${(nota1 + nota2) / 2}`);"
+  },
+  "js-cond-01-e2": {
+    "lang": "javascript",
+    "codigo": "const compra = 150;\n\nif (compra > 100) {\n  console.log(\"Tem desconto\");\n}"
+  },
+  "js-cond-02-e1": {
+    "lang": "javascript",
+    "codigo": "const idade = Number(prompt(\"Digite sua idade: \"));\n\nif (idade >= 18) {\n  console.log(\"Maior de idade\");\n} else {\n  console.log(\"Menor de idade\");\n}"
+  },
+  "js-cond-02-e2": {
+    "lang": "javascript",
+    "codigo": "const idade = Number(prompt(\"Digite sua idade: \"));\n\nif (idade >= 18) {\n  console.log(\"Maior de idade\");\n} else {\n  console.log(\"Menor de idade\");\n}"
+  },
+  "js-cond-03-e1": {
+    "lang": "javascript",
+    "codigo": "const temperatura = 12;\n\nif (temperatura > 30) {\n  console.log(\"Calor\");\n} else if (temperatura >= 15) {\n  console.log(\"Ameno\");\n} else {\n  console.log(\"Frio\");\n}"
+  },
+  "js-cond-04-e1": {
+    "lang": "javascript",
+    "codigo": "const idade = 22;\nconst temHabilitacao = false;\n\nif (idade >= 18 && temHabilitacao) {\n  console.log(\"Pode dirigir\");\n} else {\n  console.log(\"Não pode dirigir\");\n}"
+  },
+  "js-rep-01-e1": {
+    "lang": "javascript",
+    "codigo": "for (let i = 1; i <= 5; i++) {\n  console.log(i);\n}"
+  },
+  "js-rep-02-e1": {
+    "lang": "javascript",
+    "codigo": "let contador = 3;\n\nwhile (contador >= 1) {\n  console.log(contador);\n  contador--;\n}\n\nconsole.log(\"Fim\");"
+  },
+  "js-rep-03-e1": {
+    "lang": "javascript",
+    "codigo": "let soma = 0;\n\nfor (let i = 1; i <= 100; i++) {\n  soma += i;\n}\n\nconsole.log(soma);"
+  },
+  "js-rep-03-e2": {
+    "lang": "javascript",
+    "codigo": "let quantidade = 0;\n\nfor (let i = 1; i <= 20; i++) {\n  if (i % 3 === 0) {\n    quantidade++;\n  }\n}\n\nconsole.log(quantidade);"
+  },
+  "js-rep-04-e1": {
+    "lang": "javascript",
+    "codigo": "for (let i = 1; i <= 10; i++) {\n  if (i === 7) {\n    continue;\n  }\n  console.log(i);\n}"
+  },
+  "js-rep-04-e2": {
+    "lang": "javascript",
+    "codigo": "const linguagens = [\"Python\", \"JavaScript\", \"Java\"];\n\nfor (const linguagem of linguagens) {\n  console.log(linguagem);\n}"
+  },
+  "js-func-01-e1": {
+    "lang": "javascript",
+    "codigo": "function abrirJogo() {\n  console.log(\"Partida iniciada\");\n}\n\nabrirJogo();\nabrirJogo();"
+  },
+  "js-func-02-e1": {
+    "lang": "javascript",
+    "codigo": "function calcularMedia(a, b) {\n  return (a + b) / 2;\n}\n\nconsole.log(calcularMedia(7, 9));"
+  },
+  "js-func-03-e1": {
+    "lang": "javascript",
+    "codigo": "const ehPar = (numero) => numero % 2 === 0;\n\nconsole.log(ehPar(4));\nconsole.log(ehPar(7));"
+  },
+  "js-func-04-e2": {
+    "lang": "javascript",
+    "codigo": "let contador = 0;\n\nfunction registrar() {\n  contador++;\n  console.log(contador);\n}\n\nregistrar();\nregistrar();\nregistrar();"
+  },
+  "js-des-01-e1": {
+    "lang": "javascript",
+    "codigo": "for (let i = 1; i <= 15; i++) {\n  if (i % 3 === 0 && i % 5 === 0) {\n    console.log(\"FizzBuzz\");\n  } else if (i % 3 === 0) {\n    console.log(\"Fizz\");\n  } else if (i % 5 === 0) {\n    console.log(\"Buzz\");\n  } else {\n    console.log(i);\n  }\n}"
+  },
+  "js-des-02-e1": {
+    "lang": "javascript",
+    "codigo": "function validarSenha(senha) {\n  if (senha.length < 8) {\n    return \"Senha muito curta\";\n  }\n  if (senha === \"12345678\") {\n    return \"Senha óbvia demais\";\n  }\n  return \"Senha aceita\";\n}\n\nconsole.log(validarSenha(\"abc\"));\nconsole.log(validarSenha(\"12345678\"));\nconsole.log(validarSenha(\"codequest2026\"));"
+  },
+  "js-des-02-e2": {
+    "lang": "javascript",
+    "codigo": "const email = \"  ANA@Email.COM  \";\n\nconsole.log(email.trim().toLowerCase());"
+  },
+  "js-des-03-e1": {
+    "lang": "javascript",
+    "codigo": "const notas = [7, 9.5, 4, 8.5];\n\nconst aprovadas = notas.filter((nota) => nota >= 7);\nconst soma = notas.reduce((total, nota) => total + nota, 0);\n\nconsole.log(`Aprovadas: ${aprovadas.length}`);\nconsole.log(`Média: ${soma / notas.length}`);"
+  },
+  "js-des-03-e2": {
+    "lang": "javascript",
+    "codigo": "const precos = [10, 20, 30];\n\nconst comDesconto = precos.map((preco) => preco * 0.9);\nconsole.log(comDesconto.join(\", \"));"
+  },
+  "js-proj-01-e1": {
+    "lang": "javascript",
+    "codigo": "const aluno = { nome: \"Ana\", nota: 9 };\n\nconsole.log(aluno.nome);\nconsole.log(aluno.nota);"
+  },
+  "js-proj-02-e1": {
+    "lang": "javascript",
+    "codigo": "function situacao(media) {\n  if (media >= 7) return \"Aprovado\";\n  if (media >= 5) return \"Recuperação\";\n  return \"Reprovado\";\n}\n\nconsole.log(situacao(8));\nconsole.log(situacao(6));\nconsole.log(situacao(3));"
+  },
+  "js-proj-02-e2": {
+    "lang": "javascript",
+    "codigo": "function situacao(media) {\n  if (media >= 7) return \"Aprovado\";\n  if (media >= 5) return \"Recuperação\";\n  return \"Reprovado\";\n}\n\nconst turma = [\n  { nome: \"Ana\", nota1: 7, nota2: 9 },\n  { nome: \"Luiz\", nota1: 4, nota2: 5 },\n  { nome: \"Kauan\", nota1: 6, nota2: 6 },\n];\n\nfor (const aluno of turma) {\n  const media = (aluno.nota1 + aluno.nota2) / 2;\n  console.log(`${aluno.nome}: média ${media} - ${situacao(media)}`);\n}"
+  },
+  "js-proj-02-e3": {
+    "lang": "javascript",
+    "codigo": "function situacao(media) {\n  if (media >= 7) return \"Aprovado\";\n  if (media >= 5) return \"Recuperação\";\n  return \"Reprovado\";\n}\n\nconst turma = [\n  { nome: \"Ana\", nota1: 7, nota2: 9 },\n  { nome: \"Luiz\", nota1: 4, nota2: 5 },\n  { nome: \"Kauan\", nota1: 6, nota2: 6 },\n];\n\nlet somaDasMedias = 0;\nlet aprovados = 0;\n\nfor (const aluno of turma) {\n  const media = (aluno.nota1 + aluno.nota2) / 2;\n  console.log(`${aluno.nome}: média ${media} - ${situacao(media)}`);\n  somaDasMedias += media;\n  if (situacao(media) === \"Aprovado\") {\n    aprovados++;\n  }\n}\n\nconsole.log(\"---\");\nconsole.log(`Média da turma: ${Math.round((somaDasMedias / turma.length) * 100) / 100}`);\nconsole.log(`Aprovados: ${aprovados} de ${turma.length}`);"
+  }
+}

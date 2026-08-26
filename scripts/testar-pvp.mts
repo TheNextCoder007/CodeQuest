@@ -69,6 +69,8 @@ for (const arquivo of [
   // continuar passando nestes testes DEPOIS da mudanca.
   'supabase/migrations/0006_ranqueado.sql',
   'supabase/migrations/0007_embaralhar_alternativas.sql',
+  'supabase/migrations/0008_desafios_diarios.sql',
+  'supabase/migrations/0009_ranqueado_elite.sql',
   'supabase/seed.sql',
 ]) {
   await db.exec(ler(arquivo));

@@ -81,6 +81,8 @@ for (const arquivo of [
   'supabase/migrations/0005_pvp.sql',
   'supabase/migrations/0006_ranqueado.sql',
   'supabase/migrations/0007_embaralhar_alternativas.sql',
+  'supabase/migrations/0008_desafios_diarios.sql',
+  'supabase/migrations/0009_ranqueado_elite.sql',
   'supabase/seed.sql',
 ]) {
   await db.exec(ler(arquivo));
@@ -121,7 +123,7 @@ secao('paridade da escada (SQL x TypeScript)');
 // valores acima dela, onde o elo continua subindo e a divisao trava.
 const ELOS = [
   0, 1, 39, 40, 99, 100, 101, 250, 299, 300, 301, 599, 600, 899, 900, 1199, 1200, 1499, 1500,
-  1700, 1799, 1800, 1801, 1900, 2000, 2500, 5000,
+  1700, 1799, 1800, 1801, 1900, 2000, 2099, 2100, 2101, 2400, 2500, 5000,
 ];
 
 let divergencias = 0;
@@ -200,25 +202,37 @@ secao('a curva de progressao');
     `e a perda por derrota aumenta (${listaPerdas.join(' < ')})`,
   );
 
-  ok(DIVISAO_MAXIMA === 18, `Mestre e a divisao 18 (6 patamares x 3 + 1) - ${DIVISAO_MAXIMA}`);
+  ok(DIVISAO_MAXIMA === 21, `Elite e a divisao 21 (7 patamares x 3 + 1) - ${DIVISAO_MAXIMA}`);
   const acimaDoTeto = await um<{ divisao: number }>(
     'select public.ranked_divisao(99999)::int as divisao',
   );
-  ok(acimaDoTeto.divisao === DIVISAO_MAXIMA, 'elo muito acima do teto continua no Mestre');
+  ok(acimaDoTeto.divisao === DIVISAO_MAXIMA, 'elo muito acima do teto continua no Elite');
 }
 
-secao('Mestre e um patamar unico, sem sub-niveis');
+secao('Mestre voltou a ter sub-niveis e o Elite e o novo topo');
 {
   const noTopo = await um<{ divisao: number; sub: number; patamar: number }>(
     `select public.ranked_divisao(1800)::int as divisao,
             public.ranked_subnivel(public.ranked_divisao(1800))::int as sub,
             public.ranked_patamar(public.ranked_divisao(1800))::int as patamar`,
   );
-  ok(noTopo.divisao === 18 && noTopo.patamar === 6, '1800 de elo entra no Mestre');
-  ok(noTopo.sub === 0, 'e o Mestre nao tem sub-nivel (o SQL devolve 0)');
-  ok(subnivelDaDivisao(18) === 0, 'o TypeScript concorda');
-  ok(!temSubnivel(18), '`temSubnivel` marca o Mestre como sem sub-nivel');
-  ok(nomeDaDivisao(18) === 'Mestre', `o nome no topo e so "Mestre" (${nomeDaDivisao(18)})`);
+  ok(noTopo.divisao === 18 && noTopo.patamar === 6, '1800 de elo entra no Mestre 1');
+  ok(noTopo.sub === 1, 'e o Mestre TEM sub-nivel de novo (o SQL devolve 1)');
+  ok(subnivelDaDivisao(18) === 1, 'o TypeScript concorda');
+  ok(temSubnivel(18), '`temSubnivel` marca o Mestre como tendo sub-nivel');
+  ok(nomeDaDivisao(18) === 'Mestre 1', `18 e "Mestre 1" (${nomeDaDivisao(18)})`);
+  ok(nomeDaDivisao(20) === 'Mestre 3', `20 e "Mestre 3" (${nomeDaDivisao(20)})`);
+
+  const elite = await um<{ divisao: number; sub: number; patamar: number }>(
+    `select public.ranked_divisao(2100)::int as divisao,
+            public.ranked_subnivel(public.ranked_divisao(2100))::int as sub,
+            public.ranked_patamar(public.ranked_divisao(2100))::int as patamar`,
+  );
+  ok(elite.divisao === 21 && elite.patamar === 7, '2100 de elo entra no Elite');
+  ok(elite.sub === 0, 'e o Elite nao tem sub-nivel (o SQL devolve 0)');
+  ok(subnivelDaDivisao(21) === 0, 'o TypeScript concorda');
+  ok(!temSubnivel(21), '`temSubnivel` marca o Elite como sem sub-nivel');
+  ok(nomeDaDivisao(21) === 'Elite', `o nome no topo e so "Elite" (${nomeDaDivisao(21)})`);
 
   const abaixo = await um<{ divisao: number; sub: number }>(
     `select public.ranked_divisao(1799)::int as divisao,
@@ -227,14 +241,54 @@ secao('Mestre e um patamar unico, sem sub-niveis');
   ok(abaixo.divisao === 17 && abaixo.sub === 3, '1799 ainda e Lendario 3');
   ok(nomeDaDivisao(17) === 'Lendário 3', 'e o patamar logo abaixo continua com sub-nivel');
 
-  // Nao ha "Mestre 2": ganhar mais elo la em cima nao muda de divisao.
-  const maisElo = await um<{ divisao: number }>(
-    'select public.ranked_divisao(2400)::int as divisao',
+  // Agora ha Mestre 2 e 3: ganhar elo dentro do Mestre SOBE de divisao.
+  const maisElo = await um<{ divisao: number; sub: number }>(
+    `select public.ranked_divisao(1900)::int as divisao,
+            public.ranked_subnivel(public.ranked_divisao(1900))::int as sub`,
   );
-  ok(maisElo.divisao === 18, 'ganhar elo dentro do Mestre nao cria divisao nova');
+  ok(maisElo.divisao === 19 && maisElo.sub === 2, '1900 de elo e Mestre 2');
 
-  const piso = await um<{ piso: number }>('select public.ranked_piso(2400)::int as piso');
+  // Acima do topo a divisao trava, mas o elo continua contando para o ranking.
+  const acimaDoElite = await um<{ divisao: number }>(
+    'select public.ranked_divisao(4000)::int as divisao',
+  );
+  ok(acimaDoElite.divisao === 21, 'elo muito alto continua no Elite, sem estourar a escada');
+
+  const piso = await um<{ piso: number }>('select public.ranked_piso(1900)::int as piso');
   ok(piso.piso === 1800, 'e o piso do Mestre e a entrada dele (1800)');
+
+  /* --------------------------------------------------------------------
+   * O Elite e permanente
+   *
+   * Nao ha excecao escrita para isso: o Elite e um patamar como os outros, e
+   * `ranked_piso` sempre impediu a derrota de furar o piso do patamar atual.
+   * ------------------------------------------------------------------ */
+  const noElite = await um<{ piso: number; perdendo: number; ganho: number; perda: number }>(
+    `select public.ranked_piso(2100)::int as piso,
+            public.ranked_novo_elo(2100, 'derrota')::int as perdendo,
+            public.ranked_ganho(2100)::int as ganho,
+            public.ranked_perda(2100)::int as perda`,
+  );
+  ok(noElite.piso === 2100, 'o piso do Elite e a entrada dele (2100)');
+  ok(noElite.perdendo === 2100, 'perder no piso do Elite NAO devolve a pessoa ao Mestre');
+  ok(noElite.ganho === 10 && noElite.perda === 30, 'no Elite a vitoria vale +10 e a derrota -30');
+
+  const dentroDoElite = await um<{ depois: number }>(
+    "select public.ranked_novo_elo(2400, 'derrota')::int as depois",
+  );
+  ok(dentroDoElite.depois === 2370, 'mas dentro do Elite o elo desce normalmente (2400 -> 2370)');
+
+  const noMestre = await um<{ ganho: number; perda: number; caindo: number }>(
+    `select public.ranked_ganho(1800)::int as ganho,
+            public.ranked_perda(1800)::int as perda,
+            public.ranked_novo_elo(1800, 'derrota')::int as caindo`,
+  );
+  ok(noMestre.ganho === 13 && noMestre.perda === 25, 'no Mestre a vitoria vale +13 e a derrota -25');
+  ok(noMestre.caindo === 1800, 'e perder no piso do Mestre nao devolve a pessoa ao Lendario');
+
+  // A derrota pesar mais que a vitoria no topo e uma decisao de desenho.
+  ok(noMestre.perda > noMestre.ganho, 'no Mestre a derrota pesa mais do que a vitoria compensa');
+  ok(noElite.perda > noElite.ganho, 'e no Elite mais ainda');
 }
 
 secao('assuntos por patamar');
@@ -271,6 +325,8 @@ secao('assuntos por patamar');
 
   const mestre = await um<{ temas: string[] }>('select public.ranked_temas(6) as temas');
   ok(mestre.temas.length === 6, 'e continuam valendo ate o Mestre');
+  const eliteTemas = await um<{ temas: string[] }>('select public.ranked_temas(7) as temas');
+  ok(eliteTemas.temas.length === 6, 'e no Elite tambem');
 }
 
 secao('paridade dos bots');
@@ -838,7 +894,7 @@ const global = await db.query<{
 ok(global.rows.length === 2, `o leaderboard global lista quem jogou (${global.rows.length})`);
 ok(global.rows[0].user_id === OUTRO, 'quem tem mais elo fica em 1o lugar');
 ok(global.rows[0].posicao === 1 && global.rows[1].posicao === 2, 'as posicoes vem numeradas');
-ok(global.rows[0].divisao === 18, 'e a divisao vem junto (1850 = Mestre)');
+ok(global.rows[0].divisao === 18, 'e a divisao vem junto (1850 = Mestre 1)');
 ok(global.rows[1].elo === 900, 'o segundo colocado tem o elo certo');
 
 // Ninguem e amigo de ninguem ainda: a aba de amigos mostra so voce.
@@ -921,6 +977,81 @@ secao('reaplicar a migracao e seguro');
   ok(temporadas.n > 0, 'nem as temporadas ja criadas');
 }
 
+
+/* =========================================================================
+ * O recorde historico e quantas vezes o jogador chegou nele
+ *
+ * `ranked_topo` CONTA as temporadas em vez de ler um contador guardado - por
+ * isso o teste monta um historico a mao e confere o numero que sai.
+ * ====================================================================== */
+secao('ranked_topo: quantas vezes alcancou o patamar mais alto');
+{
+  const HISTORICO = '55555555-5555-5555-5555-555555555555';
+  await criarConta(HISTORICO, 'Historico', 'historico');
+
+  // Cinco temporadas: picos em Ouro, Ouro, Prata, Ouro e Bronze.
+  // (Ouro comeca em 600, Prata em 300, Bronze em 0.)
+  const picos = [650, 700, 350, 620, 120];
+  for (let i = 0; i < picos.length; i += 1) {
+    await db.query(
+      `insert into public.seasons (numero, comeca_em, termina_em)
+       values ($1, now() - ($2 || ' days')::interval,
+                   now() - ($2 || ' days')::interval + interval '15 days')
+       on conflict (numero) do nothing`,
+      [100 + i, String(100 + i)],
+    );
+    await db.query(
+      `insert into public.ranked_stats (season_numero, user_id, elo, pico_elo, partidas)
+       values ($1, $2, $3, $3, 10)
+       on conflict (season_numero, user_id) do update set pico_elo = excluded.pico_elo`,
+      [100 + i, HISTORICO, picos[i]],
+    );
+  }
+
+  const topo = await um<{
+    patamar: number;
+    divisao: number;
+    pico_elo: number;
+    vezes: number;
+    temporadas: number;
+  }>('select * from public.ranked_topo($1)', [HISTORICO]);
+
+  ok(topo.patamar === 2, `o patamar mais alto e Ouro (${topo.patamar})`);
+  ok(topo.pico_elo === 700, `e o maior elo de todas as temporadas e 700 (${topo.pico_elo})`);
+  ok(topo.vezes === 3, `chegou ao Ouro em 3 temporadas (${topo.vezes})`);
+  ok(topo.temporadas === 5, `de 5 temporadas disputadas (${topo.temporadas})`);
+
+  // Temporada sem partida nenhuma nao conta como "disputada".
+  await db.query(
+    `insert into public.seasons (numero, comeca_em, termina_em)
+     values (200, now(), now() + interval '15 days') on conflict (numero) do nothing`,
+  );
+  await db.query(
+    `insert into public.ranked_stats (season_numero, user_id, elo, pico_elo, partidas)
+     values (200, $1, 0, 0, 0) on conflict do nothing`,
+    [HISTORICO],
+  );
+  const depois = await um<{ temporadas: number; vezes: number }>(
+    'select * from public.ranked_topo($1)',
+    [HISTORICO],
+  );
+  ok(depois.temporadas === 5, 'temporada sem partida nao entra na conta');
+  ok(depois.vezes === 3, 'e o contador do topo nao muda');
+
+  const NUNCA_JOGOU = '66666666-6666-6666-6666-666666666666';
+  await criarConta(NUNCA_JOGOU, 'Novato', 'novatoranked');
+  const semNada = await um<{ patamar: number; vezes: number; temporadas: number }>(
+    'select * from public.ranked_topo($1)',
+    [NUNCA_JOGOU],
+  );
+  ok(
+    semNada.temporadas === 0 && semNada.vezes === 0 && semNada.patamar === 0,
+    'quem nunca jogou ranqueada tem topo zerado, sem erro',
+  );
+}
+
+console.log(`
+${passaram} passaram, ${falharam} falharam`);
 console.log(`\n${passaram} passaram, ${falharam} falharam`);
 if (falharam > 0) {
   console.error('\nALGUM TESTE FALHOU');

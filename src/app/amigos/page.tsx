@@ -19,6 +19,7 @@ import {
 import { displayUsername } from '@/lib/username';
 import { TagBadge } from '@/components/social/TagBadge';
 import { ConviteDuelo } from '@/components/pvp/ConviteDuelo';
+import { useAvisoDePartidas } from '@/lib/presenca';
 import { usePresenca } from '@/lib/presenca';
 import { cancelarPartida, partidasAbertas } from '@/lib/pvp/api';
 import { nomeDoTema } from '@/content/pvp-temas';
@@ -159,6 +160,14 @@ function AmigosContent() {
   useEffect(() => {
     recarregarPartidas();
   }, [recarregarPartidas]);
+
+  /*
+   * A lista de duelos era lida so na montagem. Quem convidava ficava olhando
+   * "esperando o amigo aceitar" para sempre: o amigo aceitava, a partida
+   * virava `ativa`, e so aparecia o botao "Entrar" depois de sair da aba e
+   * voltar. Escutando as mudancas de `matches`, a lista se atualiza sozinha.
+   */
+  useAvisoDePartidas(meuId, recarregarPartidas);
 
   const recarregar = useCallback(async () => {
     if (!meuId) return;

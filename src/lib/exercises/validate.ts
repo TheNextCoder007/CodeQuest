@@ -1,5 +1,6 @@
 import type { Exercise } from '@/types/content';
 import { LINGUAGEM_PADRAO, runtimeDaLinguagem } from './runtime';
+import { conferirEstrutura } from './estrutura';
 
 /**
  * Validacao das respostas.
@@ -82,13 +83,33 @@ export const checkOutputMatch = async (
     };
   }
 
-  const correct = normalizeOutput(result.stdout) === normalizeOutput(exercise.expectedAnswer);
+  const saidaBate = normalizeOutput(result.stdout) === normalizeOutput(exercise.expectedAnswer);
+
+  /*
+   * A estrutura so e conferida quando a SAIDA JA BATE.
+   *
+   * Se o codigo nem chega na saida certa, a mensagem util e sobre a saida - a
+   * pessoa ainda esta construindo a solucao. A conferencia de estrutura serve
+   * para o caso em que ela chegou no resultado por fora do que a licao pede
+   * (imprimindo a resposta pronta, por exemplo).
+   */
+  if (saidaBate) {
+    const falha = conferirEstrutura(code, languageSlug, exercise.requisitos);
+    if (falha) {
+      return {
+        correct: false,
+        stdout: result.stdout,
+        error: null,
+        message: falha.motivo,
+      };
+    }
+  }
 
   return {
-    correct,
+    correct: saidaBate,
     stdout: result.stdout,
     error: null,
-    message: correct
+    message: saidaBate
       ? 'Resposta correta!'
       : 'O programa rodou, mas a saída não é a esperada. Compare linha a linha.',
   };

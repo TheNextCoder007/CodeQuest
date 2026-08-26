@@ -87,7 +87,26 @@ export const ESTADO_RANQUEADA_VAZIO = (temporada: Temporada): EstadoRanqueada =>
   partidas: 0,
 });
 
-/** Patamar (0 a 6) mais alto ja alcancado em qualquer temporada. */
+/**
+ * Recorde historico do jogador na ranqueada.
+ *
+ * Vem de `ranked_topo()`, que CONTA as temporadas em vez de ler um contador
+ * guardado - ver o comentario da funcao em `0009_ranqueado_elite.sql`.
+ */
+export interface TopoRanqueado {
+  /** Maior patamar ja alcancado (0 = Bronze ... 7 = Elite). */
+  patamar: number;
+  /** Maior divisao ja alcancada, para escrever "Mestre 2". */
+  divisao: number;
+  /** Maior elo ja alcancado, em qualquer temporada. */
+  picoElo: number;
+  /** Em quantas temporadas o pico chegou a esse mesmo patamar. */
+  vezes: number;
+  /** Quantas temporadas o jogador chegou a disputar. */
+  temporadas: number;
+}
+
+/** Patamar (0 a 7) mais alto ja alcancado em qualquer temporada. */
 export const patamarMaximoAlcancado = (estado: EstadoRanqueada | null): number =>
   estado ? patamarDaDivisao(divisaoDoElo(estado.picoHistorico)) : 0;
 

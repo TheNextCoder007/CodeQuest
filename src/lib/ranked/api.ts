@@ -2,6 +2,7 @@
 
 import { getSupabase, isSupabaseConfigured } from '@/lib/supabase/client';
 import {
+  topoRanqueadoLocal,
   estadoRanqueadaLocal,
   finalizarRanqueadaLocal,
   historicoRanqueadaLocal,
@@ -11,6 +12,7 @@ import {
   temporadaAtualLocal,
 } from './local';
 import type {
+  TopoRanqueado,
   EscopoRanking,
   EstadoRanqueada,
   LinhaRankingRanqueada,
@@ -270,4 +272,43 @@ export const buscarResultadoRanqueado = async (
     divisaoDepois: linha.divisao_depois,
     adversario: linha.adversario,
   };
+};
+
+/* -------------------------------------------------------------------------
+ * Recorde historico (o "quantas vezes cheguei ao meu topo")
+ * ---------------------------------------------------------------------- */
+
+interface LinhaTopo {
+  patamar: number;
+  divisao: number;
+  pico_elo: number;
+  vezes: number;
+  temporadas: number;
+}
+
+/**
+ * Maior patamar ja alcancado e em quantas temporadas isso aconteceu.
+ *
+ * Devolve `null` quando a migracao 0009 ainda nao foi aplicada, para a tela
+ * simplesmente nao mostrar a linha em vez de quebrar.
+ */
+export const buscarTopoRanqueado = async (userId?: string): Promise<TopoRanqueado | null> => {
+  if (!isSupabaseConfigured) return topoRanqueadoLocal(userId);
+
+  try {
+    const linhas = await rpc<LinhaTopo[]>('ranked_topo', { alvo: userId ?? null });
+    const linha = linhas?.[0];
+    if (!linha) return null;
+    return {
+      patamar: linha.patamar,
+      divisao: linha.divisao,
+      picoElo: linha.pico_elo,
+      vezes: linha.vezes,
+      temporadas: linha.temporadas,
+    };
+  } catch (falha) {
+    const mensagem = falha instanceof Error ? falha.message : String(falha);
+    if (migracaoPendente(mensagem)) return null;
+    throw falha;
+  }
 };

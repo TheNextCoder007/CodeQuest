@@ -26,9 +26,20 @@ let ultimoCliqueNoLogo = 0;
 const INTERVALO_MAXIMO_MS = 1500;
 const CLIQUES_NECESSARIOS = 10;
 
+/*
+ * `/trilha` nao aponta para uma linguagem fixa: o href real e montado em
+ * `AppShell` a partir da ultima trilha aberta (`profile.current_language`).
+ *
+ * Estava escrito `/trilha/python` aqui, e era esse o motivo de a aba Trilha
+ * "esquecer" a escolha: `TrilhaView` gravava JavaScript ao ser aberta e o
+ * painel ate lia essa preferencia, mas o botao da navegacao levava sempre de
+ * volta ao Python.
+ */
+const TRILHA = '/trilha';
+
 const navItems = [
   { href: '/dashboard', label: 'Início', icon: Home },
-  { href: '/trilha/python', label: 'Trilha', icon: Map },
+  { href: TRILHA, label: 'Trilha', icon: Map },
   { href: '/amigos', label: 'Amigos', icon: Users },
   { href: '/ranking', label: 'Ranking', icon: Trophy },
   { href: '/perfil', label: 'Perfil', icon: User },
@@ -123,9 +134,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     });
   };
 
+  /** Ultima trilha aberta; Python enquanto o perfil nao carregou. */
+  const trilhaAtual = state?.profile.current_language ?? 'python';
+
+  /** Destino real de cada item da navegacao. */
+  const destino = (href: string) => (href === TRILHA ? `${TRILHA}/${trilhaAtual}` : href);
+
   const isActive = (href: string) =>
-    pathname === href || pathname.startsWith(`${href}/`) ||
-    (href === '/trilha/python' && pathname.startsWith('/licao'));
+    href === TRILHA
+      ? pathname.startsWith(`${TRILHA}/`) || pathname.startsWith('/licao')
+      : pathname === href || pathname.startsWith(`${href}/`);
 
   return (
     // Enquanto o perfil nao tiver @username, o UsernameGate assume a tela
@@ -146,7 +164,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             {navItems.map((item) => (
               <Link
                 key={item.href}
-                href={item.href}
+                href={destino(item.href)}
                 className={cn(
                   'cq-focus rounded-lg px-3 py-2 text-sm font-medium transition',
                   isActive(item.href)
@@ -226,7 +244,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             return (
               <Link
                 key={item.href}
-                href={item.href}
+                href={destino(item.href)}
                 className={cn(
                   // `min-w-0` + `basis-0`: sem isso cada item fica do tamanho do
                   // proprio rotulo e, com a fonte ampliada do Android, os cinco

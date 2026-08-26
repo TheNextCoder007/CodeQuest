@@ -4835,7 +4835,10 @@ insert into public.achievements (id, title, description, icon, criteria) values 
 insert into public.achievements (id, title, description, icon, criteria) values ('ranqueada-lendario', 'Alcançou Lendário', 'Chegou ao Lendário na ranqueada.', '👑', '{"kind":"ranked_tier","patamar":5}'::jsonb)
   on conflict (id) do update set title = excluded.title, description = excluded.description,
   icon = excluded.icon, criteria = excluded.criteria;
-insert into public.achievements (id, title, description, icon, criteria) values ('ranqueada-mestre', 'Alcançou Mestre', 'Chegou ao Mestre — o patamar mais alto da ranqueada.', '🏅', '{"kind":"ranked_tier","patamar":6}'::jsonb)
+insert into public.achievements (id, title, description, icon, criteria) values ('ranqueada-mestre', 'Alcançou Mestre', 'Chegou ao Mestre, com os três sub-níveis pela frente.', '🏅', '{"kind":"ranked_tier","patamar":6}'::jsonb)
+  on conflict (id) do update set title = excluded.title, description = excluded.description,
+  icon = excluded.icon, criteria = excluded.criteria;
+insert into public.achievements (id, title, description, icon, criteria) values ('ranqueada-elite', 'Alcançou Elite', 'Chegou ao Elite — o topo absoluto da escada, de onde não se cai mais.', '⭐', '{"kind":"ranked_tier","patamar":7}'::jsonb)
   on conflict (id) do update set title = excluded.title, description = excluded.description,
   icon = excluded.icon, criteria = excluded.criteria;
 insert into public.achievements (id, title, description, icon, criteria) values ('segredo-curioso', 'Achou o botão secreto', 'Dez cliques no logo depois, algo apareceu.', '🕵️', '{"kind":"secret","segredo":"logo-10-cliques"}'::jsonb)

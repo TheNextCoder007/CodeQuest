@@ -37,7 +37,7 @@ const { executar } = contexto.CQJSRuntime;
  * usando so o que ja foi ensinado ate aquela licao.
  * ------------------------------------------------------------------------ */
 
-const SOLUCOES = {
+export const SOLUCOES = {
   /* ----------------------------------------------------------- Fundamentos */
   'js-fund-02-e1': 'console.log("Olá, CodeQuest!");',
   'js-fund-02-e2':
@@ -128,46 +128,52 @@ const normalizar = (valor) =>
  * Conferencia
  * ------------------------------------------------------------------------ */
 
+/*
+ * `SOLUCOES` tambem e importado por `scripts/testar-estrutura.mts`, que confere
+ * as regras de estrutura contra estas mesmas solucoes - assim as duas
+ * conferencias olham exatamente o mesmo codigo.
+ *
+ * Por isso a parte de linha de comando fica dentro de um `if`: importar este
+ * arquivo nao pode disparar o verificador nem encerrar o processo.
+ */
 const arquivo = process.argv[2];
-if (!arquivo) {
-  console.error('uso: node scripts/verificar-saidas-js.mjs <exercicios.json>');
-  process.exit(1);
-}
 
-const exercicios = JSON.parse(readFileSync(arquivo, 'utf8'));
+if (arquivo) {
+  const exercicios = JSON.parse(readFileSync(arquivo, 'utf8'));
 
-let falhas = 0;
-const semSolucao = [];
+  let falhas = 0;
+  const semSolucao = [];
 
-for (const exercicio of exercicios) {
-  const codigo = SOLUCOES[exercicio.id];
-  if (codigo === undefined) {
-    semSolucao.push(exercicio.id);
-    continue;
+  for (const exercicio of exercicios) {
+    const codigo = SOLUCOES[exercicio.id];
+    if (codigo === undefined) {
+      semSolucao.push(exercicio.id);
+      continue;
+    }
+
+    const resultado = executar(codigo, exercicio.stdin);
+
+    if (resultado.error !== null) {
+      falhas += 1;
+      console.log(`ERRO   ${exercicio.id}: ${resultado.error.split('\n')[0]}`);
+      continue;
+    }
+
+    if (normalizar(resultado.stdout) === normalizar(exercicio.expected)) {
+      console.log(`ok     ${exercicio.id}`);
+    } else {
+      falhas += 1;
+      console.log(`FALHA  ${exercicio.id}`);
+      console.log(`       esperado: ${JSON.stringify(normalizar(exercicio.expected))}`);
+      console.log(`       obtido:   ${JSON.stringify(normalizar(resultado.stdout))}`);
+    }
   }
 
-  const resultado = executar(codigo, exercicio.stdin);
-
-  if (resultado.error !== null) {
-    falhas += 1;
-    console.log(`ERRO   ${exercicio.id}: ${resultado.error.split('\n')[0]}`);
-    continue;
+  if (semSolucao.length > 0) {
+    console.log(`\nsem solucao de referencia: ${semSolucao.join(', ')}`);
   }
 
-  if (normalizar(resultado.stdout) === normalizar(exercicio.expected)) {
-    console.log(`ok     ${exercicio.id}`);
-  } else {
-    falhas += 1;
-    console.log(`FALHA  ${exercicio.id}`);
-    console.log(`       esperado: ${JSON.stringify(normalizar(exercicio.expected))}`);
-    console.log(`       obtido:   ${JSON.stringify(normalizar(resultado.stdout))}`);
-  }
+  const conferidos = exercicios.length - falhas - semSolucao.length;
+  console.log(`\n${conferidos}/${exercicios.length} conferidos com sucesso`);
+  process.exit(falhas > 0 || semSolucao.length > 0 ? 1 : 0);
 }
-
-if (semSolucao.length > 0) {
-  console.log(`\nsem solucao de referencia: ${semSolucao.join(', ')}`);
-}
-
-const conferidos = exercicios.length - falhas - semSolucao.length;
-console.log(`\n${conferidos}/${exercicios.length} conferidos com sucesso`);
-process.exit(falhas > 0 || semSolucao.length > 0 ? 1 : 0);

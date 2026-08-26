@@ -1,17 +1,25 @@
 'use client';
 
-import { Shield, Trophy } from 'lucide-react';
+import { Medal, Shield, Trophy } from 'lucide-react';
 import { Card, CardTitle, Pill, ProgressBar } from '@/components/ui/Card';
 import { LinkButton } from '@/components/ui/Button';
 import { PatamarBadge } from './PatamarBadge';
 import {
+  ELO_POR_DIVISAO,
   ESTILO_PATAMAR,
   PATAMARES,
+  SUBNIVEIS_POR_PATAMAR,
+  eloInicialDoPatamar,
   nomeDaDivisao,
   patamarDaDivisao,
   progressoNaDivisao,
 } from '@/lib/ranked/patamares';
-import { descricaoDoPrazo, type EstadoRanqueada, type TemporadaPassada } from '@/lib/ranked/tipos';
+import {
+  descricaoDoPrazo,
+  type EstadoRanqueada,
+  type TemporadaPassada,
+  type TopoRanqueado,
+} from '@/lib/ranked/tipos';
 import { cn } from '@/lib/cn';
 
 /**
@@ -27,17 +35,31 @@ import { cn } from '@/lib/cn';
 export function CartaoRanqueada({
   estado,
   historico = [],
+  topo = null,
   proprio = false,
 }: {
   estado: EstadoRanqueada;
   historico?: TemporadaPassada[];
+  /** Recorde de TODAS as temporadas (`ranked_topo`). */
+  topo?: TopoRanqueado | null;
   /** true quando e o proprio perfil (mostra o atalho para jogar e o histórico). */
   proprio?: boolean;
 }) {
-  const patamar = PATAMARES[patamarDaDivisao(estado.divisao)];
+  const indiceDoPatamar = patamarDaDivisao(estado.divisao);
+  const patamar = PATAMARES[indiceDoPatamar];
   const estilo = ESTILO_PATAMAR[patamar];
   const progresso = progressoNaDivisao(estado.elo);
   const bateuORecorde = estado.picoDivisao > estado.divisao;
+
+  /*
+   * Quanto de elo o jogador acumulou DENTRO do patamar atual.
+   *
+   * O numero cru (1850) nao diz nada sozinho; "50 de 300 dentro do Mestre" diz
+   * onde a pessoa esta na faixa que interessa. No Elite nao ha faixa - ele e o
+   * ultimo -, entao ali mostramos so o elo, que e o que ordena o leaderboard.
+   */
+  const eloNoPatamar = estado.elo - eloInicialDoPatamar(indiceDoPatamar);
+  const eloDoPatamarInteiro = SUBNIVEIS_POR_PATAMAR * ELO_POR_DIVISAO;
 
   return (
     <Card className={cn('bg-gradient-to-br', estilo.cartao)}>
@@ -55,7 +77,7 @@ export function CartaoRanqueada({
         <div className="mt-4">
           <p className="text-sm leading-relaxed text-slate-400">
             {proprio
-              ? 'Você ainda não jogou nenhuma partida ranqueada. Comece no Bronze 1 e suba até Mestre 3 antes da temporada acabar.'
+              ? 'Você ainda não jogou nenhuma partida ranqueada. Comece no Bronze 1 e suba até o Elite antes da temporada acabar.'
               : 'Essa pessoa ainda não jogou ranqueada nesta temporada.'}
           </p>
           {proprio && (
@@ -81,16 +103,21 @@ export function CartaoRanqueada({
             </div>
             <div className="min-w-0 text-right">
               <p className="cq-label">Elo</p>
-              <p className="mt-1 text-2xl font-extrabold text-white">{estado.elo}</p>
+              <p className="mt-1 text-2xl font-extrabold tabular-nums text-white">{estado.elo}</p>
+              <p className="cq-muted mt-0.5">
+                {progresso.noTopo
+                  ? 'sem teto no Elite'
+                  : `${eloNoPatamar} de ${eloDoPatamarInteiro} no ${estilo.nome}`}
+              </p>
             </div>
           </div>
 
           <div className="mt-3">
             <ProgressBar value={progresso.fracao} tone={estilo.barra} />
-            <p className="mt-2 text-xs text-slate-500">
+            <p className="cq-muted mt-2">
               {progresso.noTopo
-                ? 'Topo da escada — não há divisão acima de Mestre 3.'
-                : `${progresso.atual} de ${progresso.alvo} para a próxima divisão`}
+                ? 'Topo da escada — não existe patamar acima do Elite, e daqui não se cai mais.'
+                : `${progresso.atual} de ${progresso.alvo} para ${nomeDaDivisao(estado.divisao + 1)}`}
             </p>
           </div>
 
@@ -120,6 +147,22 @@ export function CartaoRanqueada({
               <span className="text-slate-500">(é onde você está agora)</span>
             )}
           </p>
+
+          {topo && topo.temporadas > 0 && (
+            <p className="mt-2 flex flex-wrap items-center gap-2 text-sm text-slate-400">
+              <Medal className="h-4 w-4 shrink-0 text-mint-300" aria-hidden />
+              Recorde de todas as temporadas:
+              <PatamarBadge divisao={topo.divisao} tamanho="sm" />
+              <span className="tabular-nums text-slate-500">{topo.picoElo} de elo</span>
+              <span className="text-slate-500">
+                ·{' '}
+                {topo.vezes === 1
+                  ? 'alcançado em 1 temporada'
+                  : `alcançado em ${topo.vezes} temporadas`}
+                {topo.temporadas > 1 && ` de ${topo.temporadas}`}
+              </span>
+            </p>
+          )}
 
           {proprio && (
             <div className="mt-4">

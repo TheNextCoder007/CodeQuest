@@ -1,4 +1,5 @@
 import type { Exercise, Language, Lesson, Module } from '@/types/content';
+import { requisitosDoExercicio } from './requisitos';
 import { fundamentos } from './python/01-fundamentos';
 import { variaveis } from './python/02-variaveis';
 import { condicionais } from './python/03-condicionais';
@@ -91,7 +92,31 @@ export const languageBySlug = (slug: string): Language | undefined =>
 
 export const allModules = (): Module[] => languages.flatMap((language) => language.modules);
 
-export const allLessons = (): Lesson[] => allModules().flatMap((module) => module.lessons);
+/**
+ * Licoes com os requisitos de estrutura ja costurados.
+ *
+ * Calculado UMA vez e guardado: as referencias precisam ser estaveis entre
+ * renderizacoes, senao o `useMemo` que embaralha as alternativas veria uma
+ * lista nova a cada render e reordenaria as opcoes embaixo do dedo de quem
+ * esta respondendo.
+ *
+ * Todo caminho que leva um exercicio ate a tela passa por aqui - a licao
+ * (`lessonById`) e o desafio diario (`exerciseById`) -, entao nao ha por onde
+ * um exercicio chegar ao corretor sem os requisitos dele.
+ */
+let licoesPreparadas: Lesson[] | null = null;
+
+export const allLessons = (): Lesson[] => {
+  if (!licoesPreparadas) {
+    licoesPreparadas = allModules().flatMap((module) =>
+      module.lessons.map((lesson) => ({
+        ...lesson,
+        exercises: lesson.exercises.map(comRequisitos),
+      })),
+    );
+  }
+  return licoesPreparadas;
+};
 
 export const moduleById = (id: string): Module | undefined =>
   allModules().find((module) => module.id === id);
@@ -99,11 +124,23 @@ export const moduleById = (id: string): Module | undefined =>
 export const lessonById = (id: string): Lesson | undefined =>
   allLessons().find((lesson) => lesson.id === id);
 
-/** Um exercicio pelo id, de qualquer trilha. Usado pelo desafio diario. */
+/**
+ * Um exercicio pelo id, ja com os requisitos de estrutura costurados.
+ *
+ * Os requisitos moram em `requisitos.ts` (e nao dentro de cada licao) para
+ * ficarem todos visiveis num arquivo so - e por isso sao juntados aqui, no
+ * unico ponto por onde um exercicio e obtido.
+ */
 export const exerciseById = (id: string): Exercise | undefined =>
   allLessons()
     .flatMap((lesson) => lesson.exercises)
-    .find((exercise) => exercise.id === id);
+    .find((item) => item.id === id);
+
+/** Acrescenta ao exercicio o que ele exige na estrutura do codigo. */
+export const comRequisitos = (exercise: Exercise): Exercise => {
+  const requisitos = requisitosDoExercicio(exercise.id);
+  return requisitos ? { ...exercise, requisitos } : exercise;
+};
 
 /** A licao a que um exercicio pertence - para mostrar de onde ele veio. */
 export const lessonOfExercise = (exerciseId: string): Lesson | undefined =>

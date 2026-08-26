@@ -8,7 +8,7 @@
  * `src/lib/pvp/local.ts`).
  *
  * O que muda aqui e que o perfil do bot depende do patamar do jogador: bot de
- * Bronze erra mais da metade e demora; bot de Mestre acerta quase tudo e
+ * Bronze erra mais da metade e demora; o do Elite acerta quase tudo e
  * responde em poucos segundos.
  *
  * ATENCAO: esta tabela existe tambem em SQL (`ranked_bot()` em
@@ -51,9 +51,10 @@ export const BOTS_POR_PATAMAR: readonly PerfilDeBotRanqueado[] = [
   { patamar: 'mitico', nome: 'Daemon', acerto: 0.8, msMin: 3000, msMax: 8000 },
   { patamar: 'lendario', nome: 'Overflow', acerto: 0.88, msMin: 2500, msMax: 6500 },
   { patamar: 'mestre', nome: 'Root', acerto: 0.94, msMin: 1800, msMax: 5000 },
+  { patamar: 'elite', nome: 'Singleton', acerto: 0.97, msMin: 1400, msMax: 4200 },
 ] as const;
 
-/** O bot do patamar (0 a 6). */
+/** O bot do patamar (0 a 7). */
 export const botDoPatamar = (patamar: number): PerfilDeBotRanqueado =>
   BOTS_POR_PATAMAR[Math.max(0, Math.min(PATAMARES.length - 1, patamar))];
 

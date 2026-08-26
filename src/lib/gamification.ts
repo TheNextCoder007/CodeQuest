@@ -114,7 +114,7 @@ export interface AchievementState {
   desafiosDiarios?: number;
   /**
    * Maior patamar ja alcancado na ranqueada, em QUALQUER temporada
-   * (0 = Bronze ... 6 = Mestre). Ver `patamarMaximoAlcancado` em
+   * (0 = Bronze ... 6 = Mestre, 7 = Elite). Ver `patamarMaximoAlcancado` em
    * `src/lib/ranked/tipos.ts`.
    */
   rankedPatamarMax?: number;

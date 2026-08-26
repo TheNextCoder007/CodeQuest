@@ -181,14 +181,14 @@ function RanqueadoContent() {
           <ProgressBar value={progresso.fracao} tone={estilo.barra} />
           <p className="mt-2 cq-muted">
             {progresso.noTopo
-              ? 'Você está no topo da escada: Mestre é o patamar mais alto e não tem sub-níveis.'
+              ? 'Você está no topo da escada: Elite é o patamar mais alto e não tem sub-níveis.'
               : `Faltam ${progresso.faltam} de elo para ${nomeDaDivisao(estado.divisao + 1)}.`}
           </p>
         </div>
 
         <p className="mt-4 text-xs leading-relaxed text-slate-500">
           {progresso.noTopo
-            ? 'Você não cai abaixo de Mestre enquanto a temporada durar. O elo continua contando para a sua posição no leaderboard.'
+            ? 'Do Elite não se cai mais: o patamar é seu até o fim da temporada. O elo continua subindo e descendo, e é ele que define a sua posição entre os outros Elite.'
             : `Você não cai abaixo de ${ESTILO_PATAMAR[patamar].nome} 1 enquanto a temporada durar — o patamar conquistado não se perde, só o sub-nível.`}
         </p>
       </section>
@@ -327,14 +327,15 @@ function RanqueadoContent() {
         <CardTitle>Como a escada funciona</CardTitle>
         <ul className="mt-3 space-y-2 text-sm leading-relaxed text-slate-400">
           <li>
-            São <strong className="text-slate-200">7 patamares</strong>, do Bronze ao Mestre. Os
-            seis primeiros têm 3 sub-níveis (Bronze 1, Bronze 2, Bronze 3, Prata 1…);{' '}
-            <strong className="text-slate-200">Mestre é um só</strong>, sem sub-níveis, e é o topo
+            São <strong className="text-slate-200">8 patamares</strong>, do Bronze ao Elite. Os
+            sete primeiros têm 3 sub-níveis (Bronze 1, Bronze 2, Bronze 3… até Mestre 3);{' '}
+            <strong className="text-slate-200">Elite é um só</strong>, sem sub-níveis, e é o topo
             absoluto. Cada divisão custa 100 de elo.
           </li>
           <li>
-            Dentro do Mestre o elo continua subindo e descendo — é ele que define a sua posição no
-            leaderboard —, mas não existe mais divisão para alcançar.
+            <strong className="text-slate-200">Patamar conquistado não se perde.</strong> Quem
+            chega ao Elite não volta para o Mestre por mais que perca — dentro do patamar o elo
+            sobe e desce, e é ele que define a sua posição no leaderboard.
           </li>
           <li>
             <strong className="text-slate-200">O assunto acompanha o patamar.</strong> Até Diamante
@@ -344,8 +345,13 @@ function RanqueadoContent() {
           <li>
             Quanto mais alto o patamar,{' '}
             <strong className="text-slate-200">menos elo cada vitória vale</strong>: 40 no Bronze,
-            10 no Mestre. Subir de Bronze 1 para Bronze 2 leva 3 vitórias; de Lendário 2 para
-            Lendário 3, 7.
+            13 no Mestre, 10 no Elite. Subir de Bronze 1 para Bronze 2 leva 3 vitórias; de
+            Lendário 2 para Lendário 3, 7.
+          </li>
+          <li>
+            <strong className="text-slate-200">No topo, a derrota pesa mais que a vitória.</strong>{' '}
+            No Mestre é +13 e −25; no Elite, +10 e −30. É de propósito: lá em cima, manter a
+            posição precisa custar tanto quanto chegar nela.
           </li>
           <li>
             A temporada dura <strong className="text-slate-200">15 dias</strong>. No fim, todo mundo

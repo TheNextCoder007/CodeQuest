@@ -30,11 +30,16 @@ import { EstatisticasPvpCard } from '@/components/pvp/EstatisticasPvpCard';
 import { CartaoRanqueada } from '@/components/ranked/CartaoRanqueada';
 import { buscarEstatisticas } from '@/lib/pvp/api';
 import { ESTATISTICAS_VAZIAS, type EstatisticasPvp } from '@/lib/pvp/tipos';
-import { buscarEstadoRanqueada, buscarHistoricoRanqueada } from '@/lib/ranked/api';
+import {
+  buscarEstadoRanqueada,
+  buscarHistoricoRanqueada,
+  buscarTopoRanqueado,
+} from '@/lib/ranked/api';
 import {
   patamarMaximoAlcancado,
   type EstadoRanqueada,
   type TemporadaPassada,
+  type TopoRanqueado,
 } from '@/lib/ranked/tipos';
 import {
   achievementsWithStatus,
@@ -150,16 +155,22 @@ function PerfilContent() {
   // estatisticas de duelo, vem de tabela que so o servidor escreve.
   const [ranqueada, setRanqueada] = useState<EstadoRanqueada | null>(null);
   const [temporadasPassadas, setTemporadasPassadas] = useState<TemporadaPassada[]>([]);
+  const [topoRanqueada, setTopoRanqueada] = useState<TopoRanqueado | null>(null);
 
   useEffect(() => {
     if (!idAtual) return;
     let ativo = true;
 
-    Promise.all([buscarEstadoRanqueada(idAtual), buscarHistoricoRanqueada(idAtual)])
-      .then(([atual, passadas]) => {
+    Promise.all([
+      buscarEstadoRanqueada(idAtual),
+      buscarHistoricoRanqueada(idAtual),
+      buscarTopoRanqueado(idAtual).catch(() => null),
+    ])
+      .then(([atual, passadas, topo]) => {
         if (!ativo || !atual) return;
         setRanqueada(atual);
         setTemporadasPassadas(passadas);
+        setTopoRanqueada(topo);
         // Conquista de patamar e permanente: a conferencia usa o maior elo de
         // todas as temporadas, nao o da atual.
         void sincronizarRanqueada(patamarMaximoAlcancado(atual));
@@ -446,7 +457,12 @@ function PerfilContent() {
 
       {/* Ranqueada ---------------------------------------------------- */}
       {ranqueada && (
-        <CartaoRanqueada estado={ranqueada} historico={temporadasPassadas} proprio />
+        <CartaoRanqueada
+          estado={ranqueada}
+          historico={temporadasPassadas}
+          topo={topoRanqueada}
+          proprio
+        />
       )}
 
       {/* Duelos ------------------------------------------------------- */}

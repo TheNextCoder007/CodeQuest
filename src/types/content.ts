@@ -10,6 +10,35 @@
 
 export type ValidationType = 'output_match' | 'multiple_choice' | 'fill_blank';
 
+/**
+ * Exigencias de ESTRUTURA do codigo, alem de a saida bater.
+ *
+ * Sem isso, um exercicio como "some 1 a 100" era aceito com `print(5050)`: a
+ * saida batia e a licao (o laco) nao era exercitada. Ver
+ * `src/lib/exercises/estrutura.ts` e `src/content/requisitos.ts`.
+ */
+export interface RequisitosDeCodigo {
+  /**
+   * Padroes que PRECISAM aparecer no codigo. Conferidos com comentarios e
+   * textos removidos, para `# for` nao valer por `for`.
+   */
+  exige?: string[];
+  /**
+   * Padroes que NAO podem aparecer. Conferidos no codigo cru, porque o que se
+   * quer barrar normalmente esta entre aspas (`print("5050")`).
+   */
+  proibe?: string[];
+  /** Explicacao mostrada ao aluno quando o codigo nao cumpre. */
+  motivo?: string;
+  /**
+   * true nos primeiros exercicios, onde imprimir o texto literal E a licao
+   * ("mostre Olá na tela"). Ali nao existe trapaca a barrar - a solucao certa
+   * e escrever o texto. Serve para `npm run test:estrutura` saber que nao deve
+   * exigir recusa nesses casos, em vez de eles passarem despercebidos.
+   */
+  literalEhASolucao?: boolean;
+}
+
 export interface Exercise {
   id: string;
   lessonId: string;
@@ -30,6 +59,11 @@ export interface Exercise {
   stdin?: string[];
   /** Dica opcional liberada pelo botao "Preciso de uma dica". */
   hint?: string;
+  /**
+   * Exigencias de estrutura (apenas output_match). Sem isto, basta imprimir a
+   * saida esperada para o exercicio ser aceito.
+   */
+  requisitos?: RequisitosDeCodigo;
   /** Explicacao mostrada depois da resposta (certa ou errada). */
   explanation: string;
   xpReward: number;

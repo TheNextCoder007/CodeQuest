@@ -51,21 +51,41 @@ export function AvisoDeConvite() {
   if (!convite) return null;
 
   const responder = async (aceitar: boolean) => {
+    const alvo = convite.id;
     setRespondendo(true);
-    try {
-      await responderConvite(convite.id, aceitar);
-      if (aceitar) {
-        router.push(`/duelo/?m=${encodeURIComponent(convite.id)}`);
-      } else {
-        setRecusados((atual) => [...atual, convite.id]);
-        setConvite(null);
+
+    if (!aceitar) {
+      try {
+        await responderConvite(alvo, false);
+      } catch {
+        /* recusar e o unico caminho a partir daqui, deu certo ou nao */
       }
-    } catch {
-      setRecusados((atual) => [...atual, convite.id]);
+      setRecusados((atual) => [...atual, alvo]);
       setConvite(null);
-    } finally {
       setRespondendo(false);
+      return;
     }
+
+    /*
+     * Aceitar SEMPRE leva para a partida.
+     *
+     * Antes, qualquer erro do RPC caia no `catch` que descartava o convite -
+     * e sem navegacao. O caso mais comum era justamente o inofensivo: o
+     * Realtime avisa o outro lado, a partida ja consta como aceita e a
+     * chamada volta reclamando. Resultado: a partida existia, estava ativa, e
+     * a pessoa ficava parada na tela em que estava, tendo de ir ate Amigos
+     * para achar o botao "Entrar".
+     *
+     * Agora o erro so e registrado: se a partida nao estiver mesmo jogavel,
+     * quem explica isso e a tela do duelo, que ja sabe distinguir "convite nao
+     * aceito" de "partida encerrada".
+     */
+    try {
+      await responderConvite(alvo, true);
+    } catch (falha) {
+      console.warn('[CodeQuest] aceitar convite respondeu com erro', falha);
+    }
+    router.push(`/duelo/?m=${encodeURIComponent(alvo)}`);
   };
 
   return (

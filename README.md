@@ -77,6 +77,7 @@ Para ligar a nuvem (contas reais, progresso sincronizado entre celular/PC/site),
 | `npm run test:amigos` | Testa o fluxo de amizades (busca, pedido, aceite, remoção, ranking) |
 | `npm run test:tags` | Testa as tags, os segredos e as regras do @username |
 | `npm run test:pvp` | Joga uma partida 1v1 num Postgres real e testa as tentativas de trapaça |
+| `npm run test:estrutura` | Conferência anti-gambiarra: solução de referência passa e trapaça é recusada, nos 61 exercícios |
 | `npm run test:desafios` | Desafio diário: sorteio determinístico, XP pago uma vez só e RLS |
 | `npm run test:ranqueado` | Testa a escada de patamares, o elo, as temporadas e os bots num Postgres real |
 | `npm run test:seo` | Confere sitemap, robots.txt e as meta tags do build |
@@ -141,6 +142,7 @@ CodeQuest/
 │   ├── migrations/0006_ranqueado.sql # temporadas, elo, patamares, bots
 │   ├── migrations/0007_embaralhar_alternativas.sql # ordem sorteada por exibição
 │   ├── migrations/0008_desafios_diarios.sql # um exercício por dia, igual para todos
+│   ├── migrations/0009_ranqueado_elite.sql # patamar Elite + sub-níveis do Mestre
 │   ├── diagnostico.sql           # consultas de conferência (só leitura)
 │   └── seed.sql                  # conteúdo das trilhas (GERADO)
 ├── android/                      # projeto Android (Capacitor)
@@ -222,10 +224,12 @@ O Supabase dá um Postgres gerenciado + autenticação no plano gratuito, **sem 
    Esse arquivo faz o servidor **embaralhar as alternativas** de cada pergunta (ver [seção 12.6](#126-por-que-as-alternativas-são-embaralhadas-no-servidor)).
 9. Abra outra query, cole **todo** o conteúdo de [`supabase/migrations/0008_desafios_diarios.sql`](supabase/migrations/0008_desafios_diarios.sql) e rode.
    Esse arquivo cria o **desafio diário** — um exercício por dia, igual para todo mundo (ver [seção 14](#14-desafio-diário)).
-10. Abra mais uma query, cole **todo** o conteúdo de [`supabase/seed.sql`](supabase/seed.sql) e rode também.
-   Esse arquivo popula as 5 linguagens, 50 lições, 100 exercícios, 41 conquistas, 22 tags e 88 perguntas de duelo.
+10. Abra outra query, cole **todo** o conteúdo de [`supabase/migrations/0009_ranqueado_elite.sql`](supabase/migrations/0009_ranqueado_elite.sql) e rode.
+    Esse arquivo cria o patamar **Elite**, devolve os sub-níveis do Mestre e adiciona o contador de recordes (ver [seção 13](#13-modo-ranqueado-temporadas-e-patamares)).
+11. Abra mais uma query, cole **todo** o conteúdo de [`supabase/seed.sql`](supabase/seed.sql) e rode também.
+   Esse arquivo popula as 5 linguagens, 50 lições, 100 exercícios, 42 conquistas, 22 tags e 88 perguntas de duelo.
 
-> Os nove scripts podem ser executados quantas vezes você quiser: eles usam
+> Os dez scripts podem ser executados quantas vezes você quiser: eles usam
 > `if not exists` / `on conflict do update` e não duplicam nem apagam nada.
 > Isso não é só promessa: `npm run test:migrations` aplica todos eles **três vezes
 > seguidas** num PostgreSQL de verdade e confere que o progresso de um aluno
@@ -968,8 +972,8 @@ A partida em si é a mesma — 5 perguntas cronometradas, mesma pontuação, mes
 
 ### 13.1 A escada
 
-São **7 patamares**, 19 divisões no total. Os seis primeiros têm 3 sub-níveis; **Mestre é um só**,
-sem sub-níveis, e é o topo absoluto:
+São **8 patamares**, 22 divisões no total. Os sete primeiros têm 3 sub-níveis — Bronze 1 até
+Mestre 3; **Elite é um só**, sem sub-níveis, e é o topo absoluto:
 
 | Patamar | Divisões | Elo | Vitória | Derrota |
 |---|---|---|---|---|
@@ -979,13 +983,17 @@ sem sub-níveis, e é o topo absoluto:
 | 💎 Diamante 1–3 | 9–11 | 900–1199 | +25 | −18 |
 | 🔮 Mítico 1–3 | 12–14 | 1200–1499 | +20 | −20 |
 | 👑 Lendário 1–3 | 15–17 | 1500–1799 | +15 | −22 |
-| 🏅 **Mestre** | 18 | 1800+ | +10 | −25 |
+| 🏅 Mestre 1–3 | 18–20 | 1800–2099 | +13 | −25 |
+| ⭐ **Elite** | 21 | 2100+ | +10 | −30 |
 
 Cada divisão custa **100 de elo**, sempre. Quem faz a subida ficar mais lenta lá em cima não é o
 tamanho da divisão — é o ganho por vitória, que cai de 40 para 10. Na prática: subir de Bronze 1
 para Bronze 2 leva **3 vitórias**; de Lendário 2 para Lendário 3 leva **7**. É a mesma curva do
 Brawl Stars, mas com uma vantagem: a tela consegue dizer "faltam 60 de 100", que é muito mais fácil
 de entender do que "faltam 2 vitórias e meia".
+
+A partir do Mestre a conta inverte: a **derrota passa a pesar mais que a vitória** (+13/−25 no
+Mestre, +10/−30 no Elite). Ver [13.7](#137-o-topo-mestre-e-elite).
 
 Duas regras que existem para a coisa não ficar frustrante:
 
@@ -996,9 +1004,9 @@ Duas regras que existem para a coisa não ficar frustrante:
   a mesma pontuação até o bônus de velocidade), e punir um resultado que ninguém controla só
   geraria reclamação.
 
-**Mestre é o teto da escada, e não tem sub-níveis.** Chegar lá (1800 de elo) é o fim da
-progressão: não existe "Mestre 2" para alcançar. O elo continua subindo e descendo dentro do
-Mestre, porque é ele que define a sua posição no leaderboard — mas a divisão trava em 18.
+**Elite é o teto da escada, e não tem sub-níveis.** Chegar lá (2100 de elo) é o fim da
+progressão: não existe "Elite 2" para alcançar. O elo continua subindo e descendo dentro do
+Elite, porque é ele que define a sua posição no leaderboard — mas a divisão trava em 21.
 
 ### 13.2 O que cai em cada patamar
 
@@ -1009,7 +1017,7 @@ medir. Quem decide é o patamar:
 | Patamar | Assuntos sorteados |
 |---|---|
 | Bronze 1 → Diamante 3 | 🐍 Python · 🧠 Lógica · 🟨 JavaScript |
-| Mítico 1 → Mestre | as **seis** linguagens (+ ☕ Java, 🎯 C#, ⚡ C++) |
+| Mítico 1 → Elite | as **seis** linguagens (+ ☕ Java, 🎯 C#, ⚡ C++) |
 
 A ideia é que a ranqueada acompanhe a trilha. Python e JavaScript já estão prontas, então os
 patamares de baixo cobram o que o aluno de fato estudou; do Mítico para cima o jogo passa a exigir
@@ -1107,12 +1115,58 @@ depois por nome, para a ordem ficar estável entre duas leituras.
 A consulta é `ranked_ranking(escopo, limite)`, `security definer` — a aba "Amigos" filtra pelas
 amizades confirmadas no próprio banco, e não no aparelho.
 
-### 13.7 Conquistas
+### 13.7 O topo: Mestre e Elite
+
+São **8 patamares**. Os sete primeiros têm 3 sub-níveis — Bronze 1 até **Mestre 3**. Acima deles
+fica o **Elite**, único e sem sub-níveis, o teto absoluto da escada.
+
+| Patamar | Entra com | Vitória | Derrota |
+| --- | --- | --- | --- |
+| Bronze | 0 | +40 | −10 |
+| … | … | … | … |
+| Lendário | 1500 | +15 | −22 |
+| **Mestre 1/2/3** | 1800 | **+13** | **−25** |
+| **Elite** | 2100 | **+10** | **−30** |
+
+Repare que no topo **a derrota pesa mais do que a vitória compensa**. É de propósito: lá em cima,
+manter a posição precisa custar tanto quanto chegar nela. Um Elite que ganha duas e perde uma
+termina no zero a zero (+20 / −30).
+
+**O Elite é permanente — e isso não exigiu nenhuma regra nova.** `ranked_piso` sempre devolveu o
+início do patamar atual, e `ranked_novo_elo` nunca deixou a derrota furar esse piso: era o que
+impedia cair de Ouro 1 para Prata 3. Com o Elite virando um patamar como os outros, a **mesma**
+regra passa a impedir cair de Elite para Mestre. Não há exceção escrita em lugar nenhum.
+
+Dentro do Elite (e dentro do Mestre) o elo sobe e desce à vontade — é ele que ordena o leaderboard
+entre quem já chegou lá.
+
+### 13.8 Quantas vezes você chegou ao seu topo
+
+O perfil mostra o elo atual **dentro do patamar** ("50 de 300 no Mestre") e o recorde de todas as
+temporadas, com a contagem: *"Mestre 2 · 1 950 de elo · alcançado em 3 temporadas de 7"*.
+
+**Contamos em vez de guardar um contador.** `ranked_stats` já registra o `pico_elo` de **cada**
+temporada, então "quantas vezes ele chegou ao patamar mais alto dele" é uma pergunta que os dados
+já respondem — é o número de temporadas cujo pico caiu naquele patamar
+([`ranked_topo()`](supabase/migrations/0009_ranqueado_elite.sql)).
+
+A alternativa seria uma coluna incrementada a cada novo recorde. Foi descartada por três motivos:
+
+1. daria número errado retroativamente — as temporadas já jogadas não teriam sido contadas;
+2. um contador guardado pode divergir do histórico (uma correção de elo, um recálculo), e aí passam
+   a existir duas verdades;
+3. exigiria escrever em mais um lugar dentro de `ranked_aplicar_resultado`, que é justamente a
+   função onde menos se quer mexer.
+
+Contar sai de graça: são poucas linhas por usuário, e o índice de `ranked_stats` já é por
+`(season_numero, user_id)`.
+
+### 13.9 Conquistas
 
 Uma conquista por **patamar alcançado** — "Alcançou Prata", "Alcançou Ouro", até "Alcançou
 Mestre". São 6 (Bronze fica de fora: é onde todo mundo começa).
 
-A escolha foi por patamar inteiro e não por sub-nível porque 19 divisões dariam 19 medalhas quase
+A escolha foi por patamar inteiro e não por sub-nível porque 22 divisões dariam 22 medalhas quase
 iguais, e a lista de conquistas viraria uma planilha. Chegar a Ouro 1 já conta como "alcançou
 Ouro".
 
@@ -1123,7 +1177,7 @@ então o reset de 15 dias não apaga a medalha.
 isso não conta para as tags de duelo — senão "Imortal — 100 vitórias" viraria uma tarde de farm.
 Os dois cartéis são separados no perfil.
 
-### 13.8 No modo demonstração
+### 13.10 No modo demonstração
 
 Sem Supabase, a temporada e o elo ficam guardados no próprio aparelho
 ([`src/lib/ranked/local.ts`](src/lib/ranked/local.ts)), com a mesma escada, os mesmos bots e a
@@ -1343,11 +1397,47 @@ npm run seed:gen                # atualiza supabase/seed.sql
 
 4. Se estiver usando Supabase, rode o `seed.sql` atualizado no SQL Editor.
 
+### Por que a saída certa não basta
+
+Até a correção de agosto de 2026, um exercício `output_match` era aceito **só por comparar o texto
+impresso**. Em "some os números de 1 a 100", escrever `print(5050)` gerava exatamente a saída
+esperada e passava — o aluno "acertava" sem escrever o laço, que era o assunto inteiro da lição.
+
+A correção está em [`src/lib/exercises/estrutura.ts`](src/lib/exercises/estrutura.ts), e as regras
+de cada exercício em [`src/content/requisitos.ts`](src/content/requisitos.ts):
+
+```ts
+'py-rep-03-e1': { exige: ['\\bfor\\b'], proibe: ['5050'], motivo: CALCULE },
+```
+
+- **`exige`** — padrões que precisam aparecer. Conferidos no código **sem comentários e sem o texto
+  das aspas**, senão `# for` ou `print("for")` satisfariam a exigência de usar `for`.
+- **`proibe`** — padrões que não podem aparecer. Conferidos no código **cru**, porque a gambiarra
+  quase sempre está dentro de aspas.
+
+Duas decisões que valem registro:
+
+1. **A estrutura só é conferida quando a saída já bate.** Enquanto a pessoa ainda está construindo
+   a solução, a mensagem útil é sobre a saída. A conferência de estrutura existe para o caso em que
+   ela chegou ao resultado por fora do que a lição pede.
+2. **A interpolação conta como código.** `print(f"média {(a + b) / 2}")` tem a divisão *dentro* das
+   aspas — descartar tudo entre aspas reprovava a própria solução de referência. O extrator preserva
+   o miolo de `{...}` e `${...}`.
+
+Seis exercícios são marcados com `literalEhASolucao: true`: são os primeiros ("mostre Olá na tela"),
+onde escrever o texto **é** a resposta certa e não existe gambiarra a barrar. A isenção fica no
+catálogo para ser deliberada, em vez de esses casos passarem despercebidos.
+
+`npm run test:estrutura` roda, para cada um dos 61 exercícios de código, a solução de referência
+(que precisa passar) **e** a gambiarra (que precisa ser recusada, em dois formatos). Escrever uma
+regra que barra a gambiarra é fácil; o difícil é não barrar junto quem resolveu certo — por isso as
+duas metades andam sempre juntas ali.
+
 ### Tipos de exercício
 
 | `validationType` | Como o aluno responde | Como é corrigido |
 | --- | --- | --- |
-| `output_match` | escrevendo código no editor | o código roda no dispositivo (Pyodide ou o motor do navegador, conforme a trilha) e a saída é comparada com `expectedAnswer` |
+| `output_match` | escrevendo código no editor | o código roda no dispositivo (Pyodide ou o motor do navegador, conforme a trilha), a saída é comparada com `expectedAnswer` **e a estrutura do código é conferida** (ver acima) |
 | `multiple_choice` | escolhendo uma alternativa | comparação com `expectedAnswer` (que precisa estar em `options`) |
 | `fill_blank` | digitando uma palavra | comparação tolerante; aceite variações separando com `\|` |
 

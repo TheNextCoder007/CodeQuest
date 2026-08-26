@@ -21,15 +21,18 @@
  * ---------------------------------------------------------------------- */
 
 /**
- * Os sete patamares, do mais baixo ao mais alto.
+ * Os oito patamares, do mais baixo ao mais alto.
  *
- * Os seis primeiros tem 3 sub-niveis (Bronze 1, Bronze 2, Bronze 3, Prata 1...).
- * **Mestre nao tem sub-nivel**: e um patamar unico e o topo absoluto da escada.
- * Sao 6 x 3 + 1 = 19 divisoes.
+ * Os sete primeiros tem 3 sub-niveis (Bronze 1, Bronze 2, Bronze 3, Prata 1...),
+ * **inclusive o Mestre** (Mestre 1, 2 e 3).
  *
- * Chegar a Mestre nao para o elo: ele continua subindo e descendo, porque e
+ * **Elite nao tem sub-nivel**: e um patamar unico e o topo absoluto da escada.
+ * Sao 7 x 3 + 1 = 22 divisoes.
+ *
+ * Chegar ao Elite nao para o elo: ele continua subindo e descendo, porque e
  * ele que ordena o leaderboard entre quem ja chegou la. O que acaba e a
- * progressao - nao existe "Mestre 2" para alcancar.
+ * progressao - nao existe "Elite 2" para alcancar. E, como em qualquer outro
+ * patamar, quem entrou no Elite nao volta para o Mestre (ver `pisoDoPatamar`).
  */
 export const PATAMARES = [
   'bronze',
@@ -39,17 +42,21 @@ export const PATAMARES = [
   'mitico',
   'lendario',
   'mestre',
+  'elite',
 ] as const;
 
 export type Patamar = (typeof PATAMARES)[number];
 
 export const SUBNIVEIS_POR_PATAMAR = 3;
 
-/** Indice do Mestre (6). E o unico patamar sem sub-niveis. */
-export const PATAMAR_MESTRE = PATAMARES.length - 1;
+/** Indice do Mestre (6). Tem sub-niveis, como os patamares abaixo dele. */
+export const PATAMAR_MESTRE = 6;
 
-/** 19 divisoes: 0 = Bronze 1 ... 17 = Lendario 3, 18 = Mestre. */
-export const TOTAL_DIVISOES = PATAMAR_MESTRE * SUBNIVEIS_POR_PATAMAR + 1;
+/** Indice do Elite (7). E o unico patamar sem sub-niveis. */
+export const PATAMAR_ELITE = PATAMARES.length - 1;
+
+/** 22 divisoes: 0 = Bronze 1 ... 18..20 = Mestre 1..3, 21 = Elite. */
+export const TOTAL_DIVISOES = PATAMAR_ELITE * SUBNIVEIS_POR_PATAMAR + 1;
 export const DIVISAO_MAXIMA = TOTAL_DIVISOES - 1;
 
 /**
@@ -71,11 +78,18 @@ export const eloInicialDoPatamar = (patamar: number): number =>
  * Ganho e perda
  * ---------------------------------------------------------------------- */
 
-/** Elo ganho por vitoria, por patamar. Diminui conforme sobe. */
-export const GANHO_POR_PATAMAR = [40, 35, 30, 25, 20, 15, 10] as const;
+/**
+ * Elo ganho por vitoria, por patamar. Diminui conforme sobe.
+ *
+ * Repare no Mestre (13) e no Elite (10): a partir dali a DERROTA pesa mais do
+ * que a vitoria compensa. E de proposito - no topo, manter a posicao precisa
+ * custar tanto quanto chegar nela. Um Elite que ganha 2 e perde 1 fica no
+ * zero a zero (+20 / -30).
+ */
+export const GANHO_POR_PATAMAR = [40, 35, 30, 25, 20, 15, 13, 10] as const;
 
 /** Elo perdido por derrota, por patamar. Aumenta conforme sobe. */
-export const PERDA_POR_PATAMAR = [10, 12, 15, 18, 20, 22, 25] as const;
+export const PERDA_POR_PATAMAR = [10, 12, 15, 18, 20, 22, 25, 30] as const;
 
 /**
  * Empate nao mexe no elo.
@@ -96,27 +110,27 @@ const limitar = (valor: number, minimo: number, maximo: number): number =>
   Math.max(minimo, Math.min(maximo, valor));
 
 /**
- * Divisao (0 a 18) correspondente a um elo.
+ * Divisao (0 a 21) correspondente a um elo.
  *
- * O elo continua crescendo depois que a pessoa entra em Mestre - e ele que
+ * O elo continua crescendo depois que a pessoa entra no Elite - e ele que
  * ordena o leaderboard entre quem ja chegou ao teto -, mas a divisao trava
- * em 18.
+ * em 21.
  */
 export const divisaoDoElo = (elo: number): number =>
   limitar(Math.floor(Math.max(0, elo) / ELO_POR_DIVISAO), 0, DIVISAO_MAXIMA);
 
-/** Indice do patamar (0 a 6) de uma divisao. */
+/** Indice do patamar (0 a 7) de uma divisao. */
 export const patamarDaDivisao = (divisao: number): number =>
   Math.floor(limitar(divisao, 0, DIVISAO_MAXIMA) / SUBNIVEIS_POR_PATAMAR);
 
-/** Mestre e o unico patamar sem sub-niveis. */
+/** Elite e o unico patamar sem sub-niveis. */
 export const temSubnivel = (divisao: number): boolean =>
   limitar(divisao, 0, DIVISAO_MAXIMA) < DIVISAO_MAXIMA;
 
 /**
  * Sub-nivel dentro do patamar: 1, 2 ou 3.
  *
- * Devolve **0** no Mestre, que nao tem sub-nivel. Quem for escrever na tela
+ * Devolve **0** no Elite, que nao tem sub-nivel. Quem for escrever na tela
  * deve usar `nomeDaDivisao`, que ja trata isso.
  */
 export const subnivelDaDivisao = (divisao: number): number => {
@@ -141,6 +155,11 @@ export const perdaDaDerrota = (elo: number): number =>
  * Uma vez que a pessoa entra em Ouro 1, ela nao volta para Prata 3 por mais
  * que perca - so anda para tras dentro do proprio patamar. E o mesmo alivio
  * do Brawl Stars: uma noite ruim nao apaga a temporada inteira.
+ *
+ * A mesma regra e o que torna o **Elite permanente**: o piso de quem esta no
+ * Elite e o proprio inicio do Elite, entao nao ha derrota que devolva a
+ * pessoa ao Mestre. Dentro do Elite (e dentro do Mestre) o elo sobe e desce a
+ * vontade, que e o que ordena o leaderboard.
  */
 export const pisoDoPatamar = (elo: number): number =>
   eloInicialDoPatamar(patamarDaDivisao(divisaoDoElo(elo)));
@@ -168,11 +187,11 @@ export const deltaDaPartida = (elo: number, resultado: ResultadoRanqueada): numb
 export interface ProgressoDivisao {
   /** Elo acumulado dentro da divisao atual (0 a 99). */
   atual: number;
-  /** Sempre `ELO_POR_DIVISAO`, exceto no Mestre, onde nao ha proximo. */
+  /** Sempre `ELO_POR_DIVISAO`, exceto no Elite, onde nao ha proximo. */
   alvo: number;
-  /** 0 a 1, para a barra. No Mestre fica cheia. */
+  /** 0 a 1, para a barra. No Elite fica cheia. */
   fracao: number;
-  /** Quanto falta para a proxima divisao (0 no Mestre). */
+  /** Quanto falta para a proxima divisao (0 no Elite). */
   faltam: number;
   /** true quando ja esta no teto da escada. */
   noTopo: boolean;
@@ -269,14 +288,23 @@ export const ESTILO_PATAMAR: Record<Patamar, EstiloPatamar> = {
   mestre: {
     nome: 'Mestre',
     emoji: '🏅',
-    chip: 'border-transparent bg-gradient-to-r from-mint-500 via-aqua-400 to-electric-500 text-night-950 font-extrabold shadow-glow',
-    cartao: 'border-mint-400/50 from-mint-500/25 via-electric-500/10 to-transparent',
+    chip: 'border-mint-400/60 bg-mint-500/15 text-mint-200',
+    cartao: 'border-mint-400/40 from-mint-500/20 via-night-900/60 to-transparent',
     texto: 'text-mint-200',
+    barra: 'mint',
+  },
+  // O gradiente cheio, que antes era do Mestre, sobe para o novo teto.
+  elite: {
+    nome: 'Elite',
+    emoji: '⭐',
+    chip: 'border-transparent bg-gradient-to-r from-mint-500 via-aqua-400 to-electric-500 text-night-950 font-extrabold shadow-glow',
+    cartao: 'border-aqua-400/50 from-mint-500/25 via-electric-500/15 to-transparent',
+    texto: 'text-aqua-200',
     barra: 'mint',
   },
 };
 
-/** Ex.: "Ouro 2" - e so "Mestre" no topo, que nao tem sub-nivel. */
+/** Ex.: "Ouro 2", "Mestre 3" - e so "Elite" no topo, que nao tem sub-nivel. */
 export const nomeDaDivisao = (divisao: number): string => {
   const patamar = PATAMARES[patamarDaDivisao(divisao)];
   const nome = ESTILO_PATAMAR[patamar].nome;

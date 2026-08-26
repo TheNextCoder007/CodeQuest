@@ -12,7 +12,7 @@ SOLUCOES = {
     "py-fund-02-e1": 'print("Olá, CodeQuest!")',
     "py-fund-02-e2": 'print("Meu nome é Dev")\nprint("Estou aprendendo Python")',
     "py-fund-03-e2": '# print("teste temporário")\nprint("Relatório final")',
-    "py-fund-04-e2": 'print("Tudo certo!")',
+    "py-fund-04-e2": 'mensagem = "Tudo certo!"\nprint(mensagem)',
     "py-fund-05-e1": 'cidade = input("De qual cidade você é? ")\nprint("Boa viagem para", cidade)',
     "py-var-01-e1": 'nome = "Ana"\nprint(nome)',
     "py-var-02-e2": 'print("10" + "5")\nprint(10 + 5)',

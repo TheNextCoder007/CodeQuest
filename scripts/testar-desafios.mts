@@ -72,6 +72,7 @@ const ARQUIVOS = [
   'supabase/migrations/0006_ranqueado.sql',
   'supabase/migrations/0007_embaralhar_alternativas.sql',
   'supabase/migrations/0008_desafios_diarios.sql',
+  'supabase/migrations/0009_ranqueado_elite.sql',
   'supabase/seed.sql',
 ];
 

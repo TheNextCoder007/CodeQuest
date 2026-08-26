@@ -13,6 +13,7 @@ import { botDoElo } from './bots';
 import { divisaoDoElo, novoElo, patamarDaDivisao, type ResultadoRanqueada } from './patamares';
 import { poolDoPatamar, temasDoPatamar } from './temas';
 import type {
+  TopoRanqueado,
   EscopoRanking,
   EstadoRanqueada,
   LinhaRankingRanqueada,
@@ -328,3 +329,38 @@ export const resultadoRanqueadoLocal = (matchId: string): ResultadoRanqueado | n
 
 /** Tema da partida, para a tela de resultado. */
 export const temaRanqueadoLocal = (matchId: string): string => temaLocal(matchId);
+
+/**
+ * Recorde historico no modo demonstracao.
+ *
+ * Mesma conta do servidor: percorre as temporadas guardadas, acha o maior
+ * patamar e conta em quantas delas o pico chegou nesse patamar.
+ */
+export const topoRanqueadoLocal = (userId?: string): TopoRanqueado => {
+  const vazio: TopoRanqueado = {
+    patamar: 0,
+    divisao: 0,
+    picoElo: 0,
+    vezes: 0,
+    temporadas: 0,
+  };
+  if (!userId) return vazio;
+
+  const stats = lerJson<Record<string, LinhaStats>>(CHAVE_STATS, {});
+  const picos = Object.entries(stats)
+    .filter(([chave, linha]) => chave.endsWith(`:${userId}`) && linha.partidas > 0)
+    .map(([, linha]) => linha.picoElo);
+
+  if (picos.length === 0) return vazio;
+
+  const picoElo = Math.max(...picos);
+  const patamar = patamarDaDivisao(divisaoDoElo(picoElo));
+
+  return {
+    patamar,
+    divisao: divisaoDoElo(picoElo),
+    picoElo,
+    vezes: picos.filter((p) => patamarDaDivisao(divisaoDoElo(p)) === patamar).length,
+    temporadas: picos.length,
+  };
+};

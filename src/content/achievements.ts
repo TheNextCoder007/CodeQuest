@@ -35,10 +35,10 @@ export type AchievementCriteria =
    * Chegar a um patamar do modo ranqueado.
    *
    * `patamar` e o indice em `PATAMARES` (`src/lib/ranked/patamares.ts`):
-   * 1 = Prata, 2 = Ouro, ... 6 = Mestre. Bronze fica de fora porque e onde
+   * 1 = Prata, 2 = Ouro, ... 7 = Elite. Bronze fica de fora porque e onde
    * todo mundo comeca - conquista por estar no comeco nao e conquista.
    *
-   * E por PATAMAR, nao por sub-nivel: 21 divisoes dariam 21 medalhas quase
+   * E por PATAMAR, nao por sub-nivel: 22 divisoes dariam 22 medalhas quase
    * iguais e a lista de conquistas viraria uma planilha. Chegar a Ouro 1 ja
    * conta como "alcancou Ouro".
    *
@@ -335,9 +335,16 @@ export const achievements: AchievementDefinition[] = [
   {
     id: 'ranqueada-mestre',
     title: 'Alcançou Mestre',
-    description: 'Chegou ao Mestre — o patamar mais alto da ranqueada.',
+    description: 'Chegou ao Mestre, com os três sub-níveis pela frente.',
     icon: '🏅',
     criteria: { kind: 'ranked_tier', patamar: 6 },
+  },
+  {
+    id: 'ranqueada-elite',
+    title: 'Alcançou Elite',
+    description: 'Chegou ao Elite — o topo absoluto da escada, de onde não se cai mais.',
+    icon: '⭐',
+    criteria: { kind: 'ranked_tier', patamar: 7 },
   },
 
   {
