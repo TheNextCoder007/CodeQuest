@@ -77,6 +77,7 @@ Para ligar a nuvem (contas reais, progresso sincronizado entre celular/PC/site),
 | `npm run test:amigos` | Testa o fluxo de amizades (busca, pedido, aceite, remoção, ranking) |
 | `npm run test:tags` | Testa as tags, os segredos e as regras do @username |
 | `npm run test:pvp` | Joga uma partida 1v1 num Postgres real e testa as tentativas de trapaça |
+| `npm run test:realtime` | Canais do Realtime: dois assinantes do mesmo usuário não podem colidir |
 | `npm run test:estrutura` | Conferência anti-gambiarra: solução de referência passa e trapaça é recusada, nos 61 exercícios |
 | `npm run test:desafios` | Desafio diário: sorteio determinístico, XP pago uma vez só e RLS |
 | `npm run test:ranqueado` | Testa a escada de patamares, o elo, as temporadas e os bots num Postgres real |
@@ -227,7 +228,7 @@ O Supabase dá um Postgres gerenciado + autenticação no plano gratuito, **sem 
 10. Abra outra query, cole **todo** o conteúdo de [`supabase/migrations/0009_ranqueado_elite.sql`](supabase/migrations/0009_ranqueado_elite.sql) e rode.
     Esse arquivo cria o patamar **Elite**, devolve os sub-níveis do Mestre e adiciona o contador de recordes (ver [seção 13](#13-modo-ranqueado-temporadas-e-patamares)).
 11. Abra mais uma query, cole **todo** o conteúdo de [`supabase/seed.sql`](supabase/seed.sql) e rode também.
-   Esse arquivo popula as 5 linguagens, 50 lições, 100 exercícios, 42 conquistas, 22 tags e 88 perguntas de duelo.
+   Esse arquivo popula as 5 linguagens, 50 lições, 100 exercícios, 43 conquistas, 22 tags e 88 perguntas de duelo.
 
 > Os dez scripts podem ser executados quantas vezes você quiser: eles usam
 > `if not exists` / `on conflict do update` e não duplicam nem apagam nada.
@@ -1443,6 +1444,12 @@ duas metades andam sempre juntas ali.
 
 Em `output_match` você pode simular respostas do usuário com `stdin: ['18']` — o `input()` (Python)
 ou o `prompt()` (JavaScript) do exercício consome esses valores em ordem.
+
+> **Cuidado com alternativas que só diferem em espaços, aspas ou maiúsculas.** A correção
+> normaliza antes de comparar, então `Ana`, `  Ana  ` e `ana` são **a mesma resposta** — e todas
+> seriam aceitas. Uma pergunta do duelo chegou a ter três alternativas certas por causa disso.
+> `npm run content:check` agora recusa esse caso, comparando as alternativas já normalizadas com o
+> mesmo normalizador que corrige a resposta.
 
 ### Escrever a teoria
 

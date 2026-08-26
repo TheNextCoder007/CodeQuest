@@ -449,11 +449,15 @@ export const pvpQuestions: PvpQuestion[] = [
     id: 'pvp-js-28',
     languageSlug: 'javascript',
     kind: 'multiple_choice',
-    prompt: 'O que `console.log("  Ana  ".trim())` mostra?',
-    options: ['"Ana"', 'Ana', '  Ana  ', 'ana'],
-    answer: 'Ana',
+    // Antes as alternativas eram `"Ana"`, `Ana`, `  Ana  ` e `ana`: como a
+    // correcao do servidor passa tudo para minusculas e tira os espacos das
+    // pontas, TRES delas eram a mesma resposta e todas davam ponto. Medir o
+    // tamanho mantem a licao do `trim` com alternativas inconfundiveis.
+    prompt: 'O que `console.log("  Ana  ".trim().length)` mostra?',
+    options: ['3', '7', '5', '4'],
+    answer: '3',
     explanation:
-      '`trim` remove os espaços das duas pontas. Ele devolve um texto novo — o original não muda, porque strings são imutáveis em JavaScript.',
+      '`trim` remove os espaços das duas pontas, sobrando `"Ana"` — 3 caracteres. O texto original tinha 7. O original não muda: `trim` devolve um texto novo.',
     difficulty: 1,
   },
   {

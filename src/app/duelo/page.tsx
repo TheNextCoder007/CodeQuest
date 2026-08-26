@@ -249,7 +249,7 @@ function DueloContent() {
     buscarEstatisticas(user.id)
       .then(async (stats) => {
         if (!ativo) return;
-        const novas = await sincronizarPvp(stats.vitorias, stats.vitoriasPorTema);
+        const novas = await sincronizarPvp(stats.vitorias, stats.vitoriasPorTema, stats.empates);
         novas.forEach((tag, indice) => {
           window.setTimeout(() => {
             showToast({
@@ -403,8 +403,22 @@ function DueloContent() {
                     <strong className="text-rose-300">{nomeDaDivisao(ranqueada.divisaoDepois)}</strong>
                     .
                   </>
-                ) : ranqueada.delta === 0 ? (
+                ) : empatou ? (
                   'Empate não mexe no elo.'
+                ) : ranqueada.delta === 0 ? (
+                  /*
+                   * Delta zero SEM empate quer dizer que a derrota bateu no
+                   * piso do patamar. Antes a tela deduzia "empate" so pelo
+                   * delta, e quem perdia estando no piso via "Empate não mexe
+                   * no elo" logo abaixo de "Você perdeu essa".
+                   */
+                  <>
+                    Você está no piso de{' '}
+                    <strong className="text-slate-200">
+                      {nomeDaDivisao(ranqueada.divisaoDepois)}
+                    </strong>
+                    : o patamar conquistado não se perde, então a derrota não tirou elo.
+                  </>
                 ) : (
                   <>
                     Agora com <strong className="text-slate-200">{ranqueada.eloDepois} de elo</strong>{' '}

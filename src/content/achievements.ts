@@ -25,6 +25,14 @@ export type AchievementCriteria =
   /** Vitorias no modo 1v1. */
   | { kind: 'pvp_wins'; count: number }
   /**
+   * Empates no modo 1v1.
+   *
+   * E de longe o resultado mais raro: as duas pessoas precisam acertar a mesma
+   * quantidade de perguntas E somar o mesmo bonus de velocidade, em milesimos
+   * de segundo. Por isso vale medalha ja no primeiro.
+   */
+  | { kind: 'pvp_draws'; count: number }
+  /**
    * Desafios diarios concluidos, no total.
    *
    * O contador vive no banco (`daily_challenge_completions`) e chega aqui por
@@ -297,6 +305,14 @@ export const achievements: AchievementDefinition[] = [
   /* ---------------------------------------------------------------------
    * Ranqueada - uma por patamar (ver `ranked_tier` acima)
    * ------------------------------------------------------------------ */
+  {
+    id: 'duelo-empate',
+    title: 'Empate técnico',
+    description:
+      'Terminou um duelo empatado — mesmo número de acertos e o mesmo bônus de velocidade. É o resultado mais raro do jogo.',
+    icon: '🤝',
+    criteria: { kind: 'pvp_draws', count: 1 },
+  },
   {
     id: 'ranqueada-prata',
     title: 'Alcançou Prata',

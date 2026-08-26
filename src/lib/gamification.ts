@@ -107,6 +107,8 @@ export interface AchievementState {
   unlockedTagIds?: string[];
   /** Vitorias acumuladas no duelo 1v1. */
   pvpVitorias?: number;
+  /** Empates acumulados no duelo 1v1. */
+  pvpEmpates?: number;
   /**
    * Desafios diarios concluidos no total. Vem de `desafio_estado()` - tabela
    * que so o servidor escreve.
@@ -153,6 +155,8 @@ const meetsCriteria = (achievement: AchievementDefinition, state: AchievementSta
       return state.flawlessLesson === true;
     case 'pvp_wins':
       return (state.pvpVitorias ?? 0) >= criteria.count;
+    case 'pvp_draws':
+      return (state.pvpEmpates ?? 0) >= criteria.count;
     case 'daily_challenges':
       return (state.desafiosDiarios ?? 0) >= criteria.count;
     case 'ranked_tier':

@@ -3156,8 +3156,8 @@ console.log("5" === 5);
 insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
   expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
   'js-cond-04-e3', 'js-cond-04', 'Qual destes valores é **truthy** (ou seja, faz o `if` entrar)?',
-  null, 'multiple_choice', '"0"',
-  '["\"0\"","0","\"\"","NaN"]'::jsonb, null, null,
+  null, 'multiple_choice', 'O texto "0"',
+  '["O texto \"0\"","O número 0","O texto vazio","NaN"]'::jsonb, null, null,
   'O texto `"0"` não está vazio, então é truthy — mesmo parecendo o número zero. Já `0`, `""` e `NaN` estão na lista dos oito valores falsy. É por isso que checar entrada de usuário com `if (valor)` engana: o texto `"0"` passa.', 25, 3)
   on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
   starter_code = excluded.starter_code, validation_type = excluded.validation_type,
@@ -4820,6 +4820,9 @@ insert into public.achievements (id, title, description, icon, criteria) values 
 insert into public.achievements (id, title, description, icon, criteria) values ('pvp-100-vitorias', '100 duelos vencidos', 'Cem vitórias no 1v1.', '💀', '{"kind":"pvp_wins","count":100}'::jsonb)
   on conflict (id) do update set title = excluded.title, description = excluded.description,
   icon = excluded.icon, criteria = excluded.criteria;
+insert into public.achievements (id, title, description, icon, criteria) values ('duelo-empate', 'Empate técnico', 'Terminou um duelo empatado — mesmo número de acertos e o mesmo bônus de velocidade. É o resultado mais raro do jogo.', '🤝', '{"kind":"pvp_draws","count":1}'::jsonb)
+  on conflict (id) do update set title = excluded.title, description = excluded.description,
+  icon = excluded.icon, criteria = excluded.criteria;
 insert into public.achievements (id, title, description, icon, criteria) values ('ranqueada-prata', 'Alcançou Prata', 'Saiu do Bronze na temporada ranqueada.', '🥈', '{"kind":"ranked_tier","patamar":1}'::jsonb)
   on conflict (id) do update set title = excluded.title, description = excluded.description,
   icon = excluded.icon, criteria = excluded.criteria;
@@ -5131,7 +5134,7 @@ begin
     on conflict (id) do update set language_slug = excluded.language_slug, kind = excluded.kind,
     prompt = excluded.prompt, options = excluded.options, answer = excluded.answer,
     explanation = excluded.explanation, difficulty = excluded.difficulty;
-  insert into public.pvp_questions (id, language_slug, kind, prompt, options, answer, explanation, difficulty) values ('pvp-js-28', 'javascript', 'multiple_choice', 'O que `console.log("  Ana  ".trim())` mostra?', '["\"Ana\"","Ana","  Ana  ","ana"]'::jsonb, 'Ana', '`trim` remove os espaços das duas pontas. Ele devolve um texto novo — o original não muda, porque strings são imutáveis em JavaScript.', 1)
+  insert into public.pvp_questions (id, language_slug, kind, prompt, options, answer, explanation, difficulty) values ('pvp-js-28', 'javascript', 'multiple_choice', 'O que `console.log("  Ana  ".trim().length)` mostra?', '["3","7","5","4"]'::jsonb, '3', '`trim` remove os espaços das duas pontas, sobrando `"Ana"` — 3 caracteres. O texto original tinha 7. O original não muda: `trim` devolve um texto novo.', 1)
     on conflict (id) do update set language_slug = excluded.language_slug, kind = excluded.kind,
     prompt = excluded.prompt, options = excluded.options, answer = excluded.answer,
     explanation = excluded.explanation, difficulty = excluded.difficulty;

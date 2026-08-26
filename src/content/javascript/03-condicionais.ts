@@ -456,8 +456,11 @@ Texto vazio é falsy, então o \`else\` assume — sem precisar escrever \`nome 
           prompt: 'Qual destes valores é **truthy** (ou seja, faz o `if` entrar)?',
           starterCode: null,
           validationType: 'multiple_choice',
-          options: ['"0"', '0', '""', 'NaN'],
-          expectedAnswer: '"0"',
+          // As alternativas sao descritas por extenso de proposito: a correcao
+          // tira as aspas das pontas antes de comparar, entao `"0"` e `0`
+          // seriam a MESMA resposta - e as duas dariam certo.
+          options: ['O texto "0"', 'O número 0', 'O texto vazio', 'NaN'],
+          expectedAnswer: 'O texto "0"',
           explanation:
             'O texto `"0"` não está vazio, então é truthy — mesmo parecendo o número zero. Já `0`, `""` e `NaN` estão na lista dos oito valores falsy. É por isso que checar entrada de usuário com `if (valor)` engana: o texto `"0"` passa.',
           xpReward: 25,

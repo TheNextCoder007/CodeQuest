@@ -30,7 +30,8 @@
     "test:seo": "tsx scripts/testar-seo.mts",
     "content:verify-js": "tsx scripts/dump-exercises.ts javascript > .exercises-js.json && node scripts/verificar-saidas-js.mjs .exercises-js.json",
     "test:desafios": "tsx scripts/testar-desafios.mts",
-    "test:estrutura": "tsx scripts/testar-estrutura.mts"
+    "test:estrutura": "tsx scripts/testar-estrutura.mts",
+    "test:realtime": "tsx scripts/testar-realtime.mts"
   },
   "dependencies": {
     "@capacitor/android": "^6.2.0",

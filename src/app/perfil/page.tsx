@@ -111,7 +111,7 @@ function PerfilContent() {
       .then((lidas) => {
         if (!ativo) return;
         setStatsPvp(lidas);
-        void sincronizarPvp(lidas.vitorias, lidas.vitoriasPorTema);
+        void sincronizarPvp(lidas.vitorias, lidas.vitoriasPorTema, lidas.empates);
       })
       .catch(() => {
         /* sem duelo ainda: o cartao mostra o estado vazio */

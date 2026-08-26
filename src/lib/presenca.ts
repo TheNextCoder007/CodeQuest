@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { getSupabase, isSupabaseConfigured } from '@/lib/supabase/client';
 
 /**
@@ -61,30 +61,75 @@ export function usePresenca(meuId: string | undefined, meuUsername: string | nul
  *
  * Escuta as mudancas da tabela `matches`. O RLS continua valendo no Realtime:
  * so chegam eventos das partidas em que a pessoa aparece.
+ *
+ * ---------------------------------------------------------------------------
+ * POR QUE O NOME DO CANAL LEVA UM ID UNICO
+ *
+ * `supabase.channel(topico)` **nao cria um canal novo** quando o topico ja
+ * existe: ele devolve o mesmo objeto (ver `RealtimeClient.channel`). E
+ * `canal.on('postgres_changes', ...)` LANCA EXCECAO se o canal ja passou por
+ * `subscribe()`:
+ *
+ *     cannot add `postgres_changes` callbacks for realtime:... after `subscribe()`.
+ *
+ * Como o `AvisoDeConvite` fica montado no AppShell em TODAS as telas, o
+ * topico `partidas-<meuId>` ja estava assinado. Qualquer segunda tela que
+ * chamasse este hook com o mesmo id pegava aquele canal, tentava registrar o
+ * ouvinte e derrubava a pagina inteira com "Application error" - foi o que
+ * aconteceu com a aba Amigos.
+ *
+ * `useId()` da um sufixo estavel e diferente por componente montado, entao
+ * cada assinante tem o proprio canal e nao existe mais essa colisao.
+ *
+ * ---------------------------------------------------------------------------
+ * POR QUE `aoMudar` VAI PARA UMA REF
+ *
+ * Se o callback mudar de identidade a cada render, o efeito refaz a
+ * assinatura junto - derrubando e recriando o canal sem parar. Guardando numa
+ * ref, a assinatura depende so do `meuId` e o callback sempre e o mais atual.
  */
+/**
+ * Nome do canal de partidas de um assinante.
+ *
+ * O `identificador` vem do `useId()` de quem chamou: e ele que impede dois
+ * componentes montados ao mesmo tempo de pedirem o MESMO topico (ver o
+ * comentario acima). Exportado para `npm run test:realtime` poder conferir.
+ */
+export const topicoDePartidas = (meuId: string, identificador: string): string =>
+  `partidas-${meuId}-${identificador}`;
+
+/** Nome do canal de respostas de uma partida. Mesmo cuidado do de cima. */
+export const topicoDeRespostas = (matchId: string, identificador: string): string =>
+  `duelo-${matchId}-${identificador}`;
+
 export function useAvisoDePartidas(meuId: string | undefined, aoMudar: () => void) {
+  const identificador = useId();
+  const callback = useRef(aoMudar);
+  callback.current = aoMudar;
+
   useEffect(() => {
     if (!isSupabaseConfigured || !meuId) return;
 
+    const avisar = () => callback.current();
     const supabase = getSupabase()!;
     const canal = supabase
-      .channel(`partidas-${meuId}`)
+      .channel(topicoDePartidas(meuId, identificador))
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'matches', filter: `guest_id=eq.${meuId}` },
-        aoMudar,
+        avisar,
       )
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'matches', filter: `host_id=eq.${meuId}` },
-        aoMudar,
+        avisar,
       )
       .subscribe();
 
     return () => {
       void supabase.removeChannel(canal);
     };
-  }, [meuId, aoMudar]);
+  }, [meuId, identificador]);
 }
 
 /**
@@ -94,21 +139,28 @@ export function useAvisoDePartidas(meuId: string | undefined, aoMudar: () => voi
  * para mostrar "ele esta na pergunta 3" - o conteudo da resposta nao aparece.
  */
 export function useAvisoDeRespostas(matchId: string | null, aoMudar: () => void) {
+  // Mesmo cuidado de `useAvisoDePartidas`: topico unico por componente e
+  // callback numa ref. Hoje so a tela do duelo usa este hook, mas um segundo
+  // consumidor derrubaria a pagina pelo mesmo motivo.
+  const identificador = useId();
+  const callback = useRef(aoMudar);
+  callback.current = aoMudar;
+
   useEffect(() => {
     if (!isSupabaseConfigured || !matchId) return;
 
     const supabase = getSupabase()!;
     const canal = supabase
-      .channel(`duelo-${matchId}`)
+      .channel(topicoDeRespostas(matchId, identificador))
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'match_answers', filter: `match_id=eq.${matchId}` },
-        aoMudar,
+        () => callback.current(),
       )
       .subscribe();
 
     return () => {
       void supabase.removeChannel(canal);
     };
-  }, [matchId, aoMudar]);
+  }, [matchId, identificador]);
 }

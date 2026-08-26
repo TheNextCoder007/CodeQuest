@@ -9,6 +9,8 @@
 import { languages } from '../src/content/index';
 import { achievements } from '../src/content/achievements';
 import { pvpQuestions } from '../src/content/pvp-questions';
+import { normalizarResposta } from '../src/lib/pvp/regras';
+import { normalizarRespostaDaTrilha } from '../src/lib/exercises/normalizar';
 import { TEMAS_PVP } from '../src/content/pvp-temas';
 
 const problemas: string[] = [];
@@ -106,8 +108,29 @@ for (const language of languages) {
             problemas.push(
               `exercicio ${exercise.id}: a resposta correta nao esta entre as alternativas`,
             );
-          } else if (new Set(exercise.options).size !== exercise.options.length) {
-            problemas.push(`exercicio ${exercise.id} tem alternativas repetidas`);
+          } else {
+            /*
+             * Comparar as alternativas CRUAS nao basta.
+             *
+             * A correcao normaliza antes de comparar (tira espacos das pontas,
+             * junta espacos repetidos, tira aspas e passa para minusculas),
+             * entao `"Ana"`, `  Ana  ` e `ana` sao a MESMA resposta - e todas
+             * seriam aceitas como certas. Foi exatamente o que aconteceu numa
+             * pergunta do duelo: tres das quatro alternativas davam ponto.
+             */
+            const vistas = new Map<string, string>();
+            for (const opcao of exercise.options) {
+              const chave = normalizarRespostaDaTrilha(opcao);
+              const anterior = vistas.get(chave);
+              if (anterior !== undefined) {
+                problemas.push(
+                  `exercicio ${exercise.id}: as alternativas ${JSON.stringify(anterior)} e ` +
+                    `${JSON.stringify(opcao)} sao a mesma resposta depois de normalizadas`,
+                );
+              } else {
+                vistas.set(chave, opcao);
+              }
+            }
           }
         }
 
@@ -175,8 +198,23 @@ for (const pergunta of pvpQuestions) {
       problemas.push(`pergunta ${pergunta.id} precisa de pelo menos 2 alternativas`);
     } else if (!pergunta.options.includes(pergunta.answer)) {
       problemas.push(`pergunta ${pergunta.id}: o gabarito nao esta entre as alternativas`);
-    } else if (new Set(pergunta.options).size !== pergunta.options.length) {
-      problemas.push(`pergunta ${pergunta.id} tem alternativas repetidas`);
+    } else {
+      // Mesma armadilha da trilha, com o normalizador do servidor
+      // (`pvp_normalizar`): minusculas e espacos colapsados.
+      const vistas = new Map<string, string>();
+      for (const opcao of pergunta.options) {
+        const chave = normalizarResposta(opcao);
+        const anterior = vistas.get(chave);
+        if (anterior !== undefined) {
+          problemas.push(
+            `pergunta ${pergunta.id}: as alternativas ${JSON.stringify(anterior)} e ` +
+              `${JSON.stringify(opcao)} sao a mesma resposta depois de normalizadas ` +
+              `(as duas dariam ponto)`,
+          );
+        } else {
+          vistas.set(chave, opcao);
+        }
+      }
     }
   } else if (pergunta.options) {
     problemas.push(`pergunta ${pergunta.id}: fill_blank nao deve ter alternativas`);

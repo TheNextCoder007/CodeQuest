@@ -1,6 +1,7 @@
 import type { Exercise } from '@/types/content';
 import { LINGUAGEM_PADRAO, runtimeDaLinguagem } from './runtime';
 import { conferirEstrutura } from './estrutura';
+import { normalizarRespostaDaTrilha as normalizeAnswer } from './normalizar';
 
 /**
  * Validacao das respostas.
@@ -34,12 +35,6 @@ export const normalizeOutput = (value: string): string =>
     .replace(/\n+$/g, '')
     .trim();
 
-const normalizeAnswer = (value: string): string =>
-  value
-    .trim()
-    .replace(/^[`'"]+|[`'"]+$/g, '')
-    .replace(/\s+/g, ' ')
-    .toLowerCase();
 
 export const checkMultipleChoice = (selected: string, exercise: Exercise): ValidationResult => {
   const correct = normalizeAnswer(selected) === normalizeAnswer(exercise.expectedAnswer);

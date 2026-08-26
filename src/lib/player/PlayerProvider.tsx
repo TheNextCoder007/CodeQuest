@@ -68,7 +68,11 @@ interface PlayerContextValue {
    * servidor. Quem chama isto passa o que leu de la; aqui so avaliamos os
    * criterios e gravamos o que faltar.
    */
-  sincronizarPvp: (vitorias: number, vitoriasPorTema: Record<string, number>) => Promise<TagDefinition[]>;
+  sincronizarPvp: (
+    vitorias: number,
+    vitoriasPorTema: Record<string, number>,
+    empates?: number,
+  ) => Promise<TagDefinition[]>;
   /**
    * Concede as conquistas de patamar da ranqueada.
    *
@@ -731,6 +735,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     async (
       vitorias: number,
       vitoriasPorTema: Record<string, number>,
+      empates = 0,
     ): Promise<TagDefinition[]> => {
       if (!user || !state) return [];
 
@@ -754,6 +759,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
           flawlessLesson: state.flawlessLessonIds.length > 0,
           unlockedTagIds,
           pvpVitorias: vitorias,
+          pvpEmpates: empates,
         },
         state.unlockedAchievementIds,
       );
