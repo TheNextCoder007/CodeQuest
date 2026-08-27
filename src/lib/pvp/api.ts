@@ -2,6 +2,7 @@
 
 import { getSupabase, isSupabaseConfigured } from '@/lib/supabase/client';
 import {
+  abandonarLocal,
   criarDueloLocal,
   estadoLocal,
   estatisticasLocais,
@@ -209,6 +210,25 @@ interface LinhaFinal {
   pontos_host: number;
   pontos_guest: number;
 }
+
+/**
+ * Declara o proprio abandono: encerra a partida como derrota de quem chama.
+ *
+ * Repare que nao ha parametro dizendo quem perdeu - quem perde e sempre quem
+ * chamou. Por isso e seguro o cliente poder chamar isto: a unica coisa que se
+ * consegue com essa funcao e se prejudicar.
+ *
+ * O elo sai pelo caminho de sempre, entao a derrota por abandono custa
+ * exatamente o mesmo que a derrota jogada (ver `pvp_abandonar` na migracao
+ * 0010).
+ */
+export const abandonarPartida = async (matchId: string): Promise<void> => {
+  if (!isSupabaseConfigured) {
+    abandonarLocal(matchId);
+    return;
+  }
+  await rpc<unknown>('pvp_abandonar', { m: matchId });
+};
 
 export const finalizarPartida = async (matchId: string): Promise<ResultadoFinal> => {
   if (!isSupabaseConfigured) return finalizarLocal(matchId);

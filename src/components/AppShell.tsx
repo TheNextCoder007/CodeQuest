@@ -10,6 +10,7 @@ import { usePlayer } from '@/lib/player/PlayerProvider';
 import { displayStreak, levelFromXp } from '@/lib/gamification';
 import { cn } from '@/lib/cn';
 import { AvisoDeConvite } from './pvp/AvisoDeConvite';
+import { EntrarNaPartida } from './pvp/EntrarNaPartida';
 import { UsernameGate } from './UsernameGate';
 import { Logo } from './Logo';
 
@@ -215,6 +216,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
         {/* Convite de duelo: aparece em qualquer tela. */}
         <AvisoDeConvite />
+        {/* Nao desenha nada: leva os dois lados para a partida quando ela comeca. */}
+        <EntrarNaPartida />
 
         {demoMode && (
           <div className="border-t border-amber-400/20 bg-amber-400/[0.07] px-4 py-1.5 text-center text-[11px] text-amber-200">

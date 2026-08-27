@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Flame, Globe, Shield, Star, Swords, Trophy, UserPlus, Users } from 'lucide-react';
+import { Crown, Flame, Globe, Shield, Star, Swords, Timer, Trophy, UserPlus, Users } from 'lucide-react';
 import { AppShell } from '@/components/AppShell';
 import { Avatar } from '@/components/social/Avatar';
 import { LinkButton } from '@/components/ui/Button';
@@ -11,7 +11,7 @@ import { useAuth } from '@/lib/auth/AuthProvider';
 import { usePlayer } from '@/lib/player/PlayerProvider';
 import { PatamarBadge } from '@/components/ranked/PatamarBadge';
 import { buscarRankingRanqueada } from '@/lib/ranked/api';
-import type { LinhaRankingRanqueada } from '@/lib/ranked/tipos';
+import type { LinhaRankingRanqueada, RecorteRanking } from '@/lib/ranked/tipos';
 import { fetchLeaderboard } from '@/lib/leaderboard';
 import { fetchFriendsLeaderboard } from '@/lib/friends';
 import { displayUsername } from '@/lib/username';
@@ -67,30 +67,47 @@ const modos = [
   { id: 'ranqueada' as const, label: 'Ranqueada', icon: Shield },
 ];
 
+/**
+ * So aparece dentro da ranqueada: a temporada corrente ou o historico inteiro.
+ *
+ * O ranking de XP nao tem esse par porque XP nunca zera - la "todos os
+ * tempos" ja e a unica lista possivel.
+ */
+const recortes = [
+  { id: 'temporada' as const, label: 'Temporada atual', icon: Timer },
+  { id: 'historico' as const, label: 'Todos os tempos', icon: Crown },
+];
+
 function RankingContent() {
   const { user } = useAuth();
   const { state } = usePlayer();
 
   const [modo, setModo] = useState<Modo>('xp');
+  const [recorte, setRecorte] = useState<RecorteRanking>('temporada');
   const [ranqueada, setRanqueada] = useState<LinhaRankingRanqueada[] | null>(null);
   const [aba, setAba] = useState<Aba>('global');
   const [rows, setRows] = useState<LeaderboardRow[] | null>(null);
   const [erro, setErro] = useState<string | null>(null);
 
   const carregar = useCallback(
-    async (qual: Modo, alvo: Aba) => {
+    async (qual: Modo, alvo: Aba, qualRecorte: RecorteRanking) => {
       setRows(null);
       setRanqueada(null);
       setErro(null);
       try {
         if (qual === 'ranqueada') {
           setRanqueada(
-            await buscarRankingRanqueada(alvo, {
-              id: user?.id ?? '',
-              nome: user?.name ?? '',
-              username: state?.profile.username ?? null,
-              avatarUrl: state?.profile.avatar_url ?? null,
-            }),
+            await buscarRankingRanqueada(
+              alvo,
+              {
+                id: user?.id ?? '',
+                nome: user?.name ?? '',
+                username: state?.profile.username ?? null,
+                avatarUrl: state?.profile.avatar_url ?? null,
+              },
+              50,
+              qualRecorte,
+            ),
           );
           return;
         }
@@ -105,8 +122,8 @@ function RankingContent() {
   );
 
   useEffect(() => {
-    void carregar(modo, aba);
-  }, [modo, aba, carregar]);
+    void carregar(modo, aba, recorte);
+  }, [modo, aba, recorte, carregar]);
 
   const lista = modo === 'xp' ? rows : ranqueada;
   const minhaPosicao = lista?.findIndex((linha) => linha.id === user?.id) ?? -1;
@@ -125,9 +142,13 @@ function RankingContent() {
         </h1>
         <p className="mt-2 max-w-xl text-sm text-slate-400">
           {modo === 'ranqueada'
-            ? aba === 'global'
-              ? 'Quem está jogando melhor a temporada, por patamar e elo. Zera a cada 15 dias.'
-              : 'Você e seus amigos confirmados na temporada de ranqueada.'
+            ? recorte === 'historico'
+              ? aba === 'global'
+                ? 'O maior patamar que cada pessoa já alcançou, somando todas as temporadas. Esta lista não zera.'
+                : 'Você e seus amigos confirmados, pelo recorde de todas as temporadas.'
+              : aba === 'global'
+                ? 'Quem está jogando melhor a temporada, por patamar e elo. Zera a cada 15 dias.'
+                : 'Você e seus amigos confirmados na temporada de ranqueada.'
             : aba === 'global'
               ? 'Todos os estudantes do CodeQuest ordenados por XP acumulado. Cada lição concluída muda essa lista.'
               : 'Só você e seus amigos confirmados. Uma disputa mais justa — e bem mais divertida.'}
@@ -172,6 +193,38 @@ function RankingContent() {
           );
         })}
       </div>
+
+      {/* Temporada ou historico (so na ranqueada) ---------------------- */}
+      {modo === 'ranqueada' && (
+        <div
+          role="tablist"
+          aria-label="Recorte do ranking de ranqueada"
+          className="flex gap-1 rounded-xl border border-white/10 bg-night-900/60 p-1"
+        >
+          {recortes.map((item) => {
+            const Icon = item.icon;
+            const ativo = recorte === item.id;
+            return (
+              <button
+                key={item.id}
+                role="tab"
+                aria-selected={ativo}
+                type="button"
+                onClick={() => setRecorte(item.id)}
+                className={cn(
+                  'flex min-h-[44px] min-w-0 flex-1 basis-0 items-center justify-center gap-2 rounded-lg px-2 py-2.5 text-sm font-semibold transition sm:px-3',
+                  ativo
+                    ? 'bg-gradient-to-r from-amber-400 to-mint-400 text-night-950 shadow-glow'
+                    : 'text-slate-400 hover:bg-white/5 hover:text-white',
+                )}
+              >
+                <Icon className="h-4 w-4 shrink-0" aria-hidden />
+                <span className="truncate">{item.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {/* Abas ---------------------------------------------------------- */}
       <div
@@ -315,9 +368,19 @@ function RankingContent() {
 
                   <div className="min-w-0 text-right">
                     <p className="font-bold text-mint-300">{linha.elo}</p>
-                    <p className="text-[11px] uppercase tracking-wider text-slate-500">elo</p>
+                    {/*
+                      * No historico o numero e o PICO, nao o elo de hoje - e o
+                      * rotulo precisa dizer isso, senao a lista parece estar
+                      * mostrando o elo atual errado.
+                      */}
+                    <p className="text-[11px] uppercase tracking-wider text-slate-500">
+                      {recorte === 'historico' ? 'pico de elo' : 'elo'}
+                    </p>
                     <p className="cq-muted">
                       {linha.vitorias}V · {linha.derrotas}D
+                      {recorte === 'historico' && linha.temporadas
+                        ? ` · ${linha.temporadas} ${linha.temporadas === 1 ? 'temporada' : 'temporadas'}`
+                        : ''}
                     </p>
                   </div>
                 </div>

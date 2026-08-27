@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight, Check, Lock } from 'lucide-react';
 import { AppShell } from '@/components/AppShell';
@@ -12,11 +13,56 @@ import { usePlayer } from '@/lib/player/PlayerProvider';
 import { languageBySlug, lessonXp, moduleById } from '@/content';
 import { achievementsWithStatus, displayStreak, levelProgress, levelTitle, studiedToday, xpToNextLevel } from '@/lib/gamification';
 import { languageProgress, nextLesson, trackSummary } from '@/lib/progression';
+import { conferirPrimeiraVisita } from '@/lib/boas-vindas';
 import { cn } from '@/lib/cn';
 
 function DashboardContent() {
   const { user } = useAuth();
   const { state, loading } = usePlayer();
+
+  /*
+   * Saudacao de conta nova.
+   *
+   * `null` = ainda nao sabemos. Enquanto isso o rotulo fica invisivel (e nao
+   * ausente): assim ele nao pisca de "Bem-vindo de volta" para "Bem-vindo" na
+   * cara de quem acabou de criar a conta, e o layout nao pula.
+   *
+   * A resposta vem de `marcar_boas_vindas()`, que responde e carimba na mesma
+   * chamada - ver `@/lib/boas-vindas` para os caminhos que NAO funcionam.
+   */
+  const [primeiraVisita, setPrimeiraVisita] = useState<boolean | null>(null);
+  const jaPerguntou = useRef<string | null>(null);
+
+  useEffect(() => {
+    const id = user?.id;
+    if (!id || jaPerguntou.current === id) return;
+
+    /*
+     * So quando o painel esta DE FATO na tela.
+     *
+     * A pergunta gasta a resposta: quem responde `true` ja carimba. Enquanto o
+     * estado carrega, o `UsernameGate` ainda nao sabe que precisa aparecer e
+     * deixa os filhos montarem por um instante - se a pergunta fosse feita ai,
+     * a saudacao de novato seria consumida por uma tela que a pessoa nunca
+     * chegou a ver, e o primeiro painel de verdade ja diria "de volta". Foi
+     * exatamente o que o teste de navegador pegou.
+     *
+     * Esperar o `username` cobre os dois casos: o estado carregou, e o portao
+     * de @username ja saiu da frente.
+     */
+    if (loading || !state?.profile.username) return;
+
+    // Uma vez por conta: a funcao carimba, entao perguntar duas vezes
+    // devolveria `false` na segunda e apagaria a saudacao no meio da visita.
+    jaPerguntou.current = id;
+    let ativo = true;
+    void conferirPrimeiraVisita(id).then((primeira) => {
+      if (ativo) setPrimeiraVisita(primeira);
+    });
+    return () => {
+      ativo = false;
+    };
+  }, [user?.id, loading, state?.profile.username]);
 
   if (loading || !state) {
     return (
@@ -60,9 +106,11 @@ function DashboardContent() {
     <div className="cq-page">
       {/* Saudacao + proxima licao ------------------------------------- */}
       <section className="cq-card overflow-hidden bg-gradient-to-br from-mint-600/15 via-night-900/60 to-electric-500/10 p-6 sm:p-8">
-        <Label>Bem-vindo de volta</Label>
+        <Label className={cn('transition-opacity', primeiraVisita === null && 'opacity-0')}>
+          {primeiraVisita ? 'Bem-vindo ao CodeQuest' : 'Bem-vindo de volta'}
+        </Label>
         <h1 className="mt-2 text-xl font-extrabold text-white sm:text-3xl">
-          Olá, {primeiroNome} 👋
+          {primeiraVisita ? `Bem-vindo, ${primeiroNome}!` : `Olá, ${primeiroNome}`} 👋
         </h1>
 
         {proxima ? (

@@ -7,6 +7,7 @@ import {
   finalizarRanqueadaLocal,
   historicoRanqueadaLocal,
   iniciarRanqueadaLocal,
+  rankingHistoricoLocal,
   rankingRanqueadaLocal,
   resultadoRanqueadoLocal,
   temporadaAtualLocal,
@@ -16,6 +17,7 @@ import type {
   EscopoRanking,
   EstadoRanqueada,
   LinhaRankingRanqueada,
+  RecorteRanking,
   ResultadoRanqueado,
   Temporada,
   TemporadaPassada,
@@ -200,23 +202,40 @@ interface LinhaRanking {
   vitorias: number;
   derrotas: number;
   partidas: number;
+  temporadas?: number;
   equipped_tag_id: string | null;
   is_developer: boolean;
 }
 
-/** Leaderboard da temporada corrente: 'global' ou 'amigos'. */
+/**
+ * Leaderboard da ranqueada.
+ *
+ * `recorte` escolhe a pergunta: `temporada` mostra o elo de agora (zera a cada
+ * 15 dias); `historico` mostra o maior pico ja alcancado em qualquer
+ * temporada - o hall da fama, que nao zera.
+ *
+ * As duas listas saem de funcoes diferentes no banco (`ranked_ranking` e
+ * `ranked_ranking_topo`), e nao de uma ordenacao feita aqui: ordenar no
+ * cliente exigiria trazer a base inteira para o aparelho.
+ */
 export const buscarRankingRanqueada = async (
   escopo: EscopoRanking,
   demo?: { id: string; nome: string; username: string | null; avatarUrl: string | null },
   limite = 50,
+  recorte: RecorteRanking = 'temporada',
 ): Promise<LinhaRankingRanqueada[]> => {
   if (!isSupabaseConfigured) {
     if (!demo) return [];
-    return rankingRanqueadaLocal(demo.id, demo.nome, demo.username, demo.avatarUrl);
+    return recorte === 'historico'
+      ? rankingHistoricoLocal(demo.id, demo.nome, demo.username, demo.avatarUrl)
+      : rankingRanqueadaLocal(demo.id, demo.nome, demo.username, demo.avatarUrl);
   }
 
   try {
-    const linhas = await rpc<LinhaRanking[]>('ranked_ranking', { escopo, limite });
+    const linhas = await rpc<LinhaRanking[]>(
+      recorte === 'historico' ? 'ranked_ranking_topo' : 'ranked_ranking',
+      { escopo, limite },
+    );
     return (linhas ?? []).map((linha) => ({
       posicao: linha.posicao,
       id: linha.user_id,
@@ -228,6 +247,7 @@ export const buscarRankingRanqueada = async (
       vitorias: linha.vitorias,
       derrotas: linha.derrotas,
       partidas: linha.partidas,
+      temporadas: linha.temporadas,
       equippedTagId: linha.equipped_tag_id,
       isDeveloper: linha.is_developer,
     }));

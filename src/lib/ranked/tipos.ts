@@ -51,17 +51,33 @@ export interface LinhaRankingRanqueada {
   name: string;
   username: string | null;
   avatarUrl: string | null;
+  /**
+   * Na temporada, o elo de agora. No historico, o MAIOR pico ja alcancado -
+   * que e o feito que aquele quadro registra.
+   */
   elo: number;
   divisao: number;
   vitorias: number;
   derrotas: number;
   partidas: number;
+  /** So no historico: em quantas temporadas a pessoa jogou. */
+  temporadas?: number;
   equippedTagId: string | null;
   isDeveloper: boolean;
 }
 
 /** As duas listas do leaderboard, iguais as do ranking de XP. */
 export type EscopoRanking = 'global' | 'amigos';
+
+/**
+ * Qual recorte do leaderboard da ranqueada.
+ *
+ * `temporada` responde "quem esta jogando melhor agora" e zera a cada 15 dias.
+ * `historico` responde "quem ja chegou mais longe", somando todas as
+ * temporadas - e nao zera nunca. Sao perguntas diferentes, entao sao listas
+ * diferentes, e nao uma ordenacao da outra.
+ */
+export type RecorteRanking = 'temporada' | 'historico';
 
 /** O que mudou no elo por causa de uma partida ranqueada. */
 export interface ResultadoRanqueado {

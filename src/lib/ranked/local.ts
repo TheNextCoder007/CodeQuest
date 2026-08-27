@@ -291,6 +291,47 @@ export const rankingRanqueadaLocal = (
 };
 
 /**
+ * O mesmo quadro, mas somando TODAS as temporadas.
+ *
+ * No modo demonstracao existe uma pessoa so, entao a lista tem no maximo uma
+ * linha - o que importa e que a regra seja a mesma do servidor: ordenar pelo
+ * maior pico ja alcancado, e nao pelo elo de agora.
+ */
+export const rankingHistoricoLocal = (
+  userId: string,
+  nome: string,
+  username: string | null,
+  avatarUrl: string | null,
+): LinhaRankingRanqueada[] => {
+  const stats = lerJson<Record<string, LinhaStats>>(CHAVE_STATS, {});
+  const minhas = Object.entries(stats)
+    .filter(([chave, linha]) => chave.endsWith(`:${userId}`) && linha.partidas > 0)
+    .map(([, linha]) => linha);
+
+  if (minhas.length === 0) return [];
+
+  const picoElo = Math.max(...minhas.map((linha) => linha.picoElo));
+
+  return [
+    {
+      posicao: 1,
+      id: userId,
+      name: nome,
+      username,
+      avatarUrl,
+      elo: picoElo,
+      divisao: divisaoDoElo(picoElo),
+      vitorias: minhas.reduce((total, linha) => total + linha.vitorias, 0),
+      derrotas: minhas.reduce((total, linha) => total + linha.derrotas, 0),
+      partidas: minhas.reduce((total, linha) => total + linha.partidas, 0),
+      temporadas: minhas.length,
+      equippedTagId: null,
+      isDeveloper: false,
+    },
+  ];
+};
+
+/**
  * Fecha a partida e aplica o elo.
  *
  * Devolve `null` enquanto a partida nao terminou - a tela continua esperando,

@@ -102,7 +102,26 @@ export const topicoDePartidas = (meuId: string, identificador: string): string =
 export const topicoDeRespostas = (matchId: string, identificador: string): string =>
   `duelo-${matchId}-${identificador}`;
 
-export function useAvisoDePartidas(meuId: string | undefined, aoMudar: () => void) {
+/**
+ * A linha de `matches` que mudou, como o Realtime a entrega.
+ *
+ * So os campos que alguem usa. Nao ha garantia de `old`: isso exigiria
+ * `replica identity full` na tabela, e ninguem aqui precisa saber o valor
+ * anterior - basta o novo.
+ */
+export interface MudancaDePartida {
+  id: string;
+  status: string;
+  modo: string | null;
+  host_id: string;
+  guest_id: string | null;
+  started_at: string | null;
+}
+
+export function useAvisoDePartidas(
+  meuId: string | undefined,
+  aoMudar: (mudanca?: MudancaDePartida) => void,
+) {
   const identificador = useId();
   const callback = useRef(aoMudar);
   callback.current = aoMudar;
@@ -110,7 +129,8 @@ export function useAvisoDePartidas(meuId: string | undefined, aoMudar: () => voi
   useEffect(() => {
     if (!isSupabaseConfigured || !meuId) return;
 
-    const avisar = () => callback.current();
+    const avisar = (evento: { new?: unknown }) =>
+      callback.current((evento?.new as MudancaDePartida | undefined) ?? undefined);
     const supabase = getSupabase()!;
     const canal = supabase
       .channel(topicoDePartidas(meuId, identificador))

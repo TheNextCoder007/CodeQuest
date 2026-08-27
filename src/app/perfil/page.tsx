@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { AtSign, Check, LogOut, Pencil, Trophy } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { AppShell } from '@/components/AppShell';
@@ -62,6 +62,7 @@ function PerfilContent() {
     equipTag,
     sincronizarPvp,
     sincronizarRanqueada,
+    revisarConquistas,
     sincronizarDesafios,
   } = usePlayer();
   const router = useRouter();
@@ -172,8 +173,9 @@ function PerfilContent() {
         setTemporadasPassadas(passadas);
         setTopoRanqueada(topo);
         // Conquista de patamar e permanente: a conferencia usa o maior elo de
-        // todas as temporadas, nao o da atual.
-        void sincronizarRanqueada(patamarMaximoAlcancado(atual));
+        // todas as temporadas, nao o da atual. Os empates vao junto porque a
+        // medalha de empate soma os dois modos (ver `sincronizarPvp`).
+        void sincronizarRanqueada(patamarMaximoAlcancado(atual), atual.empates);
       })
       .catch(() => {
         /* migracao 0006 ainda nao aplicada: o cartao simplesmente nao aparece */
@@ -183,6 +185,27 @@ function PerfilContent() {
       ativo = false;
     };
   }, [idAtual, sincronizarRanqueada]);
+
+  /*
+   * Conferencia de fundo, uma vez por visita ao perfil.
+   *
+   * A avaliacao no aparelho so enxerga o que esta tela carregou - a temporada
+   * corrente, o cartel de duelo. Quem empatou numa temporada passada, ou
+   * cumpriu um criterio antes de ele existir, nunca receberia a medalha. Esta
+   * chamada pede ao banco que reconfira TUDO contra o historico real
+   * (`conquistas_reavaliar`, migracao 0010) e concede o que faltou.
+   *
+   * E de proposito que ela roda no perfil: e a tela onde as conquistas
+   * aparecem, entao a medalha nova ja surge na lista logo abaixo.
+   */
+  const jaRevisou = useRef<string | null>(null);
+  useEffect(() => {
+    if (!idAtual || jaRevisou.current === idAtual) return;
+    // Uma vez por conta, por visita: `revisarConquistas` muda de identidade a
+    // cada mudanca de estado, e sem esta trava o efeito repetiria a chamada.
+    jaRevisou.current = idAtual;
+    void revisarConquistas();
+  }, [idAtual, revisarConquistas]);
 
   const trocarFoto = useCallback(
     async (arquivo: File) => {

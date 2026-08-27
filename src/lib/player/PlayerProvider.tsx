@@ -1,12 +1,13 @@
 'use client';
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { getSupabase, isSupabaseConfigured } from '@/lib/supabase/client';
 import { localState } from '@/lib/local-store';
+import { reavaliarConquistas } from '@/lib/conquistas';
 import { lerEstadoDoServidor } from './loadPlayerState';
 import { esperaRestanteMs, formatarEspera, validateUsername } from '@/lib/username';
-import type { AchievementDefinition } from '@/content/achievements';
+import { achievements, type AchievementDefinition } from '@/content/achievements';
 import type { SegredoId, TagDefinition } from '@/content/tags';
 import { evaluateTags, tagPendenteDoSegredo } from '@/lib/tags';
 import type { PlayerState, ProfileRow } from '@/types/db';
@@ -80,7 +81,23 @@ interface PlayerContextValue {
    * de `ranked_estado` - tabela que so o servidor escreve. Devolve as
    * conquistas novas, para a tela poder comemorar.
    */
-  sincronizarRanqueada: (patamarMax: number) => Promise<AchievementDefinition[]>;
+  sincronizarRanqueada: (
+    patamarMax: number,
+    empates?: number,
+  ) => Promise<AchievementDefinition[]>;
+  /**
+   * Pede ao servidor que reconfira TODAS as conquistas contra o historico
+   * real e devolve as que foram concedidas agora.
+   *
+   * Existe porque a avaliacao no aparelho so enxerga o que a tela carregou.
+   * Empate de temporada passada, criterio criado depois do feito, conquista
+   * perdida por um bug ja corrigido - nada disso o cliente tem como descobrir
+   * sozinho. `conquistas_reavaliar()` (migracao 0010) descobre.
+   *
+   * No modo demonstracao devolve lista vazia: la nao ha servidor, e quem faz
+   * esse papel e a avaliacao local.
+   */
+  revisarConquistas: () => Promise<AchievementDefinition[]>;
   /**
    * Concede as tags e conquistas de desafio diario e, quando o desafio acabou
    * de ser concluido, espelha o XP que o servidor pagou.
@@ -731,6 +748,24 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     [user, state],
   );
 
+  /*
+   * Empates chegam por duas portas diferentes.
+   *
+   * O empate do duelo entre amigos e gravado em `pvp_stats`; o da ranqueada,
+   * em `ranked_stats` - e de proposito que as duas tabelas nao se misturam
+   * (se vitoria contra bot entrasse no cartel 1v1, a tag "Imortal" viraria
+   * uma tarde de farm). Mas para a MEDALHA DE EMPATE os dois valem: empate
+   * nao tem como ser farmado, ele exige placar identico ate o bonus de
+   * velocidade.
+   *
+   * Cada tela sabe so do seu lado, entao guardamos os dois numeros aqui e
+   * avaliamos sempre pela soma. A verdade completa (inclusive temporadas
+   * passadas) quem tem e `revisarConquistas`.
+   */
+  const empatesConhecidos = useRef({ pvp: 0, ranqueada: 0 });
+  const totalDeEmpates = () =>
+    empatesConhecidos.current.pvp + empatesConhecidos.current.ranqueada;
+
   const sincronizarPvp = useCallback(
     async (
       vitorias: number,
@@ -738,6 +773,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       empates = 0,
     ): Promise<TagDefinition[]> => {
       if (!user || !state) return [];
+      empatesConhecidos.current.pvp = empates;
 
       const novasTags = evaluateTags(
         {
@@ -759,7 +795,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
           flawlessLesson: state.flawlessLessonIds.length > 0,
           unlockedTagIds,
           pvpVitorias: vitorias,
-          pvpEmpates: empates,
+          pvpEmpates: totalDeEmpates(),
         },
         state.unlockedAchievementIds,
       );
@@ -905,8 +941,9 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   );
 
   const sincronizarRanqueada = useCallback(
-    async (patamarMax: number): Promise<AchievementDefinition[]> => {
+    async (patamarMax: number, empates = 0): Promise<AchievementDefinition[]> => {
       if (!user || !state) return [];
+      empatesConhecidos.current.ranqueada = empates;
 
       const novasConquistas = evaluateAchievements(
         {
@@ -916,6 +953,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
           flawlessLesson: state.flawlessLessonIds.length > 0,
           unlockedTagIds: state.unlockedTagIds,
           rankedPatamarMax: patamarMax,
+          pvpEmpates: totalDeEmpates(),
         },
         state.unlockedAchievementIds,
       );
@@ -958,6 +996,26 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     [user, state],
   );
 
+  const revisarConquistas = useCallback(async (): Promise<AchievementDefinition[]> => {
+    if (!user || !state || !isSupabaseConfigured) return [];
+
+    const ids = await reavaliarConquistas();
+    const novas = ids.filter((id) => !state.unlockedAchievementIds.includes(id));
+    if (novas.length === 0) return [];
+
+    /*
+     * Nao gravamos nada aqui: `conquistas_reavaliar()` ja escreveu em
+     * `user_achievements` antes de responder. Este bloco so poe o estado da
+     * tela em dia com o que o banco decidiu.
+     */
+    setState({
+      ...state,
+      unlockedAchievementIds: [...state.unlockedAchievementIds, ...novas],
+    });
+
+    return achievements.filter((conquista) => novas.includes(conquista.id));
+  }, [user, state]);
+
   const value = useMemo<PlayerContextValue>(
     () => ({
       state,
@@ -970,6 +1028,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       registrarSegredo,
       sincronizarPvp,
       sincronizarRanqueada,
+      revisarConquistas,
       sincronizarDesafios,
       setCurrentLanguage,
       updateName,
@@ -987,6 +1046,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       registrarSegredo,
       sincronizarPvp,
       sincronizarRanqueada,
+      revisarConquistas,
       sincronizarDesafios,
       setCurrentLanguage,
       updateName,

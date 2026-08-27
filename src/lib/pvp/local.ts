@@ -111,6 +111,8 @@ interface DueloLocal {
   winnerId: string | null;
   /** Resultado do dono do aparelho. Preenchido por `finalizarLocal`. */
   desfecho: DesfechoPessoal | null;
+  /** Encerrada por abandono (trocou de aba vezes demais). */
+  abandonada?: boolean;
 }
 
 const ler = (): Record<string, DueloLocal> => {
@@ -430,6 +432,28 @@ export const encerrarAbandonadaLocal = (id: string) => {
   });
 
   salvar(duelo);
+};
+
+/**
+ * Abandono declarado: quem sai perde, mesmo estando na frente.
+ *
+ * No modo demonstracao nao ha servidor, entao a regra roda aqui - e ela e a
+ * mesma de `pvp_abandonar()` na migracao 0010: as perguntas que faltavam do
+ * adversario sao completadas, as minhas em branco valem zero, e o desfecho e
+ * derrota independentemente do placar.
+ */
+export const abandonarLocal = (id: string): DesfechoPessoal => {
+  const duelo = pegar(id);
+  if (duelo.status === 'encerrada') return duelo.desfecho ?? 'derrota';
+
+  encerrarAbandonadaLocal(id);
+
+  const fechado = pegar(id);
+  fechado.status = 'encerrada';
+  fechado.desfecho = 'derrota';
+  fechado.abandonada = true;
+  salvar(fechado);
+  return 'derrota';
 };
 
 /**

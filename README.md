@@ -19,6 +19,10 @@ A mesma base de código roda em **quatro formatos**:
 Tudo **100% gratuito**: nenhum serviço usado exige cartão de crédito, e nada é publicado na Google
 Play ou na Microsoft Store (que cobram taxa de desenvolvedor).
 
+> 📘 O histórico de versões e o resumo de tudo o que o projeto já tem estão em
+> **[HISTORICO.md](HISTORICO.md)** — e viram um PDF pronto para anexar em e-mail com
+> `npm run doc:pdf`.
+
 ---
 
 ## 📑 Índice
@@ -78,6 +82,7 @@ Para ligar a nuvem (contas reais, progresso sincronizado entre celular/PC/site),
 | `npm run test:tags` | Testa as tags, os segredos e as regras do @username |
 | `npm run test:pvp` | Joga uma partida 1v1 num Postgres real e testa as tentativas de trapaça |
 | `npm run test:realtime` | Canais do Realtime: dois assinantes do mesmo usuário não podem colidir |
+| `npm run doc:pdf` | Gera o `CodeQuest-Versoes.pdf` a partir do `HISTORICO.md` (precisa de Chrome ou Edge) |
 | `npm run test:estrutura` | Conferência anti-gambiarra: solução de referência passa e trapaça é recusada, nos 61 exercícios |
 | `npm run test:desafios` | Desafio diário: sorteio determinístico, XP pago uma vez só e RLS |
 | `npm run test:ranqueado` | Testa a escada de patamares, o elo, as temporadas e os bots num Postgres real |
@@ -626,9 +631,10 @@ Em [`src/lib/progression.ts`](src/lib/progression.ts):
 
 ### Conquistas
 
-16 medalhas em [`src/content/achievements.ts`](src/content/achievements.ts): primeira lição, cada
-módulo concluído, trilha completa, streaks de 3/7/30 dias, marcos de 500 e 1000 XP, e "Impecável"
-(concluir uma lição acertando tudo de primeira). Elas são avaliadas a cada conclusão de lição e o
+43 medalhas em [`src/content/achievements.ts`](src/content/achievements.ts): primeira lição, cada
+módulo concluído, trilha completa, streaks de 3/7/30 dias, marcos de XP, "Impecável" (concluir uma
+lição acertando tudo de primeira), desafios diários, vitórias e empate no duelo, e patamares do
+ranqueado. Elas são avaliadas a cada conclusão de lição e o
 desbloqueio aparece como um cartão animado na tela.
 
 ### Ranking

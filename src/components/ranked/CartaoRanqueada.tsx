@@ -61,6 +61,17 @@ export function CartaoRanqueada({
   const eloNoPatamar = estado.elo - eloInicialDoPatamar(indiceDoPatamar);
   const eloDoPatamarInteiro = SUBNIVEIS_POR_PATAMAR * ELO_POR_DIVISAO;
 
+  /*
+   * O cartao de duelo fecha a linha com "tema favorito". Aqui nao existe esse
+   * dado, e nao e esquecimento: a ranqueada NAO deixa escolher assunto (ver
+   * `ranked_iniciar`, que nem parametro de tema aceita) e o `matches.tema` de
+   * uma partida ranqueada guarda o nome do POOL do patamar, nao uma
+   * linguagem. Nao ha "tema favorito" para mostrar. O aproveitamento e o
+   * numero que ocupa esse lugar com algo verdadeiro.
+   */
+  const aproveitamento =
+    estado.partidas > 0 ? Math.round((estado.vitorias / estado.partidas) * 100) : 0;
+
   return (
     <Card className={cn('bg-gradient-to-br', estilo.cartao)}>
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -121,11 +132,17 @@ export function CartaoRanqueada({
             </p>
           </div>
 
+          {/*
+            * Vitorias / Derrotas / Empates, o mesmo trio do cartao de duelo
+            * logo abaixo. "Partidas" saiu daqui porque e a soma dos outros
+            * tres - ocupava um destaque para nao dizer nada novo. Ela desceu
+            * para a linha de texto, junto do aproveitamento.
+            */}
           <div className="mt-4 grid grid-cols-3 gap-2">
             {[
               { rotulo: 'Vitórias', valor: estado.vitorias, cor: 'text-mint-300' },
               { rotulo: 'Derrotas', valor: estado.derrotas, cor: 'text-rose-300' },
-              { rotulo: 'Partidas', valor: estado.partidas, cor: 'text-slate-300' },
+              { rotulo: 'Empates', valor: estado.empates, cor: 'text-slate-300' },
             ].map((item) => (
               <div
                 key={item.rotulo}
@@ -138,6 +155,11 @@ export function CartaoRanqueada({
               </div>
             ))}
           </div>
+
+          <p className="mt-4 text-sm text-slate-400">
+            {estado.partidas} {estado.partidas === 1 ? 'partida' : 'partidas'} ·{' '}
+            {aproveitamento}% de aproveitamento
+          </p>
 
           <p className="mt-4 flex flex-wrap items-center gap-2 text-sm text-slate-400">
             <Trophy className="h-4 w-4 shrink-0 text-amber-300" aria-hidden />

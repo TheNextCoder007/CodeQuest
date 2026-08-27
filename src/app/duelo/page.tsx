@@ -3,7 +3,7 @@
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { ArrowLeft, Check, Loader2, Shield, Swords, Timer, TrendingDown, TrendingUp, X } from 'lucide-react';
+import { ArrowLeft, Check, EyeOff, Loader2, Shield, Swords, Timer, TrendingDown, TrendingUp, X } from 'lucide-react';
 import { AppShell } from '@/components/AppShell';
 import { MarkdownLite } from '@/components/content/MarkdownLite';
 import { Button, LinkButton } from '@/components/ui/Button';
@@ -13,6 +13,7 @@ import { usePlayer } from '@/lib/player/PlayerProvider';
 import { useToast } from '@/components/ui/Toast';
 import { useAvisoDeRespostas } from '@/lib/presenca';
 import {
+  abandonarPartida,
   buscarEstado,
   buscarEstatisticas,
   buscarPergunta,
@@ -20,6 +21,12 @@ import {
   responderPergunta,
 } from '@/lib/pvp/api';
 import { TEMPO_LIMITE_MS } from '@/lib/pvp/regras';
+import {
+  ausenciaPunivel,
+  avisoDeAusencia,
+  avisoDeRelogio,
+  ehAbandono,
+} from '@/lib/pvp/ausencia';
 import { nomeDoTema } from '@/content/pvp-temas';
 import { PatamarBadge } from '@/components/ranked/PatamarBadge';
 import { buscarEstadoRanqueada, buscarResultadoRanqueado } from '@/lib/ranked/api';
@@ -33,7 +40,7 @@ type Fase = 'carregando' | 'perguntando' | 'respondida' | 'aguardando' | 'fim' |
 function DueloContent() {
   const parametros = useSearchParams();
   const { user } = useAuth();
-  const { sincronizarPvp, sincronizarRanqueada } = usePlayer();
+  const { sincronizarPvp, sincronizarRanqueada, revisarConquistas } = usePlayer();
   const { showToast } = useToast();
   const matchId = parametros.get('m') ?? '';
 
@@ -52,6 +59,15 @@ function DueloContent() {
   const inicioDaPergunta = useRef<number>(0);
   // Evita responder duas vezes quando o tempo estoura junto com o clique.
   const jaRespondeu = useRef(false);
+
+  /* --- troca de aba ------------------------------------------------------
+   * Ver `@/lib/pvp/ausencia` para as regras e para o porque dos numeros.
+   * Aqui ficam so o instante da saida, o contador da partida e o aviso que
+   * aparece na volta.
+   * -------------------------------------------------------------------- */
+  const saiuEm = useRef<number | null>(null);
+  const ausencias = useRef(0);
+  const [aviso, setAviso] = useState<{ texto: string; grave: boolean } | null>(null);
 
   const souHost = estado ? estado.hostId === user?.id : true;
   const minhasRespondidas = estado
@@ -91,6 +107,9 @@ function DueloContent() {
         setEscolha('');
         jaRespondeu.current = false;
         inicioDaPergunta.current = Date.now();
+        // A ausencia foi cobrada na pergunta anterior; o aviso nao acompanha.
+        saiuEm.current = null;
+        setAviso(null);
         setRestanteMs(TEMPO_LIMITE_MS);
         setFase('perguntando');
       } catch (falha) {
@@ -182,6 +201,69 @@ function DueloContent() {
     return () => window.clearInterval(timer);
   }, [fase, responder]);
 
+  /* --- troca de aba ------------------------------------------------------
+   *
+   * Nao da para impedir a saida - nenhum site consegue. O que este efeito faz
+   * e cobrar o preco quando a pessoa volta:
+   *
+   *   - o relogio ja correu (ele e calculado por `Date.now()`, e nao por
+   *     contagem de ticks, entao o congelamento da aba escondida nao ajuda);
+   *   - sumir por mais de 5 s custa a pergunta, que vai em branco;
+   *   - na terceira vez a partida encerra como derrota, com o elo de sempre.
+   *
+   * Tudo acontece NA VOLTA, de proposito: enquanto a aba esta escondida o
+   * navegador congela o JavaScript de qualquer jeito, e a partida nao pode
+   * ficar parada esperando - o adversario continua jogando.
+   * -------------------------------------------------------------------- */
+  useEffect(() => {
+    if (fase !== 'perguntando' && fase !== 'respondida') return;
+
+    const aoTrocar = () => {
+      if (document.visibilityState === 'hidden') {
+        saiuEm.current = Date.now();
+        return;
+      }
+
+      const saida = saiuEm.current;
+      saiuEm.current = null;
+      if (saida === null) return;
+
+      const foraMs = Date.now() - saida;
+
+      // Voltou rapido: nada e cobrado alem do tempo que ja correu sozinho.
+      if (!ausenciaPunivel(foraMs)) {
+        if (fase === 'perguntando') setAviso({ texto: avisoDeRelogio(foraMs), grave: false });
+        return;
+      }
+
+      ausencias.current += 1;
+      setAviso({ texto: avisoDeAusencia(foraMs, ausencias.current), grave: true });
+
+      if (ehAbandono(ausencias.current)) {
+        jaRespondeu.current = true;
+        void abandonarPartida(matchId)
+          .catch(() => {
+            /* o servidor pode ja ter encerrado; a tela de fim resolve */
+          })
+          .then(() => recarregarEstado())
+          .then(() => setFase('fim'));
+        return;
+      }
+
+      // A pergunta atual foi perdida: resposta em branco, que o servidor
+      // pontua como zero. Se ela ja tinha sido respondida, nao ha o que fazer.
+      if (fase === 'perguntando' && !jaRespondeu.current) void responder('');
+    };
+
+    document.addEventListener('visibilitychange', aoTrocar);
+    return () => {
+      document.removeEventListener('visibilitychange', aoTrocar);
+      // Sair da pergunta com a aba escondida nao pode deixar a saida pendente
+      // para ser cobrada na pergunta seguinte.
+      saiuEm.current = null;
+    };
+  }, [fase, matchId, responder, recarregarEstado]);
+
   /* --- aguardando o adversario ------------------------------------------ */
   useEffect(() => {
     if (fase !== 'aguardando') return;
@@ -228,8 +310,25 @@ function DueloContent() {
         const atual = await buscarEstadoRanqueada(user.id).catch(() => null);
         if (!ativo || !atual) return;
 
-        const novas = await sincronizarRanqueada(patamarMaximoAlcancado(atual));
-        novas.forEach((conquista, indice) => {
+        // Os empates da ranqueada valem a medalha de empate tanto quanto os do
+        // duelo entre amigos - o que nao se mistura sao as VITORIAS.
+        const novas = await sincronizarRanqueada(patamarMaximoAlcancado(atual), atual.empates);
+
+        /*
+         * E o servidor confere o resto.
+         *
+         * `atual.empates` e so da temporada corrente: quem empatou numa
+         * temporada passada nao apareceria aqui. `conquistas_reavaliar()`
+         * (migracao 0010) olha o historico inteiro e concede o que faltou.
+         */
+        const revisadas = await revisarConquistas();
+        const pendentes = [
+          ...novas,
+          ...revisadas.filter((c) => !novas.some((n) => n.id === c.id)),
+        ];
+
+        if (!ativo) return;
+        pendentes.forEach((conquista, indice) => {
           window.setTimeout(() => {
             showToast({
               icon: conquista.icon,
@@ -270,7 +369,16 @@ function DueloContent() {
     };
     // `estado` entra so pelo `modo`; o resto do objeto muda a cada sondagem.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fase, user?.id, ehRanqueada, matchId, sincronizarPvp, sincronizarRanqueada, showToast]);
+  }, [
+    fase,
+    user?.id,
+    ehRanqueada,
+    matchId,
+    sincronizarPvp,
+    sincronizarRanqueada,
+    revisarConquistas,
+    showToast,
+  ]);
 
   const avancar = async () => {
     if (!pergunta || !estado) return;
@@ -340,13 +448,28 @@ function DueloContent() {
             {venci ? '🏆' : empatou ? '🤝' : '💪'}
           </span>
           <CardTitle className="mt-4 text-2xl">
-            {venci ? 'Você venceu!' : empatou ? 'Empate!' : 'Você perdeu essa'}
+            {venci
+              ? 'Você venceu!'
+              : ehAbandono(ausencias.current)
+                ? 'Partida encerrada por abandono'
+                : empatou
+                  ? 'Empate!'
+                  : 'Você perdeu essa'}
           </CardTitle>
           <p className="mt-2 text-sm text-slate-400">
             {ehRanqueada
               ? `Ranqueada · ${estado.total} perguntas`
               : `Tema: ${nomeDoTema(estado.tema)} · ${estado.total} perguntas`}
           </p>
+
+          {/* O placar abaixo pode ate estar a favor: quem sai perde de todo
+              jeito, e a tela precisa dizer por que. */}
+          {ehAbandono(ausencias.current) && (
+            <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-rose-200">
+              Você saiu da aba {ausencias.current} vezes durante a partida. O duelo foi encerrado
+              como derrota, com a perda de elo normal.
+            </p>
+          )}
 
           <div className="mt-6 flex items-center justify-center gap-4">
             <div className="min-w-0">
@@ -474,6 +597,28 @@ function DueloContent() {
 
   return (
     <div className="cq-page">
+      {/*
+        * Aviso de troca de aba.
+        *
+        * Sem ele, a pergunta ir a zero sozinha parece defeito do aplicativo -
+        * a pessoa nao liga uma coisa a outra. `role="alert"` porque isso
+        * mudou o resultado sem a pessoa ter feito nada na tela.
+        */}
+      {aviso && (
+        <div
+          role="alert"
+          className={cn(
+            'flex items-start gap-3 rounded-2xl border p-4 text-sm',
+            aviso.grave
+              ? 'border-rose-500/40 bg-rose-500/10 text-rose-100'
+              : 'border-amber-400/30 bg-amber-400/10 text-amber-100',
+          )}
+        >
+          <EyeOff className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+          <p className="min-w-0 leading-relaxed">{aviso.texto}</p>
+        </div>
+      )}
+
       {/* Cabecalho do duelo ------------------------------------------- */}
       <section className="cq-card bg-gradient-to-br from-electric-500/15 via-night-900/60 to-mint-600/10 p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
