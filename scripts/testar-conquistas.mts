@@ -76,6 +76,7 @@ for (const arquivo of [
   'supabase/migrations/0009_ranqueado_elite.sql',
   'supabase/migrations/0010_empates_leaderboard_abandono.sql',
   'supabase/migrations/0011_cronometro_e_abandono.sql',
+  'supabase/migrations/0012_relogio_do_servidor.sql',
   'supabase/seed.sql',
 ]) {
   await db.exec(ler(arquivo));
@@ -391,6 +392,24 @@ ok(
   JSON.stringify(entrega1.alternativas) === JSON.stringify(entrega2.alternativas),
   'a ordem das alternativas tambem se mantem entre reentregas',
 );
+
+secao('o servidor devolve o proprio relogio (0012)');
+
+const comRelogio = await um<{ comecou_em: Date; agora: Date }>(
+  'select comecou_em, agora from public.pvp_pergunta($1, 1)',
+  [partidaRelogio],
+);
+ok(Boolean(comRelogio.agora), 'a pergunta devolve o "agora" do servidor');
+
+/*
+ * O que importa e a DIFERENCA entre os dois, que e o tempo ja decorrido - e
+ * ela precisa sair inteira do relogio do servidor. Foi por comparar o carimbo
+ * do servidor com o relogio do navegador que a v1.10 zerou a pergunta em
+ * computador com a hora adiantada.
+ */
+const decorrido = new Date(comRelogio.agora).getTime() - new Date(comRelogio.comecou_em).getTime();
+ok(decorrido >= 0, `o decorrido nunca e negativo (${decorrido} ms)`);
+ok(decorrido < 20_000, 'e cabe dentro do tempo da pergunta numa entrega recente');
 
 secao('o estado diz quem abandonou (0011)');
 

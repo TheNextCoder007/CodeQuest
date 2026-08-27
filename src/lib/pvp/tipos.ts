@@ -30,6 +30,18 @@ export interface PerguntaPvp {
    * Nulo quando a migracao 0011 ainda nao foi aplicada.
    */
   comecouEm?: string | null;
+  /**
+   * O relogio do SERVIDOR no instante em que ele respondeu.
+   *
+   * So faz sentido junto com `comecouEm`: e a dupla que permite medir o tempo
+   * ja decorrido sem envolver o relogio do aparelho. Comparar o carimbo do
+   * servidor com o `Date.now()` do navegador parece funcionar - e funciona,
+   * ate encontrar um computador com a hora adiantada, onde a pergunta nascia
+   * com o tempo esgotado e a partida inteira passava com 0 ponto.
+   *
+   * Nulo quando a migracao 0012 ainda nao foi aplicada.
+   */
+  agora?: string | null;
 }
 
 /** O que volta depois de responder - agora sim com o gabarito. */

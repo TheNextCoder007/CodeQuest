@@ -120,20 +120,45 @@ function DueloContent() {
         jaRespondeu.current = false;
 
         /*
-         * O cronometro comeca onde o SERVIDOR disse que comecou.
+         * Quanto tempo desta pergunta ja passou - medido SO com o relogio do
+         * servidor.
          *
          * `pvp_pergunta` carimba a primeira entrega e nao mexe nesse carimbo
-         * nas seguintes - entao sair da tela e voltar reentrega a pergunta com
-         * o tempo que sobrou, e nao com 20 s de novo. Antes a tela usava o
-         * `Date.now()` do aparelho e mostrava o relogio cheio, enquanto o
-         * servidor continuava contando desde o inicio: a pessoa respondia com
-         * calma e levava 0 sem entender.
+         * nas seguintes, entao sair da tela e voltar retoma o tempo que sobrou
+         * em vez de dar 20 s de novo.
          *
-         * Sem o carimbo (migracao 0011 ainda nao aplicada) cai no relogio
-         * local, que e o comportamento antigo.
+         * O erro da v1.10 foi subtrair o carimbo do servidor do `Date.now()`
+         * do navegador: dois relogios diferentes na mesma conta. Num
+         * computador com a hora adiantada em mais de 20 s, a pergunta nascia
+         * com o tempo esgotado, a tela mandava resposta em branco sozinha e a
+         * partida inteira passava com 0 ponto. No celular nao aparecia, porque
+         * celular acerta a hora pela rede.
+         *
+         * Agora os dois valores vem do servidor (`comecou_em` e `agora`), e a
+         * diferenca entre eles e exata. De quebra, se a leitura da data
+         * estivesse errada por fuso ou formato, o erro afetaria os dois
+         * igualmente e se cancelaria aqui.
          */
         const carimbo = proxima.comecouEm ? Date.parse(proxima.comecouEm) : Number.NaN;
-        inicioDaPergunta.current = Number.isFinite(carimbo) ? carimbo : Date.now();
+        const agoraNoServidor = proxima.agora ? Date.parse(proxima.agora) : Number.NaN;
+
+        let decorrido = 0;
+        if (Number.isFinite(carimbo) && Number.isFinite(agoraNoServidor)) {
+          decorrido = agoraNoServidor - carimbo;
+        } else if (Number.isFinite(carimbo)) {
+          /*
+           * Migracao 0012 ainda nao aplicada: so da para comparar com o
+           * relogio local. Um valor fora da faixa possivel (negativo, ou maior
+           * que a propria pergunta) so pode ser relogio dessincronizado - e ai
+           * vale mais dar o tempo cheio do que zerar a pergunta na cara da
+           * pessoa. O servidor continua contando certo de qualquer forma.
+           */
+          const bruto = Date.now() - carimbo;
+          decorrido = bruto >= 0 && bruto <= TEMPO_LIMITE_MS ? bruto : 0;
+        }
+
+        decorrido = Math.max(0, Math.min(decorrido, TEMPO_LIMITE_MS));
+        inicioDaPergunta.current = Date.now() - decorrido;
 
         // A ausencia foi cobrada na pergunta anterior; o aviso nao acompanha.
         saiuEm.current = null;

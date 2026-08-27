@@ -81,6 +81,7 @@ const migration0008 = ler('supabase/migrations/0008_desafios_diarios.sql');
 const migration0009 = ler('supabase/migrations/0009_ranqueado_elite.sql');
 const migration0010 = ler('supabase/migrations/0010_empates_leaderboard_abandono.sql');
 const migration0011 = ler('supabase/migrations/0011_cronometro_e_abandono.sql');
+const migration0012 = ler('supabase/migrations/0012_relogio_do_servidor.sql');
 const seed = ler('supabase/seed.sql');
 
 await db.exec(migration0001);
@@ -94,8 +95,9 @@ await db.exec(migration0008);
 await db.exec(migration0009);
 await db.exec(migration0010);
 await db.exec(migration0011);
+await db.exec(migration0012);
 await db.exec(seed);
-console.log('ok     primeira aplicacao (0001..0011 + seed)');
+console.log('ok     primeira aplicacao (0001..0012 + seed)');
 
 /* -------------------------------------------------------------------------
  * Um aluno com progresso, igual ao caso relatado
@@ -169,6 +171,7 @@ for (const rodada of [2, 3]) {
   await db.exec(migration0009);
   await db.exec(migration0010);
   await db.exec(migration0011);
+  await db.exec(migration0012);
   await db.exec(seed);
   console.log(`ok     aplicacao ${rodada} concluida sem erro`);
 }

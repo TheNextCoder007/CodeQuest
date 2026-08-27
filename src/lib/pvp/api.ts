@@ -117,6 +117,8 @@ interface LinhaPergunta {
   total: number;
   /** Opcional: so existe depois da migracao 0011. */
   comecou_em?: string | null;
+  /** Opcional: so existe depois da migracao 0012. */
+  agora?: string | null;
 }
 
 export const buscarPergunta = async (matchId: string, n: number): Promise<PerguntaPvp> => {
@@ -132,6 +134,7 @@ export const buscarPergunta = async (matchId: string, n: number): Promise<Pergun
     alternativas: linha.alternativas,
     total: linha.total,
     comecouEm: linha.comecou_em ?? null,
+    agora: linha.agora ?? null,
   };
 };
 

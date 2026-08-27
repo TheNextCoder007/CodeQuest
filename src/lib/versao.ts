@@ -9,4 +9,4 @@
  * Ao lancar uma versao nova: troque aqui, escreva a entrada no HISTORICO.md e
  * rode `npm run doc:pdf`.
  */
-export const VERSAO = 'v1.10';
+export const VERSAO = 'v1.10.1';

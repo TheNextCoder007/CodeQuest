@@ -241,6 +241,9 @@ export async function perguntaLocal(id: string, n: number): Promise<PerguntaPvp>
     // Mesma regra do servidor: o carimbo e o da PRIMEIRA entrega. Voltar para
     // a pergunta nao devolve tempo.
     comecouEm: new Date(minha.startedAt ?? Date.now()).toISOString(),
+    // No modo demonstracao os dois carimbos saem do mesmo relogio (o do
+    // aparelho), entao a conta do tempo decorrido e a mesma do servidor.
+    agora: new Date().toISOString(),
   };
 }
 

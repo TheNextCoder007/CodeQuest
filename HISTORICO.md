@@ -5,9 +5,9 @@ cada atualização acrescentou.
 
 | | |
 | --- | --- |
-| **Versão atual** | `v1.10` |
+| **Versão atual** | `v1.10.1` |
 | **Última atualização** | 26/08/2026 |
-| **Migração mais recente** | `0011_cronometro_e_abandono.sql` |
+| **Migração mais recente** | `0012_relogio_do_servidor.sql` |
 | **PDF** | [`CodeQuest-Versoes.pdf`](CodeQuest-Versoes.pdf) — gerado por `npm run doc:pdf` |
 
 > As versões foram numeradas a partir do histórico do Git. Cada commit de funcionalidade virou uma
@@ -57,7 +57,7 @@ Três decisões atravessam o projeto inteiro:
 | Tags de perfil | **22** |
 | Perguntas do duelo | **88** — JS 40, Python 12, Java 10, geral 10, C# 8, C++ 8 |
 | Telas | **14** rotas |
-| Migrações SQL | **11** |
+| Migrações SQL | **12** |
 | Suítes de teste | **12** |
 | Divisões do ranqueado | **22**, em 8 patamares |
 
@@ -178,6 +178,33 @@ Mais `content:check` (integridade do currículo), `content:verify-python` e `con
 ## 4. Histórico de versões
 
 *Da mais recente para a mais antiga.*
+
+---
+
+### v1.10.1 — 26/08/2026 · o cronômetro para de depender do relógio do aparelho
+
+Conserto de uma regressão da v1.10, encontrada em uso: no computador, a partida abria já com o
+tempo esgotado — a tela pulava sozinha para "Errou", marcava `0s` e a partida inteira passava com 0
+ponto. No celular não acontecia.
+
+**Corrigido**
+- **A conta misturava dois relógios.** A v1.10 calculava
+  `20s − (Date.now() do navegador − começou_em do servidor)`. Enquanto os dois relógios concordam,
+  o resultado está certo; num PC com a hora adiantada em mais de 20 s — coisa comum, e que o
+  celular não tem porque acerta a hora pela rede — a pergunta já nascia vencida.
+- `pvp_pergunta` passou a devolver também o **`agora` do servidor**. Com os dois valores saindo do
+  mesmo relógio, o tempo decorrido é exato e a hora do aparelho deixa de entrar na conta. De quebra,
+  um erro de fuso ou de formato na leitura da data também some: afetaria os dois carimbos
+  igualmente e se cancela na subtração.
+- Sem a migração aplicada, a tela agora **descarta** um tempo decorrido impossível (negativo ou
+  maior que a própria pergunta) e dá o tempo cheio, em vez de zerar a pergunta na cara de quem está
+  jogando.
+
+**Testado** com o relógio do navegador deslocado de propósito — adiantado 1 minuto, adiantado 6
+horas, atrasado 1,5 minuto e certo (controle): nos quatro, a pergunta abre com tempo e aceita
+resposta.
+
+**SQL:** `0012_relogio_do_servidor.sql`.
 
 ---
 
@@ -499,6 +526,7 @@ quantas vezes for preciso (ele é idempotente).
 | `0009_ranqueado_elite.sql` | v1.8 | Patamar Elite e Mestre com 3 sub-níveis |
 | `0010_empates_leaderboard_abandono.sql` | v1.9 | Empates nos dois modos, reavaliação de conquistas, leaderboard histórico, abandono, saudação |
 | `0011_cronometro_e_abandono.sql` | v1.10 | Cronômetro carimbado pelo servidor e abandono no estado da partida |
+| `0012_relogio_do_servidor.sql` | v1.10.1 | A pergunta devolve também o "agora" do servidor |
 
 ---
 
