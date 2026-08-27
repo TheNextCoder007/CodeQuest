@@ -12,7 +12,9 @@ import { cn } from '@/lib/cn';
 import { AvisoDeConvite } from './pvp/AvisoDeConvite';
 import { EntrarNaPartida } from './pvp/EntrarNaPartida';
 import { UsernameGate } from './UsernameGate';
+import { TravaDePartidaProvider, useEstadoDaTrava } from '@/lib/trava-de-partida';
 import { Logo } from './Logo';
+import { SeloDeVersao } from './SeloDeVersao';
 
 /**
  * Contador da tag secreta "Curioso": 10 cliques no logo, com menos de 1,5 s
@@ -100,6 +102,21 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
 
+  /*
+   * Partida em andamento: a navegacao fica travada.
+   *
+   * Quem liga e desliga isso e a tela do duelo (`useTravarNavegacao`). Aqui so
+   * guardamos o estado e apagamos os caminhos de saida - links viram texto
+   * inerte, com `aria-disabled` para quem usa leitor de tela.
+   *
+   * FICA AQUI EM CIMA, junto dos outros hooks: mais abaixo existem `return`
+   * antecipados (carregando, sem usuario, offline), e um `useState` depois
+   * deles roda em umas renderizacoes e nao em outras - que e exatamente o
+   * "Rendered more hooks than during the previous render" que derrubou a
+   * pagina inteira quando este bloco estava la embaixo.
+   */
+  const { travada, travar } = useEstadoDaTrava();
+
   useEffect(() => {
     if (!loading && !user) router.replace('/login');
   }, [loading, user, router]);
@@ -151,12 +168,25 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     // inteira e pede para escolher um - inclusive para contas antigas.
     <UsernameGate>
       <div className="min-h-dvh pb-24 lg:pb-0">
-      <header className="sticky top-0 z-40 border-b border-white/5 bg-night-950/85 backdrop-blur cq-safe-top">
+      {/* Sem `backdrop-blur` no celular: um cabecalho fixo que borra o fundo
+          e reprocessado a cada quadro de rolagem. Opaco custa zero e, num
+          cabecalho, quase nao se nota. */}
+      <header className="sticky top-0 z-40 border-b border-white/5 bg-night-950 cq-safe-top lg:bg-night-950/85 lg:backdrop-blur">
         <div className="mx-auto flex h-16 max-w-6xl items-center gap-2 px-3 sm:gap-4 sm:px-4">
           <Link
-            href="/dashboard"
-            onClick={contarCliqueNoLogo}
-            className="flex min-h-[44px] min-w-[44px] items-center"
+            href={travada ? '#' : '/dashboard'}
+            onClick={(evento) => {
+              if (travada) {
+                evento.preventDefault();
+                return;
+              }
+              contarCliqueNoLogo();
+            }}
+            aria-disabled={travada}
+            className={cn(
+              'flex min-h-[44px] min-w-[44px] items-center',
+              travada && 'pointer-events-none opacity-60',
+            )}
           >
             <Logo />
           </Link>
@@ -165,12 +195,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             {navItems.map((item) => (
               <Link
                 key={item.href}
-                href={destino(item.href)}
+                href={travada ? '#' : destino(item.href)}
+                onClick={(evento) => travada && evento.preventDefault()}
+                aria-disabled={travada}
+                tabIndex={travada ? -1 : undefined}
                 className={cn(
                   'cq-focus rounded-lg px-3 py-2 text-sm font-medium transition',
-                  isActive(item.href)
-                    ? 'bg-white/10 text-white ring-1 ring-inset ring-white/10'
-                    : 'text-slate-400 hover:bg-white/5 hover:text-white',
+                  travada
+                    ? 'pointer-events-none text-slate-600'
+                    : isActive(item.href)
+                      ? 'bg-white/10 text-white ring-1 ring-inset ring-white/10'
+                      : 'text-slate-400 hover:bg-white/5 hover:text-white',
                 )}
               >
                 {item.label}
@@ -235,11 +270,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         key={pathname}
         className="mx-auto w-full max-w-6xl animate-page-in px-4 py-6 sm:py-8"
       >
-        {children}
+        <TravaDePartidaProvider travada={travada} travar={travar}>
+          {children}
+        </TravaDePartidaProvider>
       </main>
 
+      <SeloDeVersao />
+
       {/* Barra inferior: e a navegacao principal no celular / .apk */}
-      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-night-950/95 backdrop-blur lg:hidden cq-safe-bottom">
+      {/* Mesma razao do cabecalho - e esta barra fica na tela o tempo todo. */}
+      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-night-950 lg:hidden cq-safe-bottom">
         <div className="mx-auto flex w-full max-w-lg">
           {navItems.map((item) => {
             const Icon = item.icon;
@@ -247,8 +287,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             return (
               <Link
                 key={item.href}
-                href={destino(item.href)}
+                href={travada ? '#' : destino(item.href)}
+                onClick={(evento) => travada && evento.preventDefault()}
+                aria-disabled={travada}
+                tabIndex={travada ? -1 : undefined}
                 className={cn(
+                  travada && 'pointer-events-none text-slate-700',
                   // `min-w-0` + `basis-0`: sem isso cada item fica do tamanho do
                   // proprio rotulo e, com a fonte ampliada do Android, os cinco
                   // somados passam da largura da tela - o ultimo ("Perfil")
@@ -256,7 +300,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   // `relative` para o marcador do item ativo, que e absoluto e
                   // por isso nao entra na conta da largura.
                   'relative flex min-w-0 flex-1 basis-0 flex-col items-center gap-1 px-1 py-3 text-[11px] font-medium transition active:scale-95',
-                  active ? 'text-mint-300' : 'text-slate-500 hover:text-slate-300',
+                  travada
+                    ? 'text-slate-700'
+                    : active
+                      ? 'text-mint-300'
+                      : 'text-slate-500 hover:text-slate-300',
                 )}
               >
                 {active && (

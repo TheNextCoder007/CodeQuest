@@ -72,6 +72,7 @@ for (const arquivo of [
   'supabase/migrations/0008_desafios_diarios.sql',
   'supabase/migrations/0009_ranqueado_elite.sql',
   'supabase/migrations/0010_empates_leaderboard_abandono.sql',
+  'supabase/migrations/0011_cronometro_e_abandono.sql',
   'supabase/seed.sql',
 ]) {
   await db.exec(ler(arquivo));

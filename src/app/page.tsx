@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { ArrowRight, Check, Sparkles } from 'lucide-react';
+import { VERSAO } from '@/lib/versao';
 import { Logo } from '@/components/Logo';
 import { LinkButton } from '@/components/ui/Button';
 import { Card, Pill } from '@/components/ui/Card';
@@ -312,7 +313,12 @@ export default function LandingPage() {
       <footer className="border-t border-white/5 py-8">
         <div className="mx-auto flex max-w-6xl flex-col items-center gap-3 px-4 text-center text-sm text-slate-500 sm:flex-row sm:justify-between sm:text-left">
           <Logo compact className="opacity-70" />
-          <p>CodeQuest — Projeto Integrador</p>
+          {/* A pagina de entrada nao usa o AppShell, entao o selo do canto nao
+              chega aqui - a versao vem junto do nome. */}
+          <p>
+            CodeQuest — Projeto Integrador{' '}
+            <span className="font-mono text-xs text-slate-600">{VERSAO}</span>
+          </p>
           <Link href="/login" className="cq-tap px-2 hover:text-mint-300">
             Entrar
           </Link>

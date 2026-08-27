@@ -11,6 +11,8 @@ import { achievements } from '../src/content/achievements';
 import { pvpQuestions } from '../src/content/pvp-questions';
 import { normalizarResposta } from '../src/lib/pvp/regras';
 import { normalizarRespostaDaTrilha } from '../src/lib/exercises/normalizar';
+import { VERSAO } from '../src/lib/versao';
+import { readFileSync } from 'node:fs';
 import { TEMAS_PVP } from '../src/content/pvp-temas';
 
 const problemas: string[] = [];
@@ -245,12 +247,37 @@ const totalExercicios = languages.reduce(
   0,
 );
 
+/* =========================================================================
+ * A versao do site e a do documento tem de ser a mesma
+ *
+ * O selo no canto da tela sai de `src/lib/versao.ts`; o historico e o PDF
+ * saem de `HISTORICO.md`. Se alguem trocar um e esquecer do outro, o site
+ * anuncia uma versao e o documento conta a historia de outra - e ninguem
+ * percebe, porque os dois continuam funcionando. Esta conferencia existe para
+ * transformar esse esquecimento num teste vermelho.
+ * ====================================================================== */
+try {
+  const historico = readFileSync('HISTORICO.md', 'utf8');
+  const achado = /\|\s*\*\*Versão atual\*\*\s*\|\s*`([^`]+)`\s*\|/.exec(historico);
+  if (!achado) {
+    problemas.push('nao achei a linha "Versão atual" no HISTORICO.md');
+  } else if (achado[1] !== VERSAO) {
+    problemas.push(
+      `a versao do site (${VERSAO}, em src/lib/versao.ts) nao bate com a do ` +
+        `HISTORICO.md (${achado[1]})`,
+    );
+  }
+} catch {
+  problemas.push('nao consegui ler o HISTORICO.md para conferir a versao');
+}
+
 if (problemas.length > 0) {
   console.error(`\n${problemas.length} problema(s) encontrado(s) no curriculo:\n`);
   problemas.forEach((problema) => console.error(`  - ${problema}`));
   process.exit(1);
 }
 
+console.log(`Versao ${VERSAO} (site e HISTORICO.md batem).`);
 console.log(
   `Curriculo validado: ${languages.length} linguagens, ${totalLicoes} licoes, ${totalExercicios} exercicios, ${achievements.length} conquistas.`,
 );

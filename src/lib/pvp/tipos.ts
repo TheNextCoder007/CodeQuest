@@ -18,6 +18,18 @@ export interface PerguntaPvp {
   enunciado: string;
   alternativas: string[] | null;
   total: number;
+  /**
+   * Quando o cronometro DESTA pergunta comecou, segundo o servidor.
+   *
+   * E o carimbo da primeira entrega: sair da tela e voltar reentrega a
+   * pergunta, mas nao mexe neste valor. E daqui que a tela calcula o tempo
+   * restante - se ela usasse o relogio do proprio aparelho, mostraria 20 s de
+   * novo enquanto o servidor continuaria contando desde o inicio, e a pessoa
+   * levaria 0 sem entender por que.
+   *
+   * Nulo quando a migracao 0011 ainda nao foi aplicada.
+   */
+  comecouEm?: string | null;
 }
 
 /** O que volta depois de responder - agora sim com o gabarito. */
@@ -30,6 +42,17 @@ export interface ResultadoResposta {
 }
 
 export interface EstadoPartida {
+  /**
+   * Quem largou a partida no meio, quando foi o caso.
+   *
+   * Vem do banco (`matches.abandonada_por`). E a UNICA fonte confiavel para a
+   * tela dizer "encerrada por abandono": um contador guardado no navegador
+   * sobrevive entre partidas e mente - foi exatamente o que aconteceu, com a
+   * mensagem de abandono aparecendo numa partida ganha.
+   *
+   * Nulo tambem quando a migracao 0011 ainda nao foi aplicada.
+   */
+  abandonadaPor?: string | null;
   status: StatusPartida;
   total: number;
   tema: string;

@@ -24,12 +24,53 @@
   }
 
   body {
+    min-height: 100dvh;
+    /* Toque continua respondendo na hora, sem o retangulo cinza do Android. */
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /*
+   * O brilho de fundo mora numa CAMADA PROPRIA, fixa.
+   *
+   * Antes eram tres `radial-gradient` no `background-image` do body com
+   * `background-attachment: fixed`. O resultado e identico na tela e caríssimo
+   * no celular: `fixed` obriga o navegador a REPINTAR os tres gradientes a
+   * cada quadro de rolagem, no processador, porque um fundo preso nao pode ser
+   * composto pela GPU junto com o resto. Numa tela de 120 Hz isso e o
+   * suficiente para a rolagem nunca alcancar a taxa do aparelho.
+   *
+   * Como camada `position: fixed` separada, os gradientes sao pintados UMA vez
+   * e viram uma textura que a GPU so reposiciona. `will-change: transform`
+   * garante a promocao a camada propria; `pointer-events: none` para nao
+   * roubar toque de nada.
+   */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
     background-image:
       radial-gradient(circle at 12% 8%, rgba(0, 227, 148, 0.13), transparent 42%),
       radial-gradient(circle at 88% 4%, rgba(56, 214, 245, 0.12), transparent 40%),
       radial-gradient(circle at 70% 96%, rgba(37, 99, 235, 0.16), transparent 45%);
-    background-attachment: fixed;
-    min-height: 100dvh;
+    will-change: transform;
+  }
+
+  /*
+   * Alvos de toque nao esperam o duplo-toque.
+   *
+   * Sem isto o navegador segura o clique por ~300 ms em alguns aparelhos, para
+   * ver se vem um segundo toque - e a interface parece lenta mesmo desenhando
+   * a 120 Hz.
+   */
+  button,
+  a,
+  [role='button'],
+  input,
+  select,
+  textarea {
+    touch-action: manipulation;
   }
 
   h1,
@@ -82,12 +123,43 @@
   }
 }
 
+/*
+ * Barra do cronometro do duelo.
+ *
+ * Anima `transform`, e nao `width`: `width` obriga o navegador a refazer o
+ * layout a cada quadro; `transform` a GPU resolve sozinha. E, por ser uma
+ * animacao CSS, ela roda na taxa do aparelho (120 Hz num celular que tenha)
+ * sem uma unica linha de JavaScript por quadro.
+ *
+ * `--cq-inicio` e a fracao de tempo que ainda restava quando a barra apareceu
+ * - ela nao comeca sempre em 1, porque voltar para uma pergunta ja comecada
+ * retoma o tempo que sobrou.
+ */
+@keyframes cq-cronometro {
+  from {
+    transform: scaleX(var(--cq-inicio, 1));
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
 @layer components {
   .cq-card {
     /* `min-w-0` e essencial: sem ele, um card que contenha bloco de codigo
        (`white-space: pre`) forca a coluna do grid a ficar do tamanho da linha
        mais longa - e a pagina inteira passa a rolar na horizontal no celular. */
-    @apply min-w-0 rounded-2xl border border-white/10 bg-night-900/70 backdrop-blur-sm shadow-card;
+    /*
+     * O desfoque de fundo so no desktop (`lg:`).
+     *
+     * `backdrop-blur` obriga o navegador a ler o que esta ATRAS do elemento e
+     * borrar, a cada quadro em que algo se mexe. Numa tela de trilha com uma
+     * duzia de cards, isso e uma duzia de leituras por quadro - o custo mais
+     * caro da interface no celular. O fundo dos cards e opaco o bastante
+     * (`bg-night-900/70`) para a diferenca visual ser quase nula; a fluidez da
+     * rolagem, nao.
+     */
+    @apply min-w-0 rounded-2xl border border-white/10 bg-night-900/80 shadow-card lg:bg-night-900/70 lg:backdrop-blur-sm;
   }
 
   /* Card clicavel. Antes cada tela inventava o proprio hover (12 variantes

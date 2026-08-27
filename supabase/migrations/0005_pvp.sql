@@ -355,6 +355,10 @@ $$;
 -- Os nomes de saida (`num`, `tipo`, ...) evitam de proposito colidir com as
 -- colunas das tabelas usadas dentro da funcao: em plpgsql, um parametro de
 -- saida chamado `ordem` deixa `on conflict (..., ordem)` ambiguo.
+-- A 0011 troca o TIPO DE RETORNO desta funcao (passa a devolver `comecou_em`).
+-- `create or replace` nao consegue trocar tipo de retorno, entao reaplicar a
+-- cadeia inteira quebraria aqui sem este `drop`.
+drop function if exists public.pvp_pergunta(uuid, int);
 create or replace function public.pvp_pergunta(m uuid, n int)
 returns table (num int, tipo text, enunciado text, alternativas jsonb, total int)
 language plpgsql

@@ -5,9 +5,9 @@ cada atualização acrescentou.
 
 | | |
 | --- | --- |
-| **Versão atual** | `v1.9` |
+| **Versão atual** | `v1.10` |
 | **Última atualização** | 26/08/2026 |
-| **Migração mais recente** | `0010_empates_leaderboard_abandono.sql` |
+| **Migração mais recente** | `0011_cronometro_e_abandono.sql` |
 | **PDF** | [`CodeQuest-Versoes.pdf`](CodeQuest-Versoes.pdf) — gerado por `npm run doc:pdf` |
 
 > As versões foram numeradas a partir do histórico do Git. Cada commit de funcionalidade virou uma
@@ -57,7 +57,7 @@ Três decisões atravessam o projeto inteiro:
 | Tags de perfil | **22** |
 | Perguntas do duelo | **88** — JS 40, Python 12, Java 10, geral 10, C# 8, C++ 8 |
 | Telas | **14** rotas |
-| Migrações SQL | **10** |
+| Migrações SQL | **11** |
 | Suítes de teste | **12** |
 | Divisões do ranqueado | **22**, em 8 patamares |
 
@@ -113,6 +113,8 @@ Três decisões atravessam o projeto inteiro:
 - **Trocar de aba tem consequência**: o relógio não para, sumir mais de 5 s numa pergunta zera
   aquela pergunta, e a terceira vez encerra a partida como derrota.
 - Aceitar um convite leva **os dois jogadores** para a partida ao mesmo tempo, de qualquer tela.
+- **A navegação do aplicativo trava durante a partida**, e o cronômetro de cada pergunta é carimbado
+  pelo servidor: sair e voltar retoma o tempo que sobrou, nunca os 20 s inteiros.
 
 ### 3.5 Modo ranqueado
 
@@ -176,6 +178,58 @@ Mais `content:check` (integridade do currículo), `content:verify-python` e `con
 ## 4. Histórico de versões
 
 *Da mais recente para a mais antiga.*
+
+---
+
+### v1.10 — 26/08/2026 · versão na tela, partida sem pausa e fluidez no celular
+
+**Adicionado**
+- **Selo de versão** no canto inferior esquerdo, em todas as telas. A fonte é
+  `src/lib/versao.ts`, e `npm run content:check` **recusa** se ela divergir da versão deste
+  documento — assim o site e o histórico não contam versões diferentes.
+- **A navegação trava durante a partida.** Trocar para Início, Amigos ou Trilha no meio do duelo
+  desmontava a tela e virava uma pausa de graça. Agora os links ficam inertes até a partida acabar,
+  com a razão escrita na tela, e fechar ou recarregar pede confirmação ao navegador.
+- **O cronômetro é do servidor.** `pvp_pergunta` passou a devolver o carimbo da primeira entrega,
+  então voltar para uma pergunta já começada retoma o tempo que sobrou.
+
+**Corrigido**
+- **O relógio voltava cheio** ao sair da tela e voltar. O placar nunca foi enganado — o servidor
+  sempre contou desde a primeira entrega — mas a tela mostrava 20 s de novo, e a pessoa respondia
+  com calma e levava 0 sem entender.
+- **Pontuação da partida anterior aparecia na seguinte.** Ir para outra partida nem sempre desmonta
+  a tela (a rota é a mesma, muda só o `?m=`), e o estado sobrevivia. Agora tudo é zerado quando a
+  partida muda.
+- **"Você saiu da aba 3 vezes" aparecia em partida ganha.** A mensagem saía de um contador do
+  navegador, que herdava o valor da partida anterior. Agora ela vem de `matches.abandonada_por`, no
+  banco: só aparece quando o servidor registrou o abandono.
+- **Abandono que falhava mostrava um resultado inventado.** Se `pvp_abandonar` não respondia (a
+  migração 0010 ainda não aplicada, por exemplo), a tela ia para o fim mesmo assim, com placar
+  parcial. Agora só encerra se o servidor encerrou.
+- **A 0011 quase apagou o embaralhamento das alternativas** — a função foi reescrita a partir da
+  versão errada. `npm run test:pvp` pegou: a resposta certa voltou a cair na primeira posição, 40
+  vezes em 40.
+
+**Fluidez no celular**
+- O brilho de fundo saiu do `background-attachment: fixed` para uma **camada fixa própria**. Fundo
+  preso obriga o navegador a repintar os três gradientes a cada quadro de rolagem, no processador —
+  era o que impedia a rolagem de acompanhar uma tela de 120 Hz.
+- **`backdrop-blur` só no desktop**: cabeçalho, barra inferior e cards. Desfocar o fundo é a conta
+  mais cara da interface no celular, e o fundo dos cards já é opaco o bastante.
+- O cronômetro do duelo passou de **10 renderizações por segundo para 1**; o movimento contínuo da
+  barra virou animação CSS de `transform`, que a GPU resolve sozinha.
+- `touch-action: manipulation` nos alvos de toque, para o navegador não segurar o clique esperando
+  um duplo-toque.
+
+Medido com a mesma página, o mesmo aparelho emulado e a mesma rolagem — só o CSS muda, com o
+processador afunilado em 4× (três execuções):
+
+| | Quadros perdidos | Pior quadro |
+| --- | --- | --- |
+| CSS antigo | 5, 42 e 19 (de ~120) | 33 a 50 ms |
+| CSS novo | **0, 0 e 0** | **16,8 ms** |
+
+**SQL:** `0011_cronometro_e_abandono.sql`.
 
 ---
 
@@ -444,6 +498,7 @@ quantas vezes for preciso (ele é idempotente).
 | `0008_desafios_diarios.sql` | v1.6 | Desafio do dia |
 | `0009_ranqueado_elite.sql` | v1.8 | Patamar Elite e Mestre com 3 sub-níveis |
 | `0010_empates_leaderboard_abandono.sql` | v1.9 | Empates nos dois modos, reavaliação de conquistas, leaderboard histórico, abandono, saudação |
+| `0011_cronometro_e_abandono.sql` | v1.10 | Cronômetro carimbado pelo servidor e abandono no estado da partida |
 
 ---
 

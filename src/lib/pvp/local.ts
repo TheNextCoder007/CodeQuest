@@ -238,6 +238,9 @@ export async function perguntaLocal(id: string, n: number): Promise<PerguntaPvp>
     enunciado: questao.prompt,
     alternativas: minha.alternativas ?? null,
     total: duelo.perguntaIds.length,
+    // Mesma regra do servidor: o carimbo e o da PRIMEIRA entrega. Voltar para
+    // a pergunta nao devolve tempo.
+    comecouEm: new Date(minha.startedAt ?? Date.now()).toISOString(),
   };
 }
 
@@ -310,6 +313,7 @@ export function estadoLocal(id: string): EstadoPartida {
     guestRespondidas: respondidas(duelo.dele),
     hostPontos: somar(duelo.minhas),
     guestPontos: encerrada ? somar(duelo.dele) : 0,
+    abandonadaPor: duelo.abandonada ? duelo.meuId : null,
   };
 }
 

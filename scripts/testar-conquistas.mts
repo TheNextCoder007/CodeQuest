@@ -75,6 +75,7 @@ for (const arquivo of [
   'supabase/migrations/0008_desafios_diarios.sql',
   'supabase/migrations/0009_ranqueado_elite.sql',
   'supabase/migrations/0010_empates_leaderboard_abandono.sql',
+  'supabase/migrations/0011_cronometro_e_abandono.sql',
   'supabase/seed.sql',
 ]) {
   await db.exec(ler(arquivo));
@@ -360,6 +361,54 @@ const eloDepois = (
   )
 ).elo;
 ok(eloDepois < eloAntes, `o elo caiu (${eloAntes} -> ${eloDepois})`);
+
+secao('o cronometro nao volta cheio (0011)');
+
+await como(AMIGO);
+const partidaRelogio = (await um<{ ranked_iniciar: string }>('select public.ranked_iniciar()'))
+  .ranked_iniciar;
+
+const entrega1 = await um<{ comecou_em: string; alternativas: unknown }>(
+  'select comecou_em, alternativas from public.pvp_pergunta($1, 1)',
+  [partidaRelogio],
+);
+ok(Boolean(entrega1.comecou_em), 'a pergunta devolve quando o cronometro comecou');
+
+// Sair da tela e voltar reentrega a pergunta. O carimbo NAO pode mudar - se
+// mudasse, bastaria trocar de aba para ganhar 20 s a cada pergunta.
+await new Promise((r) => setTimeout(r, 1100));
+const entrega2 = await um<{ comecou_em: string; alternativas: unknown }>(
+  'select comecou_em, alternativas from public.pvp_pergunta($1, 1)',
+  [partidaRelogio],
+);
+// `timestamptz` volta como `Date`: comparar os objetos direto nunca da igual.
+const instante = (valor: string | Date) => new Date(valor).getTime();
+ok(
+  instante(entrega1.comecou_em) === instante(entrega2.comecou_em),
+  'e reentregar a mesma pergunta devolve o MESMO carimbo (sem tempo extra)',
+);
+ok(
+  JSON.stringify(entrega1.alternativas) === JSON.stringify(entrega2.alternativas),
+  'a ordem das alternativas tambem se mantem entre reentregas',
+);
+
+secao('o estado diz quem abandonou (0011)');
+
+const antesDoAbandono = await um<{ abandonada_por: string | null }>(
+  'select abandonada_por from public.pvp_estado($1)',
+  [partidaRelogio],
+);
+ok(antesDoAbandono.abandonada_por === null, 'partida em andamento nao tem abandono registrado');
+
+await db.query('select * from public.pvp_abandonar($1)', [partidaRelogio]);
+const depoisDoAbandono = await um<{ abandonada_por: string | null }>(
+  'select abandonada_por from public.pvp_estado($1)',
+  [partidaRelogio],
+);
+ok(
+  depoisDoAbandono.abandonada_por === AMIGO,
+  'depois de abandonar, o estado aponta quem largou',
+);
 
 secao('abandono so penaliza quem chama');
 

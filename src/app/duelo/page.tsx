@@ -3,7 +3,7 @@
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { ArrowLeft, Check, EyeOff, Loader2, Shield, Swords, Timer, TrendingDown, TrendingUp, X } from 'lucide-react';
+import { ArrowLeft, Check, EyeOff, Loader2, Lock, Shield, Swords, Timer, TrendingDown, TrendingUp, X } from 'lucide-react';
 import { AppShell } from '@/components/AppShell';
 import { MarkdownLite } from '@/components/content/MarkdownLite';
 import { Button, LinkButton } from '@/components/ui/Button';
@@ -27,6 +27,7 @@ import {
   avisoDeRelogio,
   ehAbandono,
 } from '@/lib/pvp/ausencia';
+import { useTravarNavegacao } from '@/lib/trava-de-partida';
 import { nomeDoTema } from '@/content/pvp-temas';
 import { PatamarBadge } from '@/components/ranked/PatamarBadge';
 import { buscarEstadoRanqueada, buscarResultadoRanqueado } from '@/lib/ranked/api';
@@ -69,6 +70,17 @@ function DueloContent() {
   const ausencias = useRef(0);
   const [aviso, setAviso] = useState<{ texto: string; grave: boolean } | null>(null);
 
+  /*
+   * A trava vale enquanto o cronometro corre - e SO enquanto ele corre.
+   *
+   * `perguntando` e `respondida` sao as fases em que sair e voltar seria uma
+   * pausa de graca. `aguardando` fica de fora de proposito: ali a pessoa ja
+   * respondeu tudo, nao ha nada a ganhar saindo, e o adversario pode demorar
+   * ate o limite de 5 minutos do servidor - prender alguem nessa tela seria
+   * punir quem terminou primeiro.
+   */
+  useTravarNavegacao(fase === 'perguntando' || fase === 'respondida');
+
   const souHost = estado ? estado.hostId === user?.id : true;
   const minhasRespondidas = estado
     ? souHost
@@ -106,11 +118,27 @@ function DueloContent() {
         setResultado(null);
         setEscolha('');
         jaRespondeu.current = false;
-        inicioDaPergunta.current = Date.now();
+
+        /*
+         * O cronometro comeca onde o SERVIDOR disse que comecou.
+         *
+         * `pvp_pergunta` carimba a primeira entrega e nao mexe nesse carimbo
+         * nas seguintes - entao sair da tela e voltar reentrega a pergunta com
+         * o tempo que sobrou, e nao com 20 s de novo. Antes a tela usava o
+         * `Date.now()` do aparelho e mostrava o relogio cheio, enquanto o
+         * servidor continuava contando desde o inicio: a pessoa respondia com
+         * calma e levava 0 sem entender.
+         *
+         * Sem o carimbo (migracao 0011 ainda nao aplicada) cai no relogio
+         * local, que e o comportamento antigo.
+         */
+        const carimbo = proxima.comecouEm ? Date.parse(proxima.comecouEm) : Number.NaN;
+        inicioDaPergunta.current = Number.isFinite(carimbo) ? carimbo : Date.now();
+
         // A ausencia foi cobrada na pergunta anterior; o aviso nao acompanha.
         saiuEm.current = null;
         setAviso(null);
-        setRestanteMs(TEMPO_LIMITE_MS);
+        setRestanteMs(Math.max(0, TEMPO_LIMITE_MS - (Date.now() - inicioDaPergunta.current)));
         setFase('perguntando');
       } catch (falha) {
         setErro(falha instanceof Error ? falha.message : 'Não foi possível abrir a pergunta.');
@@ -140,6 +168,34 @@ function DueloContent() {
     },
     [matchId, pergunta, recarregarEstado],
   );
+
+  /* --- troca de partida --------------------------------------------------
+   *
+   * Nada de uma partida pode sobrar na seguinte.
+   *
+   * Ir para outra partida nem sempre desmonta esta tela (a rota e a mesma, so
+   * muda o `?m=`), e ai `useState`/`useRef` sobrevivem. Foi assim que a
+   * pontuacao da partida anterior apareceu na pergunta 1 da seguinte - e que o
+   * contador de ausencias, herdado, fez uma partida GANHA exibir a mensagem de
+   * abandono.
+   *
+   * Este efeito roda antes dos outros que dependem de `matchId`, entao o
+   * estado ja esta limpo quando a partida nova carrega.
+   * -------------------------------------------------------------------- */
+  useEffect(() => {
+    setMeusPontos(0);
+    setPergunta(null);
+    setResultado(null);
+    setEscolha('');
+    setRanqueada(null);
+    setAviso(null);
+    setErro(null);
+    setRestanteMs(TEMPO_LIMITE_MS);
+    ausencias.current = 0;
+    saiuEm.current = null;
+    jaRespondeu.current = false;
+    inicioDaPergunta.current = 0;
+  }, [matchId]);
 
   /* --- inicializacao ---------------------------------------------------- */
   useEffect(() => {
@@ -188,16 +244,35 @@ function DueloContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [matchId, user?.id]);
 
-  /* --- cronometro ------------------------------------------------------- */
+  /* --- cronometro -------------------------------------------------------
+   *
+   * Uma batida por SEGUNDO, e nao dez.
+   *
+   * A versao anterior rodava a cada 100 ms e chamava `setRestanteMs` toda vez:
+   * dez renderizacoes da arvore inteira por segundo, so para o texto "12s"
+   * mudar uma vez. Num celular isso e o bastante para a rolagem engasgar.
+   *
+   * Quem desenha o movimento continuo agora e a barra, por animacao CSS de
+   * `transform` (ver `@keyframes cq-cronometro`) - a GPU cuida dela na taxa do
+   * aparelho, sem JavaScript por quadro. Ao JavaScript sobra o que so ele pode
+   * fazer: contar os segundos e disparar o fim do tempo.
+   *
+   * O calculo continua sendo por relogio de parede, entao a aba escondida (que
+   * o navegador congela) nao ganha tempo: ao voltar, o valor certo aparece
+   * imediatamente.
+   * -------------------------------------------------------------------- */
   useEffect(() => {
     if (fase !== 'perguntando') return;
-    const timer = window.setInterval(() => {
-      const decorrido = Date.now() - inicioDaPergunta.current;
-      const resta = Math.max(0, TEMPO_LIMITE_MS - decorrido);
+
+    const bater = () => {
+      const resta = Math.max(0, TEMPO_LIMITE_MS - (Date.now() - inicioDaPergunta.current));
       setRestanteMs(resta);
       // Estourou: manda resposta vazia. Quem decide que vale 0 e o servidor.
       if (resta === 0) void responder('');
-    }, 100);
+    };
+
+    bater();
+    const timer = window.setInterval(bater, 1000);
     return () => window.clearInterval(timer);
   }, [fase, responder]);
 
@@ -241,12 +316,31 @@ function DueloContent() {
 
       if (ehAbandono(ausencias.current)) {
         jaRespondeu.current = true;
+        /*
+         * Quem encerra a partida e o SERVIDOR.
+         *
+         * A versao anterior chamava `pvp_abandonar` e ia para a tela de fim de
+         * qualquer jeito, inclusive quando a chamada falhava (a migracao 0010
+         * ainda nao aplicada, por exemplo). O resultado era uma tela de fim
+         * inventada, com o placar parcial e uma mensagem de abandono que o
+         * banco nunca registrou. Agora so recarregamos o estado: se o servidor
+         * encerrou, o proprio estado diz isso; se nao encerrou, a partida
+         * continua e o erro aparece.
+         */
         void abandonarPartida(matchId)
-          .catch(() => {
-            /* o servidor pode ja ter encerrado; a tela de fim resolve */
-          })
           .then(() => recarregarEstado())
-          .then(() => setFase('fim'));
+          .then((atual) => {
+            if (atual?.status === 'encerrada') setFase('fim');
+          })
+          .catch((falha: unknown) => {
+            setAviso({
+              texto:
+                'Você saiu da aba vezes demais, mas não consegui encerrar a partida no servidor. ' +
+                'Continue jogando — o resultado sai normalmente.',
+              grave: true,
+            });
+            console.warn('[CodeQuest] abandono nao aplicado', falha);
+          });
         return;
       }
 
@@ -429,6 +523,9 @@ function DueloContent() {
       ? estado.meuDesfecho === 'empate'
       : estado.winnerId === null;
     const nomeDoAdversario = estado.adversario ?? 'Adversário';
+    // Quem abandonou, segundo o servidor. Sem migracao 0011 vem nulo, e a tela
+    // simplesmente nao fala em abandono - melhor calar do que inventar.
+    const abandonei = Boolean(estado.abandonadaPor) && estado.abandonadaPor === user?.id;
     const subiu = ranqueada ? ranqueada.divisaoDepois > ranqueada.divisaoAntes : false;
     const caiu = ranqueada ? ranqueada.divisaoDepois < ranqueada.divisaoAntes : false;
 
@@ -448,10 +545,10 @@ function DueloContent() {
             {venci ? '🏆' : empatou ? '🤝' : '💪'}
           </span>
           <CardTitle className="mt-4 text-2xl">
-            {venci
-              ? 'Você venceu!'
-              : ehAbandono(ausencias.current)
-                ? 'Partida encerrada por abandono'
+            {abandonei
+              ? 'Partida encerrada por abandono'
+              : venci
+                ? 'Você venceu!'
                 : empatou
                   ? 'Empate!'
                   : 'Você perdeu essa'}
@@ -462,12 +559,18 @@ function DueloContent() {
               : `Tema: ${nomeDoTema(estado.tema)} · ${estado.total} perguntas`}
           </p>
 
-          {/* O placar abaixo pode ate estar a favor: quem sai perde de todo
-              jeito, e a tela precisa dizer por que. */}
-          {ehAbandono(ausencias.current) && (
+          {/*
+            * O placar abaixo pode ate estar a favor: quem sai perde de todo
+            * jeito, e a tela precisa dizer por que.
+            *
+            * A condicao vem do BANCO (`abandonada_por`), e nao de um contador
+            * do navegador. O contador sobrevivia entre partidas e ja fez uma
+            * partida ganha exibir esta mensagem.
+            */}
+          {abandonei && (
             <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-rose-200">
-              Você saiu da aba {ausencias.current} vezes durante a partida. O duelo foi encerrado
-              como derrota, com a perda de elo normal.
+              Você saiu da partida antes do fim. O duelo foi encerrado como derrota, com a perda de
+              elo normal.
             </p>
           )}
 
@@ -595,6 +698,19 @@ function DueloContent() {
   const segundos = Math.ceil(restanteMs / 1000);
   const acabando = restanteMs <= 5000;
 
+  /*
+   * De onde a barra parte e quanto tempo ela leva.
+   *
+   * Calculado a partir do carimbo do servidor, e nao do estado que a batida de
+   * 1 s atualiza: assim a animacao ja nasce no lugar certo, sem esperar a
+   * primeira batida.
+   */
+  const msNoInicio = Math.max(
+    0,
+    TEMPO_LIMITE_MS - (Date.now() - (inicioDaPergunta.current || Date.now())),
+  );
+  const fracaoInicial = msNoInicio / TEMPO_LIMITE_MS;
+
   return (
     <div className="cq-page">
       {/*
@@ -643,15 +759,40 @@ function DueloContent() {
         </div>
 
         <div className="mt-4">
-          <ProgressBar
-            value={restanteMs / TEMPO_LIMITE_MS}
-            tone={acabando ? 'amber' : 'mint'}
-          />
+          {/*
+            * Barra propria, e nao o `ProgressBar` comum: aqui o valor muda
+            * continuamente, e o componente compartilhado anima `width` (que
+            * refaz o layout a cada quadro). Esta anima `transform`, que a GPU
+            * resolve sozinha.
+            *
+            * O `key` reinicia a animacao a cada pergunta; a duracao e o tempo
+            * que REALMENTE resta, e `--cq-inicio` e a fracao de onde ela parte
+            * (voltar para uma pergunta ja comecada nao devolve barra cheia).
+            */}
+          <div className="h-2 w-full overflow-hidden rounded-full bg-white/10 ring-1 ring-inset ring-white/5">
+            <div
+              key={`${pergunta.num}-${inicioDaPergunta.current}`}
+              className={cn(
+                'h-full origin-left rounded-full bg-gradient-to-r',
+                acabando ? 'from-amber-400 to-orange-500' : 'from-mint-500 to-aqua-400',
+              )}
+              style={{
+                '--cq-inicio': fracaoInicial,
+                animation: `cq-cronometro ${msNoInicio}ms linear forwards`,
+              } as React.CSSProperties}
+            />
+          </div>
         </div>
 
         <p className="mt-3 truncate cq-muted">
           Você: {minhasRespondidas}/{estado.total} · {estado.adversario ?? 'Adversário'}:{' '}
           {deleRespondidas}/{estado.total}
+        </p>
+
+        {/* Sem esta linha, a navegacao apagada parece defeito. */}
+        <p className="mt-1 flex items-center gap-1.5 text-[11px] text-slate-500">
+          <Lock className="h-3 w-3 shrink-0" aria-hidden />
+          Navegação bloqueada até o fim da partida — o relógio não para.
         </p>
       </section>
 

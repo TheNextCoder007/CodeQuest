@@ -115,6 +115,8 @@ interface LinhaPergunta {
   enunciado: string;
   alternativas: string[] | null;
   total: number;
+  /** Opcional: so existe depois da migracao 0011. */
+  comecou_em?: string | null;
 }
 
 export const buscarPergunta = async (matchId: string, n: number): Promise<PerguntaPvp> => {
@@ -129,6 +131,7 @@ export const buscarPergunta = async (matchId: string, n: number): Promise<Pergun
     enunciado: linha.enunciado,
     alternativas: linha.alternativas,
     total: linha.total,
+    comecouEm: linha.comecou_em ?? null,
   };
 };
 
@@ -177,6 +180,7 @@ interface LinhaEstado {
   guest_respondidas: number;
   host_pontos: number;
   guest_pontos: number;
+  abandonada_por?: string | null;
 }
 
 export const buscarEstado = async (matchId: string): Promise<EstadoPartida> => {
@@ -201,6 +205,7 @@ export const buscarEstado = async (matchId: string): Promise<EstadoPartida> => {
     guestRespondidas: linha.guest_respondidas,
     hostPontos: linha.host_pontos,
     guestPontos: linha.guest_pontos,
+    abandonadaPor: linha.abandonada_por ?? null,
   };
 };
 
