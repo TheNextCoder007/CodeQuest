@@ -112,7 +112,7 @@ function PerfilContent() {
       .then((lidas) => {
         if (!ativo) return;
         setStatsPvp(lidas);
-        void sincronizarPvp(lidas.vitorias, lidas.vitoriasPorTema, lidas.empates);
+        void sincronizarPvp(lidas.vitorias, lidas.vitoriasPorTema);
       })
       .catch(() => {
         /* sem duelo ainda: o cartao mostra o estado vazio */
@@ -173,9 +173,8 @@ function PerfilContent() {
         setTemporadasPassadas(passadas);
         setTopoRanqueada(topo);
         // Conquista de patamar e permanente: a conferencia usa o maior elo de
-        // todas as temporadas, nao o da atual. Os empates vao junto porque a
-        // medalha de empate soma os dois modos (ver `sincronizarPvp`).
-        void sincronizarRanqueada(patamarMaximoAlcancado(atual), atual.empates);
+        // todas as temporadas, nao o da atual.
+        void sincronizarRanqueada(patamarMaximoAlcancado(atual));
       })
       .catch(() => {
         /* migracao 0006 ainda nao aplicada: o cartao simplesmente nao aparece */

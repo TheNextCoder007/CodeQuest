@@ -8,6 +8,7 @@ import { reavaliarConquistas } from '@/lib/conquistas';
 import { lerEstadoDoServidor } from './loadPlayerState';
 import { esperaRestanteMs, formatarEspera, validateUsername } from '@/lib/username';
 import { achievements, type AchievementDefinition } from '@/content/achievements';
+import { contarEmpatesQueValem } from '@/lib/conquistas';
 import type { SegredoId, TagDefinition } from '@/content/tags';
 import { evaluateTags, tagPendenteDoSegredo } from '@/lib/tags';
 import type { PlayerState, ProfileRow } from '@/types/db';
@@ -72,7 +73,6 @@ interface PlayerContextValue {
   sincronizarPvp: (
     vitorias: number,
     vitoriasPorTema: Record<string, number>,
-    empates?: number,
   ) => Promise<TagDefinition[]>;
   /**
    * Concede as conquistas de patamar da ranqueada.
@@ -81,10 +81,7 @@ interface PlayerContextValue {
    * de `ranked_estado` - tabela que so o servidor escreve. Devolve as
    * conquistas novas, para a tela poder comemorar.
    */
-  sincronizarRanqueada: (
-    patamarMax: number,
-    empates?: number,
-  ) => Promise<AchievementDefinition[]>;
+  sincronizarRanqueada: (patamarMax: number) => Promise<AchievementDefinition[]>;
   /**
    * Pede ao servidor que reconfira TODAS as conquistas contra o historico
    * real e devolve as que foram concedidas agora.
@@ -749,31 +746,41 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   );
 
   /*
-   * Empates chegam por duas portas diferentes.
+   * Empates que valem a medalha de empate.
    *
-   * O empate do duelo entre amigos e gravado em `pvp_stats`; o da ranqueada,
-   * em `ranked_stats` - e de proposito que as duas tabelas nao se misturam
-   * (se vitoria contra bot entrasse no cartel 1v1, a tag "Imortal" viraria
-   * uma tarde de farm). Mas para a MEDALHA DE EMPATE os dois valem: empate
-   * nao tem como ser farmado, ele exige placar identico ate o bonus de
-   * velocidade.
+   * Antes este numero vinha das telas: cada uma passava o proprio contador
+   * (`pvp_stats.empates` de um lado, `ranked_stats.empates` do outro) e aqui
+   * somavamos os dois - os dois modos valem para esta medalha, ao contrario
+   * das tags de duelo, que sao so do 1v1 para vitoria contra bot nao virar
+   * farm.
    *
-   * Cada tela sabe so do seu lado, entao guardamos os dois numeros aqui e
-   * avaliamos sempre pela soma. A verdade completa (inclusive temporadas
-   * passadas) quem tem e `revisarConquistas`.
+   * O problema e que aqueles contadores contam TAMBEM o empate em 0 a 0, que
+   * e o resultado mais facil do jogo (basta os dois lados errarem tudo) numa
+   * medalha que se propoe a ser o mais raro. Separar depois e impossivel: o
+   * contador nao guarda placar. Quem sabe e o historico de partidas, no
+   * servidor - `contarEmpatesQueValem` (migracao 0013).
+   *
+   * So consultamos quando falta alguma medalha de empate. Ja tendo todas, o
+   * numero nao mudaria nada, e uma ida ao servidor por partida encerrada e
+   * ida demais.
    */
-  const empatesConhecidos = useRef({ pvp: 0, ranqueada: 0 });
-  const totalDeEmpates = () =>
-    empatesConhecidos.current.pvp + empatesConhecidos.current.ranqueada;
+  const empatesQueValem = useCallback(async (): Promise<number> => {
+    if (!state) return 0;
+    const falta = achievements.some(
+      (conquista) =>
+        conquista.criteria.kind === 'pvp_draws' &&
+        !state.unlockedAchievementIds.includes(conquista.id),
+    );
+    return falta ? contarEmpatesQueValem(user?.id) : 0;
+  }, [state, user]);
 
   const sincronizarPvp = useCallback(
     async (
       vitorias: number,
       vitoriasPorTema: Record<string, number>,
-      empates = 0,
     ): Promise<TagDefinition[]> => {
       if (!user || !state) return [];
-      empatesConhecidos.current.pvp = empates;
+      const empates = await empatesQueValem();
 
       const novasTags = evaluateTags(
         {
@@ -795,7 +802,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
           flawlessLesson: state.flawlessLessonIds.length > 0,
           unlockedTagIds,
           pvpVitorias: vitorias,
-          pvpEmpates: totalDeEmpates(),
+          pvpEmpates: empates,
         },
         state.unlockedAchievementIds,
       );
@@ -847,7 +854,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 
       return novasTags;
     },
-    [user, state],
+    [user, state, empatesQueValem],
   );
 
   const sincronizarDesafios = useCallback(
@@ -941,9 +948,9 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   );
 
   const sincronizarRanqueada = useCallback(
-    async (patamarMax: number, empates = 0): Promise<AchievementDefinition[]> => {
+    async (patamarMax: number): Promise<AchievementDefinition[]> => {
       if (!user || !state) return [];
-      empatesConhecidos.current.ranqueada = empates;
+      const empates = await empatesQueValem();
 
       const novasConquistas = evaluateAchievements(
         {
@@ -953,7 +960,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
           flawlessLesson: state.flawlessLessonIds.length > 0,
           unlockedTagIds: state.unlockedTagIds,
           rankedPatamarMax: patamarMax,
-          pvpEmpates: totalDeEmpates(),
+          pvpEmpates: empates,
         },
         state.unlockedAchievementIds,
       );
@@ -993,7 +1000,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 
       return novasConquistas;
     },
-    [user, state],
+    [user, state, empatesQueValem],
   );
 
   const revisarConquistas = useCallback(async (): Promise<AchievementDefinition[]> => {

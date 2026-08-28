@@ -58,6 +58,14 @@ function DueloContent() {
   const [ranqueada, setRanqueada] = useState<ResultadoRanqueado | null>(null);
 
   const inicioDaPergunta = useRef<number>(0);
+  /*
+   * Quanto da pergunta ja tinha corrido quando ela apareceu na tela.
+   *
+   * Fica num `ref`, e nao num calculo do render, porque e ele que posiciona a
+   * animacao da barra: se mudasse a cada redesenho, a animacao mudaria junto -
+   * que foi exatamente o defeito da v1.10.1 (ver a barra, mais abaixo).
+   */
+  const decorridoNoInicio = useRef(0);
   // Evita responder duas vezes quando o tempo estoura junto com o clique.
   const jaRespondeu = useRef(false);
 
@@ -159,6 +167,7 @@ function DueloContent() {
 
         decorrido = Math.max(0, Math.min(decorrido, TEMPO_LIMITE_MS));
         inicioDaPergunta.current = Date.now() - decorrido;
+        decorridoNoInicio.current = decorrido;
 
         // A ausencia foi cobrada na pergunta anterior; o aviso nao acompanha.
         saiuEm.current = null;
@@ -220,6 +229,7 @@ function DueloContent() {
     saiuEm.current = null;
     jaRespondeu.current = false;
     inicioDaPergunta.current = 0;
+    decorridoNoInicio.current = 0;
   }, [matchId]);
 
   /* --- inicializacao ---------------------------------------------------- */
@@ -429,9 +439,7 @@ function DueloContent() {
         const atual = await buscarEstadoRanqueada(user.id).catch(() => null);
         if (!ativo || !atual) return;
 
-        // Os empates da ranqueada valem a medalha de empate tanto quanto os do
-        // duelo entre amigos - o que nao se mistura sao as VITORIAS.
-        const novas = await sincronizarRanqueada(patamarMaximoAlcancado(atual), atual.empates);
+        const novas = await sincronizarRanqueada(patamarMaximoAlcancado(atual));
 
         /*
          * E o servidor confere o resto.
@@ -467,7 +475,7 @@ function DueloContent() {
     buscarEstatisticas(user.id)
       .then(async (stats) => {
         if (!ativo) return;
-        const novas = await sincronizarPvp(stats.vitorias, stats.vitoriasPorTema, stats.empates);
+        const novas = await sincronizarPvp(stats.vitorias, stats.vitoriasPorTema);
         novas.forEach((tag, indice) => {
           window.setTimeout(() => {
             showToast({
@@ -723,19 +731,6 @@ function DueloContent() {
   const segundos = Math.ceil(restanteMs / 1000);
   const acabando = restanteMs <= 5000;
 
-  /*
-   * De onde a barra parte e quanto tempo ela leva.
-   *
-   * Calculado a partir do carimbo do servidor, e nao do estado que a batida de
-   * 1 s atualiza: assim a animacao ja nasce no lugar certo, sem esperar a
-   * primeira batida.
-   */
-  const msNoInicio = Math.max(
-    0,
-    TEMPO_LIMITE_MS - (Date.now() - (inicioDaPergunta.current || Date.now())),
-  );
-  const fracaoInicial = msNoInicio / TEMPO_LIMITE_MS;
-
   return (
     <div className="cq-page">
       {/*
@@ -790,9 +785,23 @@ function DueloContent() {
             * refaz o layout a cada quadro). Esta anima `transform`, que a GPU
             * resolve sozinha.
             *
-            * O `key` reinicia a animacao a cada pergunta; a duracao e o tempo
-            * que REALMENTE resta, e `--cq-inicio` e a fracao de onde ela parte
-            * (voltar para uma pergunta ja comecada nao devolve barra cheia).
+            * DUAS COISAS PRECISAM SER CONSTANTES AQUI, e as duas ja sao:
+            *
+            *   - a duracao e sempre a pergunta inteira (`TEMPO_LIMITE_MS`);
+            *   - o atraso e sempre o mesmo (`decorridoNoInicio`, gravado uma
+            *     vez, quando a pergunta abriu). Negativo, ele faz a animacao
+            *     comecar ja adiantada - e assim voltar para uma pergunta em
+            *     andamento nao devolve barra cheia.
+            *
+            * Era isso que faltava na v1.10.1: os dois valores eram
+            * recalculados a cada redesenho (uma vez por segundo, quando o
+            * contador muda). O navegador nao reinicia uma animacao so porque a
+            * duracao mudou - ele mantem o tempo ja corrido e o mede contra a
+            * duracao nova, menor. A barra andava aos trancos, cada vez mais
+            * rapido, e chegava a zero com metade da pergunta ainda por
+            * responder.
+            *
+            * O `key` existe para reiniciar a animacao quando a pergunta troca.
             */}
           <div className="h-2 w-full overflow-hidden rounded-full bg-white/10 ring-1 ring-inset ring-white/5">
             <div
@@ -802,9 +811,10 @@ function DueloContent() {
                 acabando ? 'from-amber-400 to-orange-500' : 'from-mint-500 to-aqua-400',
               )}
               style={{
-                '--cq-inicio': fracaoInicial,
-                animation: `cq-cronometro ${msNoInicio}ms linear forwards`,
-              } as React.CSSProperties}
+                animation:
+                  `cq-cronometro ${TEMPO_LIMITE_MS}ms linear ` +
+                  `-${decorridoNoInicio.current}ms forwards`,
+              }}
             />
           </div>
         </div>

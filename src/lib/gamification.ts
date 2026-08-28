@@ -156,6 +156,8 @@ const meetsCriteria = (achievement: AchievementDefinition, state: AchievementSta
     case 'pvp_wins':
       return (state.pvpVitorias ?? 0) >= criteria.count;
     case 'pvp_draws':
+      // `pvpEmpates` aqui e a conta de `contarEmpatesQueValem`, que exclui o
+      // 0 a 0 - nao o contador de empates do cartel (ver migracao 0013).
       return (state.pvpEmpates ?? 0) >= criteria.count;
     case 'daily_challenges':
       return (state.desafiosDiarios ?? 0) >= criteria.count;

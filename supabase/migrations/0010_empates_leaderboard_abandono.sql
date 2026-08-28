@@ -335,8 +335,10 @@ begin
                         where s.user_id = jogador), 0) >= quanto;
 
     when 'pvp_draws' then
-      -- Aqui SIM os dois modos somam. Empate nao tem como ser farmado: exige
-      -- placar identico ate o bonus de velocidade, em milesimos de segundo.
+      -- Aqui SIM os dois modos somam.
+      --
+      -- (A 0013 refaz `conquistas_empates`: o empate em 0 a 0 deixou de
+      -- contar, porque era justamente o empate que dava para farmar.)
       return public.conquistas_empates(jogador) >= quanto;
 
     when 'ranked_tier' then

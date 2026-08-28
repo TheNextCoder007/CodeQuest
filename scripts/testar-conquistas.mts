@@ -77,6 +77,7 @@ for (const arquivo of [
   'supabase/migrations/0010_empates_leaderboard_abandono.sql',
   'supabase/migrations/0011_cronometro_e_abandono.sql',
   'supabase/migrations/0012_relogio_do_servidor.sql',
+  'supabase/migrations/0013_empate_zero_a_zero.sql',
   'supabase/seed.sql',
 ]) {
   await db.exec(ler(arquivo));
@@ -128,7 +129,7 @@ await db.query('update public.profiles set is_developer = true where id = $1', [
 await db.exec("select set_config('codequest.admin', 'off', false)");
 
 /* =========================================================================
- * 1. O empate precisa somar os dois modos
+ * 1. O empate precisa somar os dois modos - e o 0 a 0 nao pode contar
  * ====================================================================== */
 secao('empate conta na ranqueada e no duelo');
 
@@ -138,34 +139,113 @@ const temporada = await um<{ numero: number }>(
   'select (public.ranked_temporada_atual()).numero::int as numero',
 );
 
-// Dois empates de ranqueada, como os que o jogador ja tinha registrados.
+/**
+ * Grava uma partida ja encerrada direto no historico.
+ *
+ * Desde a 0013 e daqui que sai a conta de empates: o contador de
+ * `ranked_stats` / `pvp_stats` nao guarda placar, e sem placar nao da para
+ * separar um empate de verdade de um 0 a 0.
+ */
+let sequencia = 0;
+const partidaEncerrada = async (opcoes: {
+  desfecho: 'vitoria' | 'derrota' | 'empate';
+  pontos: number;
+  modo?: 'amistoso' | 'ranqueado';
+  host?: string;
+  convidado?: string | null;
+}) => {
+  sequencia += 1;
+  const id = `00000000-0000-4000-8000-${String(sequencia).padStart(12, '0')}`;
+  const modo = opcoes.modo ?? 'ranqueado';
+  const host = opcoes.host ?? DONO;
+  const convidado = opcoes.convidado ?? null;
+  // No empate os dois placares sao iguais por definicao; na vitoria/derrota o
+  // valor exato nao importa para esta conta.
+  const pontosGuest = opcoes.desfecho === 'empate' ? opcoes.pontos : opcoes.pontos + 10;
+
+  await db.query(
+    `insert into public.matches
+       (id, tema, status, host_id, guest_id, total_perguntas, winner_id,
+        pontos_host, pontos_guest, modo, desfecho_host, season_numero, bot_nome,
+        started_at, ended_at)
+     values ($1, 'python', 'encerrada', $2, $3, 5, $4, $5, $6, $7, $8, $9, $10, now(), now())`,
+    [
+      id,
+      host,
+      convidado,
+      opcoes.desfecho === 'vitoria' ? host : null,
+      opcoes.pontos,
+      pontosGuest,
+      modo,
+      opcoes.desfecho,
+      modo === 'ranqueado' ? temporada.numero : null,
+      convidado === null ? 'Bot de teste' : null,
+    ],
+  );
+  return id;
+};
+
+const empatesDe = async (id: string): Promise<number> =>
+  (await um<{ n: number }>('select public.conquistas_empates($1)::int as n', [id])).n;
+
+// Os contadores continuam registrando TUDO - inclusive o 0 a 0. Eles nao
+// mudaram; o que mudou e que a medalha deixou de olhar para eles.
 await db.query(
   `insert into public.ranked_stats (season_numero, user_id, elo, pico_elo, vitorias, derrotas, empates, partidas)
    values ($1, $2, 120, 160, 3, 1, 2, 6)`,
   [temporada.numero, DONO],
 );
-
-ok(
-  (await um<{ n: number }>('select public.conquistas_empates($1)::int as n', [DONO])).n === 2,
-  'os 2 empates de ranqueada sao contabilizados',
-);
-
-// Um empate de duelo entre amigos, na outra tabela.
 await db.query(
   `insert into public.pvp_stats (user_id, vitorias, derrotas, empates, partidas, pontos_totais)
    values ($1, 1, 0, 1, 2, 300)`,
   [DONO],
 );
 
-ok(
-  (await um<{ n: number }>('select public.conquistas_empates($1)::int as n', [DONO])).n === 3,
-  'e somados aos do duelo (2 + 1 = 3)',
-);
+ok(await empatesDe(DONO) === 0, 'contador cheio, historico vazio: nenhum empate vale');
 
+// Dois empates de ranqueada COM placar, como os que o jogador ja tinha.
+await partidaEncerrada({ desfecho: 'empate', pontos: 180 });
+await partidaEncerrada({ desfecho: 'empate', pontos: 240 });
+ok(await empatesDe(DONO) === 2, 'os 2 empates de ranqueada sao contabilizados');
+
+// Um empate de duelo entre amigos, no outro modo.
+await partidaEncerrada({ desfecho: 'empate', pontos: 150, modo: 'amistoso', convidado: AMIGO });
+ok(await empatesDe(DONO) === 3, 'e somados aos do duelo (2 + 1 = 3)');
+ok(await empatesDe(AMIGO) === 1, 'o empate do duelo vale para os DOIS jogadores');
+
+/*
+ * O 0 a 0 - o motivo da 0013.
+ *
+ * "Empate tecnico" se propoe a ser a medalha mais rara do jogo. Empatar em
+ * 0 a 0, porem, e o resultado mais facil que existe: contra o bot da ranqueada
+ * basta nao responder nada por dois minutos. A medalha mais rara era a mais
+ * farmavel do jogo.
+ */
+await partidaEncerrada({ desfecho: 'empate', pontos: 0 });
+ok(await empatesDe(DONO) === 3, 'empate em 0 a 0 NAO entra na conta');
+
+await partidaEncerrada({ desfecho: 'empate', pontos: 0, modo: 'amistoso', convidado: AMIGO });
+ok(await empatesDe(AMIGO) === 1, 'nem no duelo entre amigos');
+
+// Derrota e vitoria nunca contaram - e o 0013 nao pode ter mudado isso.
+await partidaEncerrada({ desfecho: 'derrota', pontos: 90 });
+await partidaEncerrada({ desfecho: 'vitoria', pontos: 300 });
+ok(await empatesDe(DONO) === 3, 'vitoria e derrota continuam fora da conta');
+
+ok(await empatesDe(ESTRANHO) === 0, 'quem nunca empatou continua em zero');
+
+// A tela usa a versao sem argumento, que so responde sobre quem chamou.
+await como(DONO);
 ok(
-  (await um<{ n: number }>('select public.conquistas_empates($1)::int as n', [ESTRANHO])).n === 0,
-  'quem nunca empatou continua em zero',
+  (await um<{ n: number }>('select public.conquistas_empates_meus()::int as n')).n === 3,
+  'e `conquistas_empates_meus` devolve o mesmo numero para quem chamou',
 );
+await como(ESTRANHO);
+ok(
+  (await um<{ n: number }>('select public.conquistas_empates_meus()::int as n')).n === 0,
+  'sem vazar o de outra pessoa',
+);
+await como(DONO);
 
 /* =========================================================================
  * 2. Reavaliacao retroativa
@@ -207,6 +287,56 @@ ok(
   new Set(depois).size === depois.length,
   'e nao existe conquista duplicada na tabela',
 );
+
+/* =========================================================================
+ * 2b. A 0013 tira a medalha de quem so tem 0 a 0
+ * ====================================================================== */
+secao('a medalha ganha pela regra antiga e devolvida');
+
+/*
+ * Quem ja tinha a medalha por um 0 a 0 continuaria com ela: `conquistas_
+ * reavaliar` so concede, nunca tira - de proposito, porque quase todo criterio
+ * e "ja fez alguma vez" e o banco nem sempre guarda o historico inteiro (o
+ * streak, por exemplo, so tem o valor corrente).
+ *
+ * Este criterio e a excecao: o historico de partidas esta completo em
+ * `matches`, entao da para afirmar com certeza quem nunca empatou com placar.
+ * A 0013 faz essa limpeza uma vez, e reaplica-la nao pode machucar quem
+ * empatou de verdade - e o que se confere aqui.
+ */
+await db.query(
+  `insert into public.user_achievements (user_id, achievement_id) values ($1, 'duelo-empate')`,
+  [ESTRANHO],
+);
+// ESTRANHO so tem um 0 a 0 no historico.
+await partidaEncerrada({ desfecho: 'empate', pontos: 0, host: ESTRANHO });
+
+ok(
+  (await medalhasDe(ESTRANHO)).includes('duelo-empate'),
+  'a conta comeca com a medalha que a regra antiga concedeu',
+);
+
+await db.exec(ler('supabase/migrations/0013_empate_zero_a_zero.sql'));
+
+ok(
+  !(await medalhasDe(ESTRANHO)).includes('duelo-empate'),
+  'reaplicar a 0013 tira a medalha de quem so empatou em 0 a 0',
+);
+ok(
+  (await medalhasDe(DONO)).includes('duelo-empate'),
+  'e nao encosta em quem empatou com placar',
+);
+
+// E, tirada a medalha, a reavaliacao NAO pode devolve-la.
+await como(ESTRANHO);
+const devolvidas = await linhas<{ conquista: string }>(
+  'select conquista from public.conquistas_reavaliar()',
+);
+ok(
+  !devolvidas.map((l) => l.conquista).includes('duelo-empate'),
+  'e a reavaliacao nao a devolve na sequencia',
+);
+await como(DONO);
 
 /* =========================================================================
  * 3. Paridade com a avaliacao em TypeScript

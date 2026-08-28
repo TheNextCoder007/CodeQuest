@@ -5,9 +5,9 @@ cada atualização acrescentou.
 
 | | |
 | --- | --- |
-| **Versão atual** | `v1.10.1` |
-| **Última atualização** | 26/08/2026 |
-| **Migração mais recente** | `0012_relogio_do_servidor.sql` |
+| **Versão atual** | `v1.10.2` |
+| **Última atualização** | 27/08/2026 |
+| **Migração mais recente** | `0013_empate_zero_a_zero.sql` |
 | **PDF** | [`CodeQuest-Versoes.pdf`](CodeQuest-Versoes.pdf) — gerado por `npm run doc:pdf` |
 
 > As versões foram numeradas a partir do histórico do Git. Cada commit de funcionalidade virou uma
@@ -57,7 +57,7 @@ Três decisões atravessam o projeto inteiro:
 | Tags de perfil | **22** |
 | Perguntas do duelo | **88** — JS 40, Python 12, Java 10, geral 10, C# 8, C++ 8 |
 | Telas | **14** rotas |
-| Migrações SQL | **12** |
+| Migrações SQL | **13** |
 | Suítes de teste | **12** |
 | Divisões do ranqueado | **22**, em 8 patamares |
 
@@ -178,6 +178,54 @@ Mais `content:check` (integridade do currículo), `content:verify-python` e `con
 ## 4. Histórico de versões
 
 *Da mais recente para a mais antiga.*
+
+---
+
+### v1.10.2 — 27/08/2026 · a barra do cronômetro presa ao relógio, e o empate 0 a 0 fora da medalha
+
+Duas correções encontradas em uso.
+
+**A barra do cronômetro andava mais rápido que o relógio**
+
+A barra dava trancos a cada segundo e chegava ao fim com a pergunta ainda pela metade — o print
+mostrava a barra vazia com `9s` no contador.
+
+- **A causa.** A barra é uma animação CSS de `transform` (a GPU cuida dela, sem JavaScript por
+  quadro). Só que a v1.10 recalculava a **duração** e o **ponto de partida** dessa animação a cada
+  redesenho da tela — ou seja, uma vez por segundo, quando o contador muda. O navegador *não*
+  reinicia uma animação porque a duração mudou: ele mantém o tempo já corrido e passa a medi-lo
+  contra a duração nova, sempre menor. A cada segundo a barra pulava para a frente e acelerava; aos
+  10 s ela já estava zerada, com metade da pergunta por responder.
+- **A correção.** A animação passou a ser sempre a mesma: de cheia a vazia, na duração inteira da
+  pergunta. Quem entra numa pergunta já em andamento não muda a animação — entra nela adiantado,
+  com `animation-delay` negativo. Os dois valores são gravados uma única vez, quando a pergunta
+  abre, e nenhum redesenho os toca.
+
+**Testado** lendo a matriz de transformação real da barra na tela, segundo a segundo, contra o
+contador: o desvio máximo ficou em 0 %, a queda por segundo em 5,1 % (o esperado para 20 s) e a
+barra nunca zerou com o contador andando. Sair da tela e voltar continua devolvendo a barra no
+ponto certo, não cheia.
+
+**Empate em 0 a 0 não vale mais a medalha de empate**
+
+"Empate técnico" foi criada para ser a medalha mais rara do jogo: exige placar idêntico até o bônus
+de velocidade, contado em milésimos de segundo. Só que havia um empate fácil — o 0 a 0. Contra o
+bot da ranqueada, bastava não responder nada por dois minutos. A medalha mais rara era, na prática,
+a mais farmável.
+
+- Empate só conta para a medalha se **alguém pontuou**.
+- A conta passou a sair do **histórico de partidas**, e não dos contadores. `pvp_stats.empates` e
+  `ranked_stats.empates` somam quantos empates houve, nunca com que placar — não há como descontar
+  o 0 a 0 de um número já somado. `matches` guarda o placar de cada partida, então a regra nova vale
+  retroativo sem migração de dados.
+- Os contadores do perfil **não mudaram**: 0 a 0 continua aparecendo como empate no cartel, porque
+  é um empate. Só não é um feito.
+- Quem tirou a medalha pela regra antiga a **devolve** — a migração faz essa limpeza uma vez, e só
+  para este critério (é o único cujo histórico completo está no banco; o *streak*, por exemplo, só
+  guarda o valor corrente, e reavaliar tirando medalha puniria quem apenas deixou a sequência
+  morrer).
+
+**SQL:** `0013_empate_zero_a_zero.sql`.
 
 ---
 
@@ -527,6 +575,7 @@ quantas vezes for preciso (ele é idempotente).
 | `0010_empates_leaderboard_abandono.sql` | v1.9 | Empates nos dois modos, reavaliação de conquistas, leaderboard histórico, abandono, saudação |
 | `0011_cronometro_e_abandono.sql` | v1.10 | Cronômetro carimbado pelo servidor e abandono no estado da partida |
 | `0012_relogio_do_servidor.sql` | v1.10.1 | A pergunta devolve também o "agora" do servidor |
+| `0013_empate_zero_a_zero.sql` | v1.10.2 | Empate 0 a 0 deixa de valer a medalha de empate |
 
 ---
 

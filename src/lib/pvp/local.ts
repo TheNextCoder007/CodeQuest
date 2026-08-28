@@ -77,6 +77,8 @@ export const jogadaDoBot = (
 
 const CHAVE = 'cq:demo:duelos';
 const CHAVE_STATS = 'cq:demo:pvp-stats';
+// Empates que valem medalha - ver `empatesQueValemLocais`, mais abaixo.
+const CHAVE_EMPATES_VALIDOS = 'cq:demo:empates-que-valem';
 
 interface RespostaLocal {
   resposta: string | null;
@@ -346,6 +348,10 @@ export function finalizarLocal(id: string): ResultadoFinal {
     registrarStatsLocais(duelo.meuId, quem === 'anfitriao', quem === 'empate', meus, duelo.tema);
   }
 
+  // Este SIM vale nos dois modos, e so com placar: 0 a 0 nao e feito nenhum.
+  // Mesma regra da migracao 0013.
+  if (quem === 'empate' && meus > 0) registrarEmpateQueVale(duelo.meuId);
+
   return { status: 'encerrada', winnerId: duelo.winnerId, pontosHost: meus, pontosGuest: dele };
 }
 
@@ -389,6 +395,40 @@ function registrarStatsLocais(
   };
 
   window.localStorage.setItem(CHAVE_STATS, JSON.stringify(todos));
+}
+
+/* -------------------------------------------------------------------------
+ * Empates que valem medalha
+ *
+ * `empates` conta todos os empates, inclusive o 0 a 0 - e assim deve ser, o
+ * cartel do perfil mostra o que aconteceu. Mas a medalha "Empate tecnico" so
+ * vale com placar: um 0 a 0 e o resultado mais facil do jogo (basta os dois
+ * lados errarem tudo), e a medalha se propoe a ser o mais raro.
+ *
+ * Contador separado, e nao um desconto no de cima, porque nao da para saber
+ * depois com que placar um empate ja somado terminou. No servidor a mesma
+ * conta sai do historico de partidas (migracao 0013); aqui, sem historico
+ * completo, ela e somada na hora.
+ * ---------------------------------------------------------------------- */
+
+type MapaEmpates = Record<string, number>;
+
+const lerEmpatesQueValem = (): MapaEmpates => {
+  if (typeof window === 'undefined') return {};
+  try {
+    return JSON.parse(window.localStorage.getItem(CHAVE_EMPATES_VALIDOS) || '{}') as MapaEmpates;
+  } catch {
+    return {};
+  }
+};
+
+export const empatesQueValemLocais = (userId: string): number =>
+  lerEmpatesQueValem()[userId] ?? 0;
+
+function registrarEmpateQueVale(userId: string) {
+  const todos = lerEmpatesQueValem();
+  todos[userId] = (todos[userId] ?? 0) + 1;
+  window.localStorage.setItem(CHAVE_EMPATES_VALIDOS, JSON.stringify(todos));
 }
 
 /**

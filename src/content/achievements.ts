@@ -31,6 +31,7 @@ export type AchievementCriteria =
    * quantidade de perguntas E somar o mesmo bonus de velocidade, em milesimos
    * de segundo. Por isso vale medalha ja no primeiro.
    */
+  // Empates que VALEM: o 0 a 0 fica de fora (ver migracao 0013).
   | { kind: 'pvp_draws'; count: number }
   /**
    * Desafios diarios concluidos, no total.
@@ -309,7 +310,8 @@ export const achievements: AchievementDefinition[] = [
     id: 'duelo-empate',
     title: 'Empate técnico',
     description:
-      'Terminou um duelo empatado — mesmo número de acertos e o mesmo bônus de velocidade. É o resultado mais raro do jogo.',
+      'Terminou um duelo empatado com placar — mesmo número de acertos e o mesmo bônus de velocidade. ' +
+      'É o resultado mais raro do jogo. Empate em 0 a 0 não conta: errar tudo dos dois lados não é feito nenhum.',
     icon: '🤝',
     criteria: { kind: 'pvp_draws', count: 1 },
   },

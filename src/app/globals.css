@@ -131,13 +131,21 @@
  * animacao CSS, ela roda na taxa do aparelho (120 Hz num celular que tenha)
  * sem uma unica linha de JavaScript por quadro.
  *
- * `--cq-inicio` e a fracao de tempo que ainda restava quando a barra apareceu
- * - ela nao comeca sempre em 1, porque voltar para uma pergunta ja comecada
- * retoma o tempo que sobrou.
+ * A animacao e SEMPRE cheia: de 1 a 0 na duracao inteira da pergunta. Quem
+ * comeca no meio (voltar para uma pergunta ja em andamento) nao muda a
+ * animacao - entra nela adiantada, com `animation-delay` negativo. Isso e o
+ * que a mantem presa ao relogio: a duracao e o ponto de partida sao os mesmos
+ * do primeiro ao ultimo quadro, entao nada aqui muda quando a tela redesenha.
+ *
+ * A versao anterior fazia o contrario - recalculava duracao e ponto de partida
+ * a cada segundo. Como o navegador NAO reinicia a animacao quando so a duracao
+ * muda, o tempo ja decorrido passava a ser medido contra uma duracao cada vez
+ * menor: a barra andava mais rapido que o relogio, aos trancos, e zerava com a
+ * pergunta ainda pela metade.
  */
 @keyframes cq-cronometro {
   from {
-    transform: scaleX(var(--cq-inicio, 1));
+    transform: scaleX(1);
   }
   to {
     transform: scaleX(0);
