@@ -79,6 +79,7 @@ for (const arquivo of [
   'supabase/migrations/0012_relogio_do_servidor.sql',
   'supabase/migrations/0013_empate_zero_a_zero.sql',
   'supabase/seed.sql',
+  'supabase/migrations/0015_conquistas_no_perfil_publico.sql',
 ]) {
   await db.exec(ler(arquivo));
 }

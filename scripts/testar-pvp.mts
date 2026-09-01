@@ -78,6 +78,7 @@ for (const arquivo of [
   'supabase/seed.sql',
   // Depois do seed: a 0014 exige as licoes novas ja no banco.
   'supabase/migrations/0014_trilha_python_listas_dicionarios.sql',
+  'supabase/migrations/0015_conquistas_no_perfil_publico.sql',
 ]) {
   await db.exec(ler(arquivo));
 }

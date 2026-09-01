@@ -5,9 +5,9 @@ cada atualização acrescentou.
 
 | | |
 | --- | --- |
-| **Versão atual** | `v1.11` |
+| **Versão atual** | `v1.11.1` |
 | **Última atualização** | 01/09/2026 |
-| **Migração mais recente** | `0014_trilha_python_listas_dicionarios.sql` |
+| **Migração mais recente** | `0015_conquistas_no_perfil_publico.sql` |
 | **PDF** | [`CodeQuest-Versoes.pdf`](CodeQuest-Versoes.pdf) — gerado por `npm run doc:pdf` |
 
 > As versões foram numeradas a partir do histórico do Git. Cada commit de funcionalidade virou uma
@@ -57,8 +57,8 @@ Três decisões atravessam o projeto inteiro:
 | Tags de perfil | **22** |
 | Perguntas do duelo | **88** — JS 40, Python 12, Java 10, geral 10, C# 8, C++ 8 |
 | Telas | **14** rotas |
-| Migrações SQL | **14** |
-| Suítes de teste | **13** |
+| Migrações SQL | **15** |
+| Suítes de teste | **14** |
 | Divisões do ranqueado | **22**, em 8 patamares |
 
 ---
@@ -80,17 +80,19 @@ Três decisões atravessam o projeto inteiro:
 - O worker de JavaScript tem `fetch`, `XMLHttpRequest`, `WebSocket`, `importScripts`, `indexedDB`,
   `caches` e `Worker` removidos antes de rodar o código do aluno; laço infinito morre por
   `terminate()`.
-- **Validação estrutural**: além de conferir a saída, 61 exercícios exigem que a solução realmente
-  use o que a lição ensinou — um `for` de verdade, não um `print(5050)` com a resposta na mão.
+- **Validação estrutural**: além de conferir a saída, 77 exercícios exigem que a solução realmente
+  use o que a lição ensinou — um `for` de verdade, não um `print(5050)` com a resposta na mão. E a
+  regra de cada exercício só pode exigir nomes que o próprio enunciado dá, para nunca reprovar quem
+  resolveu certo.
 - As **alternativas são embaralhadas** por aluno, tanto na trilha quanto no duelo.
-- As soluções de referência são executadas de verdade nos testes: **28/28 em Python, 33/33 em
+- As soluções de referência são executadas de verdade nos testes: **44/44 em Python, 33/33 em
   JavaScript**.
 
 ### 3.2 Gamificação
 
 - **XP** de 20 a 120 por exercício; **nível = XP ÷ 100 + 1**; refazer lição não dá XP de novo.
 - **Streak** por data local: estudou ontem soma 1, pulou um dia volta pra 1.
-- **43 conquistas**, avaliadas a cada conclusão, com cartão animado no desbloqueio.
+- **45 conquistas**, avaliadas a cada conclusão, com cartão animado no desbloqueio.
 - **22 tags** de perfil, incluindo quatro **secretas** e a tag exclusiva **Desenvolvedor/Dono**,
   atribuída só por campo direto no banco.
 - **Ranking** por XP, com aba Global e aba Amigos.
@@ -101,7 +103,7 @@ Três decisões atravessam o projeto inteiro:
   banco, não só na tela.
 - Pedidos de amizade: buscar, enviar, aceitar, recusar, remover.
 - **Perfil público** de qualquer usuário em `/usuario`, mostrando XP, nível, streak, tags e
-  conquistas — e **nunca o e-mail**.
+  conquistas — e **nunca o e-mail**. O progresso lição a lição também fica de fora: ele é privado.
 - **Foto de perfil** com recorte e compressão no próprio aparelho.
 
 ### 3.4 Duelo 1v1 (PvP)
@@ -165,7 +167,7 @@ O build estático (`NEXT_OUTPUT=export`) é o que alimenta o `.apk` e o `.exe`.
 
 ### 3.9 Qualidade
 
-Doze suítes rodam num **Postgres de verdade** (PGlite), aplicando as migrações reais e testando com o
+Quatorze suítes rodam num **Postgres de verdade** (PGlite), aplicando as migrações reais e testando com o
 RLS ligado:
 
 `test:migrations` · `test:progresso` · `test:amigos` · `test:tags` · `test:pvp` · `test:ranqueado` ·
@@ -180,6 +182,35 @@ Mais `content:check` (integridade do currículo), `content:verify-python` e `con
 ## 4. Histórico de versões
 
 *Da mais recente para a mais antiga.*
+
+---
+
+### v1.11.1 — 01/09/2026 · as conquistas voltam a aparecer no perfil dos outros
+
+**Corrigido — o perfil público mostrava "0 de 45" para todo mundo**
+
+Abrir o perfil de outra pessoa mostrava a seção 🏆 Conquistas sempre vazia, com "Nenhuma conquista
+desbloqueada ainda" — inclusive para quem tinha dezenas delas. As tags, logo acima, apareciam
+normalmente.
+
+- **A causa.** `user_tags` ganhou leitura pública na migração 0004, quando o perfil público foi
+  criado. `user_achievements` ficou com a policy da 0001: `using (auth.uid() = user_id)` — só as
+  suas. A tela sempre pediu as conquistas do outro, e o banco sempre devolveu zero linhas.
+- **Por que passou tanto tempo despercebido.** RLS **filtra linhas, não levanta erro**. A consulta
+  volta com sucesso e uma lista vazia, e lista vazia é indistinguível de "essa pessoa não tem
+  conquista nenhuma". Não havia mensagem de erro em lugar nenhum — nem na tela, nem no console.
+- E nenhum teste podia ver isso: todos rodavam como superusuário do Postgres, que **ignora RLS**.
+  A suíte nova `test:perfil-publico` faz `set role authenticated` de propósito — é a única forma de
+  a policy realmente valer. Ela reproduz o bug com as migrações até a 0014 e mostra ele sumir com a
+  0015.
+
+**O que a correção não abriu**
+
+- Escrita continua restrita ao dono: ninguém concede conquista, nem apaga a de outro (testado).
+- **O progresso lição a lição continua privado** — `user_progress` não foi tocado.
+- E-mail continua fora de alcance: ele nem existe em `profiles`, mora em `auth.users`.
+
+**SQL:** `0015_conquistas_no_perfil_publico.sql`.
 
 ---
 
@@ -639,6 +670,7 @@ quantas vezes for preciso (ele é idempotente).
 | `0012_relogio_do_servidor.sql` | v1.10.1 | A pergunta devolve também o "agora" do servidor |
 | `0013_empate_zero_a_zero.sql` | v1.10.2 | Empate 0 a 0 deixa de valer a medalha de empate |
 | `0014_trilha_python_listas_dicionarios.sql` | v1.11 | Devolve a medalha/tag de trilha completa de quem ficou com dois módulos por fazer |
+| `0015_conquistas_no_perfil_publico.sql` | v1.11.1 | Leitura pública de `user_achievements`, para as conquistas aparecerem no perfil dos outros |
 
 ---
 

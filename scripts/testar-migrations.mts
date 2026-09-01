@@ -84,6 +84,7 @@ const migration0011 = ler('supabase/migrations/0011_cronometro_e_abandono.sql');
 const migration0012 = ler('supabase/migrations/0012_relogio_do_servidor.sql');
 const migration0013 = ler('supabase/migrations/0013_empate_zero_a_zero.sql');
 const migration0014 = ler('supabase/migrations/0014_trilha_python_listas_dicionarios.sql');
+const migration0015 = ler('supabase/migrations/0015_conquistas_no_perfil_publico.sql');
 const seed = ler('supabase/seed.sql');
 
 await db.exec(migration0001);
@@ -104,7 +105,8 @@ await db.exec(seed);
 // Listas e Dicionarios ja existem antes de mexer nas medalhas de trilha
 // completa. Rodada antes, ela recusa - e faz bem.
 await db.exec(migration0014);
-console.log('ok     primeira aplicacao (0001..0013 + seed + 0014)');
+await db.exec(migration0015);
+console.log('ok     primeira aplicacao (0001..0013 + seed + 0014/0015)');
 
 /* -------------------------------------------------------------------------
  * Um aluno com progresso, igual ao caso relatado
@@ -182,6 +184,7 @@ for (const rodada of [2, 3]) {
   await db.exec(migration0013);
   await db.exec(seed);
   await db.exec(migration0014);
+  await db.exec(migration0015);
   console.log(`ok     aplicacao ${rodada} concluida sem erro`);
 }
 

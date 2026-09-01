@@ -35,7 +35,8 @@
     "doc:pdf": "node scripts/gerar-pdf.mjs",
     "test:conquistas": "tsx scripts/testar-conquistas.mts",
     "test:entrada": "tsx scripts/testar-entrada.mts",
-    "test:trilha": "tsx scripts/testar-trilha.mts"
+    "test:trilha": "tsx scripts/testar-trilha.mts",
+    "test:perfil-publico": "tsx scripts/testar-perfil-publico.mts"
   },
   "dependencies": {
     "@capacitor/android": "^6.2.0",
