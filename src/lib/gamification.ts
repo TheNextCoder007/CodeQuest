@@ -21,14 +21,62 @@ export const xpToNextLevel = (xp: number): number =>
 export const levelProgress = (xp: number): number =>
   (Math.max(0, xp) % XP_PER_LEVEL) / XP_PER_LEVEL;
 
+/**
+ * Os titulos que acompanham o nivel.
+ *
+ * ---------------------------------------------------------------------------
+ * POR QUE ELES VAO ATE O NIVEL 50
+ *
+ * A escada antiga parava no nivel 20: quem chegava la ficava com o mesmo
+ * titulo para sempre. Como o teto de XP nao tem fim e a tag mais alta do jogo
+ * ("Lenda do CodeQuest") e do nivel 50, o 50 e o ponto natural de chegada -
+ * e agora e o ultimo degrau.
+ *
+ * ---------------------------------------------------------------------------
+ * COMO ESTENDER
+ *
+ * Quando entrarem trilhas novas e o teto subir, basta acrescentar linhas aqui.
+ * Duas regras que `npm run content:check` cobra:
+ *
+ *   - o primeiro degrau e o nivel 1 (ninguem pode ficar sem titulo);
+ *   - o ULTIMO degrau tem de ser o nivel mais alto previsto - hoje, 50.
+ *
+ * Os nomes nao repetem os das tags (`src/content/tags.ts`): tag e titulo
+ * aparecem lado a lado no perfil, e dois "Mestre do Código" na mesma linha
+ * pareceriam defeito.
+ */
+export interface TituloDeNivel {
+  /** A partir deste nivel, inclusive. */
+  nivel: number;
+  titulo: string;
+}
+
+export const TITULOS_DE_NIVEL: TituloDeNivel[] = [
+  { nivel: 1, titulo: 'Iniciante' },
+  { nivel: 3, titulo: 'Aprendiz' },
+  { nivel: 6, titulo: 'Programador' },
+  // Era "Desenvolvedor", e foi trocado: esse e o nome da tag exclusiva de quem
+  // construiu o CodeQuest, que pode estar equipada em qualquer nivel. Um aluno
+  // no nivel 12 aparecia como "Nível 12 · Desenvolvedor", igualzinho ao selo
+  // do dono.
+  { nivel: 10, titulo: 'Engenheiro' },
+  { nivel: 15, titulo: 'Arquiteto' },
+  { nivel: 20, titulo: 'Veterano' },
+  { nivel: 25, titulo: 'Mestre' },
+  { nivel: 30, titulo: 'Grão-mestre' },
+  { nivel: 35, titulo: 'Lenda do código' },
+  { nivel: 40, titulo: 'Lenda viva' },
+  { nivel: 45, titulo: 'Fenômeno' },
+  { nivel: 50, titulo: 'Mito' },
+];
+
 /** Titulo exibido ao lado do nivel, so para dar sabor. */
 export const levelTitle = (level: number): string => {
-  if (level >= 20) return 'Lenda do código';
-  if (level >= 15) return 'Arquiteto';
-  if (level >= 10) return 'Desenvolvedor';
-  if (level >= 6) return 'Programador';
-  if (level >= 3) return 'Aprendiz';
-  return 'Iniciante';
+  // De tras para frente: o primeiro degrau que o nivel alcanca e o titulo.
+  for (let i = TITULOS_DE_NIVEL.length - 1; i >= 0; i -= 1) {
+    if (level >= TITULOS_DE_NIVEL[i].nivel) return TITULOS_DE_NIVEL[i].titulo;
+  }
+  return TITULOS_DE_NIVEL[0].titulo;
 };
 
 /* -------------------------------------------------------------------------

@@ -5,7 +5,7 @@ cada atualização acrescentou.
 
 | | |
 | --- | --- |
-| **Versão atual** | `v1.11.1` |
+| **Versão atual** | `v1.11.2` |
 | **Última atualização** | 01/09/2026 |
 | **Migração mais recente** | `0015_conquistas_no_perfil_publico.sql` |
 | **PDF** | [`CodeQuest-Versoes.pdf`](CodeQuest-Versoes.pdf) — gerado por `npm run doc:pdf` |
@@ -91,6 +91,8 @@ Três decisões atravessam o projeto inteiro:
 ### 3.2 Gamificação
 
 - **XP** de 20 a 120 por exercício; **nível = XP ÷ 100 + 1**; refazer lição não dá XP de novo.
+- **12 títulos de nível**, de Iniciante (1) a Mito (50): Iniciante, Aprendiz, Programador,
+  Engenheiro, Arquiteto, Veterano, Mestre, Grão-mestre, Lenda do código, Lenda viva, Fenômeno, Mito.
 - **Streak** por data local: estudou ontem soma 1, pulou um dia volta pra 1.
 - **45 conquistas**, avaliadas a cada conclusão, com cartão animado no desbloqueio.
 - **22 tags** de perfil, incluindo quatro **secretas** e a tag exclusiva **Desenvolvedor/Dono**,
@@ -182,6 +184,45 @@ Mais `content:check` (integridade do currículo), `content:verify-python` e `con
 ## 4. Histórico de versões
 
 *Da mais recente para a mais antiga.*
+
+---
+
+### v1.11.2 — 01/09/2026 · os títulos de nível vão até o 50
+
+**Novo — a escada de títulos parava no nível 20**
+
+Quem passava do nível 20 ficava com "Lenda do código" para sempre. Eram 6 degraus; agora são **12**,
+e o último é o **nível 50** — o mesmo teto da tag mais alta do jogo, "Lenda do CodeQuest".
+
+| Nível | Título | | Nível | Título |
+| --- | --- | --- | --- | --- |
+| 1 | Iniciante | | 25 | Mestre |
+| 3 | Aprendiz | | 30 | Grão-mestre |
+| 6 | Programador | | 35 | Lenda do código |
+| 10 | Engenheiro | | 40 | Lenda viva |
+| 15 | Arquiteto | | 45 | Fenômeno |
+| 20 | Veterano | | 50 | Mito |
+
+- **"Lenda do código" subiu do nível 20 para o 35.** Ela é claramente um título de chegada, e ficava
+  estranha a 40 % do caminho. Quem já estava acima do 35 **não perde nada** — continua com ela, e
+  agora tem mais três degraus pela frente.
+- Quem está entre o 20 e o 34 passa a ver Veterano, Mestre ou Grão-mestre. É a única mudança que
+  troca um título por outro, e ela é honesta: nível 20 de 50 não é o topo.
+- **"Desenvolvedor" (nível 10) virou "Engenheiro".** `Desenvolvedor` é o nome da tag exclusiva de
+  quem construiu o CodeQuest, e ela pode estar equipada em qualquer nível — um aluno no nível 12
+  aparecia como "Nível 12 · Desenvolvedor", igualzinho ao selo do dono.
+
+**A escada virou uma tabela, e `content:check` a vigia**
+
+Estender agora é acrescentar uma linha em `TITULOS_DE_NIVEL`. O `content:check` recusa se:
+
+- o primeiro degrau não for o nível 1, ou o último não for o nível 50;
+- os níveis não subirem, ou houver título repetido;
+- um título coincidir com o nome de uma **tag que possa aparecer no mesmo nível**. A conferência é
+  nível a nível, e não por nome: a tag "Arquiteto" é do nível 20 e o título homônimo vai do 15 ao
+  19, então os dois nunca se encontram e a regra não reclama à toa.
+
+**SQL:** nenhum — o título é calculado na tela, a partir do nível.
 
 ---
 

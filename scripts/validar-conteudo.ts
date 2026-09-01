@@ -12,6 +12,8 @@ import { pvpQuestions } from '../src/content/pvp-questions';
 import { normalizarResposta } from '../src/lib/pvp/regras';
 import { normalizarRespostaDaTrilha } from '../src/lib/exercises/normalizar';
 import { VERSAO } from '../src/lib/versao';
+import { TITULOS_DE_NIVEL, levelTitle } from '../src/lib/gamification';
+import { tags } from '../src/content/tags';
 import { readFileSync } from 'node:fs';
 import { TEMAS_PVP } from '../src/content/pvp-temas';
 
@@ -271,6 +273,84 @@ try {
   problemas.push('nao consegui ler o HISTORICO.md para conferir a versao');
 }
 
+/* -------------------------------------------------------------------------
+ * Titulos de nivel
+ *
+ * A escada antiga parava no nivel 20, e quem passava dali ficava com o mesmo
+ * titulo para sempre. Agora ela vai ate o 50, e estas regras existem para o
+ * proximo degrau acrescentado nao reabrir o buraco por descuido.
+ * ---------------------------------------------------------------------- */
+
+const NIVEL_MAXIMO = 50;
+
+if (TITULOS_DE_NIVEL[0]?.nivel !== 1) {
+  problemas.push('o primeiro titulo de nivel precisa comecar no nivel 1');
+}
+
+const ultimoTitulo = TITULOS_DE_NIVEL[TITULOS_DE_NIVEL.length - 1];
+if (ultimoTitulo?.nivel !== NIVEL_MAXIMO) {
+  problemas.push(
+    `o ultimo titulo de nivel precisa ser o do nivel ${NIVEL_MAXIMO} ` +
+      `(hoje e o do nivel ${ultimoTitulo?.nivel})`,
+  );
+}
+
+for (let i = 1; i < TITULOS_DE_NIVEL.length; i += 1) {
+  if (TITULOS_DE_NIVEL[i].nivel <= TITULOS_DE_NIVEL[i - 1].nivel) {
+    problemas.push(
+      `os titulos de nivel precisam subir: ${TITULOS_DE_NIVEL[i - 1].nivel} ` +
+        `vem antes de ${TITULOS_DE_NIVEL[i].nivel}`,
+    );
+  }
+}
+
+const titulosRepetidos = TITULOS_DE_NIVEL.map((t) => t.titulo).filter(
+  (titulo, i, todos) => todos.indexOf(titulo) !== i,
+);
+if (titulosRepetidos.length > 0) {
+  problemas.push(`titulo de nivel repetido: ${[...new Set(titulosRepetidos)].join(', ')}`);
+}
+
+/*
+ * Tag e titulo aparecem lado a lado no perfil, e dois nomes iguais na mesma
+ * linha pareceriam defeito. O que importa e a coincidencia REAL, nivel a
+ * nivel - e nao o nome aparecer nas duas listas:
+ *
+ *   - tag de nivel so pode colidir se for desbloqueada DENTRO da faixa do
+ *     titulo. A tag "Arquiteto" e do nivel 20 e o titulo homonimo vai do 15 ao
+ *     19, entao os dois nunca aparecem juntos;
+ *   - qualquer outra tag (secreta, de trilha, de duelo, a do dono) pode estar
+ *     equipada em QUALQUER nivel, entao colide sempre.
+ */
+const colisoes: string[] = [];
+for (let i = 0; i < TITULOS_DE_NIVEL.length; i += 1) {
+  const { nivel, titulo } = TITULOS_DE_NIVEL[i];
+  const ate = (TITULOS_DE_NIVEL[i + 1]?.nivel ?? NIVEL_MAXIMO + 1) - 1;
+
+  for (const tag of tags) {
+    if (tag.name.toLowerCase() !== titulo.toLowerCase()) continue;
+
+    const soNoNivel = tag.criteria.kind === 'level' ? tag.criteria.level : null;
+    const podeCoincidir = soNoNivel === null || (soNoNivel >= nivel && soNoNivel <= ate);
+    if (podeCoincidir) {
+      colisoes.push(
+        `"${titulo}" (titulo dos niveis ${nivel}-${ate}) tem o mesmo nome da tag "${tag.name}"`,
+      );
+    }
+  }
+}
+if (colisoes.length > 0) {
+  colisoes.forEach((colisao) => problemas.push(colisao));
+}
+
+// Ninguem pode ficar sem titulo, do nivel 1 ao teto.
+const semTitulo = Array.from({ length: NIVEL_MAXIMO }, (_, i) => i + 1).filter(
+  (nivel) => !levelTitle(nivel),
+);
+if (semTitulo.length > 0) {
+  problemas.push(`niveis sem titulo: ${semTitulo.join(', ')}`);
+}
+
 if (problemas.length > 0) {
   console.error(`\n${problemas.length} problema(s) encontrado(s) no curriculo:\n`);
   problemas.forEach((problema) => console.error(`  - ${problema}`));
@@ -278,6 +358,10 @@ if (problemas.length > 0) {
 }
 
 console.log(`Versao ${VERSAO} (site e HISTORICO.md batem).`);
+console.log(
+  `Titulos de nivel: ${TITULOS_DE_NIVEL.length}, do nivel 1 (${TITULOS_DE_NIVEL[0].titulo}) ` +
+    `ao ${NIVEL_MAXIMO} (${ultimoTitulo.titulo}).`,
+);
 console.log(
   `Curriculo validado: ${languages.length} linguagens, ${totalLicoes} licoes, ${totalExercicios} exercicios, ${achievements.length} conquistas.`,
 );
