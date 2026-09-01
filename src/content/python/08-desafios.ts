@@ -11,7 +11,7 @@ export const desafios: Module = {
   title: 'Desafios',
   description: 'Problemas que combinam tudo que você aprendeu. Nada de conteúdo novo — só raciocínio.',
   icon: '🧩',
-  orderIndex: 6,
+  orderIndex: 8,
   lessons: [
     {
       id: 'py-des-01',

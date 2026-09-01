@@ -13,7 +13,7 @@
   },
   "py-fund-04-e2": {
     "lang": "python",
-    "codigo": "mensagem = \"Tudo certo!\"\nprint(mensagem)"
+    "codigo": "print(\"Tudo certo!\")"
   },
   "py-fund-05-e1": {
     "lang": "python",
@@ -242,5 +242,69 @@
   "js-proj-02-e3": {
     "lang": "javascript",
     "codigo": "function situacao(media) {\n  if (media >= 7) return \"Aprovado\";\n  if (media >= 5) return \"Recuperação\";\n  return \"Reprovado\";\n}\n\nconst turma = [\n  { nome: \"Ana\", nota1: 7, nota2: 9 },\n  { nome: \"Luiz\", nota1: 4, nota2: 5 },\n  { nome: \"Kauan\", nota1: 6, nota2: 6 },\n];\n\nlet somaDasMedias = 0;\nlet aprovados = 0;\n\nfor (const aluno of turma) {\n  const media = (aluno.nota1 + aluno.nota2) / 2;\n  console.log(`${aluno.nome}: média ${media} - ${situacao(media)}`);\n  somaDasMedias += media;\n  if (situacao(media) === \"Aprovado\") {\n    aprovados++;\n  }\n}\n\nconsole.log(\"---\");\nconsole.log(`Média da turma: ${Math.round((somaDasMedias / turma.length) * 100) / 100}`);\nconsole.log(`Aprovados: ${aprovados} de ${turma.length}`);"
+  },
+  "py-lis-01-e1": {
+    "lang": "python",
+    "codigo": "cores = [\"azul\", \"verde\", \"roxo\"]\nprint(cores[0])\nprint(cores[-1])"
+  },
+  "py-lis-01-e2": {
+    "lang": "python",
+    "codigo": "compras = [\"arroz\", \"feijão\", \"café\", \"sal\"]\nprint(len(compras))"
+  },
+  "py-lis-02-e1": {
+    "lang": "python",
+    "codigo": "time = [\"Ana\", \"Luiz\", \"Davi\"]\ntime.append(\"Kauan\")\nprint(time)"
+  },
+  "py-lis-02-e2": {
+    "lang": "python",
+    "codigo": "fila = [\"Alan\", \"Carlos\", \"Dora\"]\nfila[0] = \"Bruna\"\nfila.remove(\"Carlos\")\nprint(fila)"
+  },
+  "py-lis-03-e1": {
+    "lang": "python",
+    "codigo": "frutas = [\"uva\", \"pera\", \"manga\"]\nfor fruta in frutas:\n    print(fruta)"
+  },
+  "py-lis-03-e2": {
+    "lang": "python",
+    "codigo": "numeros = [10, 30, 8, 45, 20]\nfor numero in numeros:\n    if numero > 20:\n        print(numero)"
+  },
+  "py-lis-04-e1": {
+    "lang": "python",
+    "codigo": "valores = [10, 5, 20, 5]\nprint(sum(valores))\nprint(sum(valores) / len(valores))"
+  },
+  "py-lis-04-e2": {
+    "lang": "python",
+    "codigo": "pontos = [7, 3, 12]\nprint(sorted(pontos))\nprint(pontos)"
+  },
+  "py-dic-01-e1": {
+    "lang": "python",
+    "codigo": "livro = {\"titulo\": \"Python Fluente\", \"paginas\": 800}\nprint(livro[\"titulo\"])\nprint(livro[\"paginas\"])"
+  },
+  "py-dic-01-e2": {
+    "lang": "python",
+    "codigo": "perfil = {\"usuario\": \"dev\", \"nivel\": 3}\nperfil[\"cidade\"] = \"Recife\"\nperfil[\"nivel\"] = 5\nprint(perfil)"
+  },
+  "py-dic-02-e1": {
+    "lang": "python",
+    "codigo": "config = {\"idioma\": \"pt-BR\"}\nprint(config.get(\"tema\", \"escuro\"))\nprint(config[\"idioma\"])"
+  },
+  "py-dic-02-e2": {
+    "lang": "python",
+    "codigo": "cadastro = {\"nome\": \"Dev\", \"senha\": \"1234\"}\nif \"email\" in cadastro:\n    print(\"Cadastro completo\")\nelse:\n    print(\"Falta o e-mail\")"
+  },
+  "py-dic-03-e1": {
+    "lang": "python",
+    "codigo": "estoque = {\"caneta\": 12, \"caderno\": 3, \"borracha\": 7}\nfor produto, quantidade in estoque.items():\n    print(f\"{produto}: {quantidade}\")"
+  },
+  "py-dic-03-e2": {
+    "lang": "python",
+    "codigo": "vendas = {\"seg\": 100, \"ter\": 150, \"qua\": 90}\nprint(sum(vendas.values()))"
+  },
+  "py-dic-04-e1": {
+    "lang": "python",
+    "codigo": "bichos = [\"gato\", \"cão\", \"gato\", \"gato\", \"cão\"]\ncontagem = {}\nfor bicho in bichos:\n    contagem[bicho] = contagem.get(bicho, 0) + 1\nprint(contagem)"
+  },
+  "py-dic-04-e2": {
+    "lang": "python",
+    "codigo": "pontos = {\"Ana\": 80, \"Luiz\": 95, \"Davi\": 60}\nlider = \"\"\nmaior = 0\nfor nome, valor in pontos.items():\n    if valor > maior:\n        maior = valor\n        lider = nome\nprint(lider)\nprint(maior)"
   }
 }

@@ -7,7 +7,7 @@ export const funcoes: Module = {
   title: 'Funções',
   description: 'Dar nome a um pedaço de lógica, reaproveitar código e parar de repetir você mesmo.',
   icon: '⚙️',
-  orderIndex: 5,
+  orderIndex: 7,
   lessons: [
     {
       id: 'py-func-01',

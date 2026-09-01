@@ -88,6 +88,8 @@ for (const arquivo of [
   'supabase/migrations/0012_relogio_do_servidor.sql',
   'supabase/migrations/0013_empate_zero_a_zero.sql',
   'supabase/seed.sql',
+  // Depois do seed: a 0014 exige as licoes novas ja no banco.
+  'supabase/migrations/0014_trilha_python_listas_dicionarios.sql',
 ]) {
   await db.exec(ler(arquivo));
 }

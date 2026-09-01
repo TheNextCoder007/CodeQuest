@@ -13,11 +13,16 @@
  *
  *   1. a SOLUCAO DE REFERENCIA passa (nenhuma regra e restritiva demais);
  *   2. a TRAPACA - so imprimir a saida esperada - e recusada;
- *   3. todo exercicio de codigo tem regra (nao da para esquecer um novo).
+ *   3. todo exercicio de codigo tem regra (nao da para esquecer um novo);
+ *   4. a regra so exige nomes que o PROPRIO exercicio menciona.
  *
  * O item 1 e o que importa: e facil escrever uma regra que barra a trapaca e,
  * junto, barra quem resolveu certo. Por isso as duas metades andam sempre
  * juntas aqui.
+ *
+ * O item 4 existe porque 1 e 3 nao bastam: a regra e a solucao de referencia
+ * sao ambas escritas por nos, e podem concordar entre si enquanto discordam do
+ * enunciado. Ver a secao 4b.
  *
  * Rodar com: npm run test:estrutura
  */
@@ -171,6 +176,79 @@ console.log(
   `ok     ${(exerciciosDeCodigo.length - isentos) * 2} tentativas de trapaca recusadas ` +
     `(2 formatos x ${exerciciosDeCodigo.length - isentos} exercicios; ` +
     `${isentos} isentos, onde o literal e a licao)`,
+);
+
+/* =========================================================================
+ * 4b. A regra fala DESTE exercicio?
+ *
+ * ---------------------------------------------------------------------------
+ * O BURACO QUE ISTO FECHA
+ *
+ * A secao 3 confere a regra contra a solucao de referencia - e as duas sao
+ * escritas por nos. Quando a regra esta errada e a solucao e escrita para
+ * satisfazer a REGRA em vez de resolver o EXERCICIO, as duas concordam entre
+ * si e discordam do enunciado. O teste passa e o aluno e reprovado.
+ *
+ * Foi o que aconteceu com `py-fund-04-e2`. O exercicio pede para fechar um
+ * parentese (`print("Tudo certo!"`), mas a regra tinha sido copiada do
+ * `js-fund-04-e2`, que e um erro de digitacao no nome de uma variavel: exigia
+ * `print(mensagem)`. A solucao de referencia foi escrita com uma variavel
+ * `mensagem` que o exercicio nunca menciona - e assim rule e solucao ficaram
+ * de acordo, enquanto `print("Tudo certo!")`, a unica resposta certa, era
+ * recusada.
+ *
+ * A conferencia: todo NOME PROPRIO que a regra EXIGE tem de aparecer em algum
+ * lugar do proprio exercicio - enunciado, codigo inicial, dica ou explicacao.
+ * Palavra-chave da linguagem nao conta, porque `for` e `def` nao precisam
+ * estar escritos no enunciado.
+ *
+ * O lado da regra e o que importa aqui, e nao o da solucao: exigir um nome e
+ * obrigar o aluno a usar exatamente aquele nome, o que so faz sentido se o
+ * exercicio o der. A solucao, ao contrario, e livre para inventar nomes seus
+ * (a variavel de um `for`, um acumulador) - conferi-la do mesmo jeito
+ * reprovaria escolhas legitimas, e nem pegaria o caso acima, onde a solucao
+ * errada tambem inventava o `mensagem`.
+ * ====================================================================== */
+secao('a regra fala do exercicio certo');
+
+/** Palavras da linguagem: podem aparecer sem estar no enunciado. */
+const DA_LINGUAGEM = new Set([
+  'if', 'else', 'elif', 'for', 'while', 'def', 'return', 'continue', 'break', 'and', 'or', 'not',
+  'in', 'is', 'range', 'print', 'input', 'int', 'float', 'str', 'len', 'sum', 'round', 'abs',
+  'sorted', 'append', 'items', 'keys', 'values', 'get', 'function', 'const', 'let', 'var',
+  'console', 'log', 'prompt', 'Number', 'String', 'Math', 'of', 'push', 'length', 'true', 'false',
+  'True', 'False', 'None', 'null', 'undefined',
+]);
+
+/**
+ * Os nomes proprios que um padrao exige.
+ *
+ * Os escapes saem primeiro: sem isso `\bfor\b` pareceria exigir um
+ * identificador chamado "bfor".
+ */
+const nomesExigidos = (padrao: string): string[] => {
+  const semEscapes = padrao.replace(/\\[a-zA-Z]/g, ' ').replace(/\\./g, ' ');
+  return [...new Set(semEscapes.match(/[A-Za-z_][A-Za-z0-9_]{2,}/g) ?? [])].filter(
+    (n) => !DA_LINGUAGEM.has(n),
+  );
+};
+
+const foraDeContexto: string[] = [];
+for (const { e } of exerciciosDeCodigo) {
+  const doExercicio = [e.prompt, e.starterCode ?? '', e.hint ?? '', e.explanation].join('\n');
+
+  for (const padrao of e.requisitos?.exige ?? []) {
+    for (const nome of nomesExigidos(padrao)) {
+      if (!doExercicio.includes(nome)) {
+        foraDeContexto.push(`${e.id}: a regra exige "${nome}", que o exercício nunca menciona`);
+      }
+    }
+  }
+}
+
+ok(foraDeContexto.length === 0, `regra/solução fora do exercício:\n  ${foraDeContexto.join('\n  ')}`);
+console.log(
+  `ok     ${exerciciosDeCodigo.length} exercicios: toda regra so exige nomes do proprio enunciado`,
 );
 
 /* =========================================================================

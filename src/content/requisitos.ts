@@ -52,9 +52,24 @@ export const REQUISITOS: Record<string, RequisitosDeCodigo> = {
     proibe: ['^\\s*print\\s*\\(\\s*["\']teste'],
     motivo: 'Comente a linha do teste com # em vez de apagá-la — é isso que a lição pratica.',
   },
+  /*
+   * ATENCAO ao comparar com `js-fund-04-e2`: os dois tem o mesmo numero e a
+   * mesma saida ("Tudo certo!"), mas NAO sao o mesmo exercicio.
+   *
+   *   JavaScript - erro de digitacao no nome da variavel
+   *                (`let mensagem` / `console.log(menssagem)`);
+   *   Python     - parentese que ficou sem fechar (`print("Tudo certo!"`).
+   *
+   * A regra daqui ja foi a do JavaScript, copiada: exigia `print(mensagem)`
+   * num exercicio onde nao existe variavel nenhuma. A resposta certa - fechar
+   * o parentese - era recusada, com uma mensagem que falava de uma variavel
+   * que o aluno nunca viu. Aqui imprimir o literal E a licao, como nos outros
+   * exercicios de `literalEhASolucao`.
+   */
   'py-fund-04-e2': {
-    exige: ['print\\s*\\(\\s*mensagem\\s*\\)'],
-    motivo: 'Corrija o nome da variável no print() em vez de escrever o texto direto.',
+    literalEhASolucao: true,
+    exige: ['print\\s*\\('],
+    motivo: USE_A_ESTRUTURA('print()'),
   },
   'py-fund-05-e1': {
     exige: ['input\\s*\\(', 'print\\s*\\('],
@@ -117,6 +132,89 @@ export const REQUISITOS: Record<string, RequisitosDeCodigo> = {
   'py-rep-04-e1': {
     exige: ['\\bfor\\b', '\\bcontinue\\b'],
     motivo: USE_A_ESTRUTURA('continue para pular o 7'),
+  },
+
+  /* =====================================================================
+   * PYTHON - Listas
+   * ================================================================== */
+  'py-lis-01-e1': {
+    exige: ['cores\\s*=\\s*\\[', 'cores\\s*\\['],
+    proibe: ['print\\s*\\(\\s*["\']azul'],
+    motivo: 'Crie a lista `cores` e mostre os itens por índice, em vez de escrever os textos.',
+  },
+  'py-lis-01-e2': { exige: ['len\\s*\\('], proibe: ['print\\s*\\(\\s*4\\s*\\)'], motivo: CALCULE },
+  'py-lis-02-e1': {
+    exige: ['append\\s*\\(', 'print\\s*\\(\\s*time\\s*\\)'],
+    motivo: 'Use append() para acrescentar e mostre a própria lista `time`.',
+  },
+  'py-lis-02-e2': {
+    exige: ['fila\\s*\\[\\s*0\\s*\\]\\s*=', 'remove\\s*\\(', 'print\\s*\\(\\s*fila\\s*\\)'],
+    motivo: 'Troque pelo índice, remova pelo valor e mostre a própria lista `fila`.',
+  },
+  'py-lis-03-e1': { exige: ['\\bfor\\b', '\\bin\\b'], motivo: USE_A_ESTRUTURA('um for percorrendo a lista') },
+  'py-lis-03-e2': {
+    exige: ['\\bfor\\b', '\\bif\\b'],
+    proibe: ['print\\s*\\(\\s*30\\s*\\)'],
+    motivo: USE_A_ESTRUTURA('um for com if para escolher o que mostrar'),
+  },
+  'py-lis-04-e1': {
+    exige: ['sum\\s*\\(', 'len\\s*\\('],
+    proibe: ['40\\s*\\)', '10\\.0'],
+    motivo: CALCULE,
+  },
+  'py-lis-04-e2': {
+    // `sorted()` e o ponto da questao: `.sort()` alteraria a lista original e a
+    // segunda linha sairia ordenada tambem.
+    exige: ['sorted\\s*\\('],
+    proibe: ['\\[\\s*3\\s*,\\s*7\\s*,\\s*12\\s*\\]'],
+    motivo: 'Use sorted() para não alterar a lista original, e mostre as duas versões.',
+  },
+
+  /* =====================================================================
+   * PYTHON - Dicionarios
+   * ================================================================== */
+  'py-dic-01-e1': {
+    exige: ['livro\\s*=\\s*\\{', 'livro\\s*\\['],
+    proibe: ['print\\s*\\(\\s*["\']Python Fluente'],
+    motivo: 'Crie o dicionário `livro` e mostre os valores pela chave, não o texto direto.',
+  },
+  'py-dic-01-e2': {
+    exige: ['perfil\\s*\\[', 'print\\s*\\(\\s*perfil\\s*\\)'],
+    motivo: 'Escreva nas chaves de `perfil` e mostre o próprio dicionário.',
+  },
+  'py-dic-02-e1': {
+    exige: ['get\\s*\\('],
+    proibe: ['print\\s*\\(\\s*["\']escuro'],
+    motivo: 'O valor padrão tem de vir do get(), não estar escrito no print().',
+  },
+  'py-dic-02-e2': {
+    exige: ['\\bif\\b', '\\bin\\b', 'cadastro'],
+    /*
+     * Ancorado na COLUNA ZERO, sem `\\s*` depois do `^`: a resposta certa tem
+     * este mesmo print, mas indentado dentro do `else`. Com `^\\s*` a regra
+     * reprovava a propria solucao de referencia.
+     */
+    proibe: ['^print\\s*\\(\\s*["\']Falta'],
+    motivo: USE_A_ESTRUTURA('um if com in para conferir a chave'),
+  },
+  'py-dic-03-e1': {
+    exige: ['\\bfor\\b', 'items\\s*\\('],
+    motivo: USE_A_ESTRUTURA('um for com items() para pegar chave e valor'),
+  },
+  'py-dic-03-e2': {
+    exige: ['sum\\s*\\(', 'values\\s*\\('],
+    proibe: ['340'],
+    motivo: CALCULE,
+  },
+  'py-dic-04-e1': {
+    exige: ['\\bfor\\b', 'contagem\\s*\\['],
+    proibe: ['["\']gato["\']\\s*:\\s*3'],
+    motivo: 'A contagem tem de ser feita percorrendo a lista, não escrita pronta.',
+  },
+  'py-dic-04-e2': {
+    exige: ['\\bfor\\b', '\\bif\\b', 'maior'],
+    proibe: ['print\\s*\\(\\s*["\']Luiz'],
+    motivo: 'Descubra o líder percorrendo o dicionário, em vez de escrever o nome.',
   },
 
   /* =====================================================================

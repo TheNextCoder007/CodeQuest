@@ -82,7 +82,7 @@ export const achievements: AchievementDefinition[] = [
   {
     id: 'meia-trilha',
     title: 'Meia trilha',
-    description: 'Doze lições concluídas — você passou da metade da trilha de Python.',
+    description: 'Doze lições concluídas — a trilha de Python pegou ritmo.',
     icon: '🧭',
     criteria: { kind: 'lessons_completed', count: 12 },
   },
@@ -115,6 +115,20 @@ export const achievements: AchievementDefinition[] = [
     criteria: { kind: 'module_completed', moduleId: 'py-repeticoes' },
   },
   {
+    id: 'modulo-listas',
+    title: 'Colecionador',
+    description: 'Você concluiu todo o módulo 📋 Listas.',
+    icon: '📋',
+    criteria: { kind: 'module_completed', moduleId: 'py-listas' },
+  },
+  {
+    id: 'modulo-dicionarios',
+    title: 'Guardião das chaves',
+    description: 'Você concluiu todo o módulo 🗂️ Dicionários.',
+    icon: '🗂️',
+    criteria: { kind: 'module_completed', moduleId: 'py-dicionarios' },
+  },
+  {
     id: 'modulo-funcoes',
     title: 'Arquiteto de funções',
     description: 'Você concluiu todo o módulo ⚙️ Funções.',
@@ -131,7 +145,7 @@ export const achievements: AchievementDefinition[] = [
   {
     id: 'trilha-python',
     title: 'Trilha de Python concluída',
-    description: 'Você terminou os sete módulos da trilha de Python. Respeito.',
+    description: 'Você terminou os nove módulos da trilha de Python. Respeito.',
     icon: '🏆',
     criteria: { kind: 'language_completed', languageSlug: 'python' },
   },

@@ -5,9 +5,9 @@ cada atualização acrescentou.
 
 | | |
 | --- | --- |
-| **Versão atual** | `v1.10.2` |
-| **Última atualização** | 27/08/2026 |
-| **Migração mais recente** | `0013_empate_zero_a_zero.sql` |
+| **Versão atual** | `v1.11` |
+| **Última atualização** | 01/09/2026 |
+| **Migração mais recente** | `0014_trilha_python_listas_dicionarios.sql` |
 | **PDF** | [`CodeQuest-Versoes.pdf`](CodeQuest-Versoes.pdf) — gerado por `npm run doc:pdf` |
 
 > As versões foram numeradas a partir do histórico do Git. Cada commit de funcionalidade virou uma
@@ -51,14 +51,14 @@ Três decisões atravessam o projeto inteiro:
 | | |
 | --- | --- |
 | Linguagens no catálogo | **5** (Python e JavaScript com trilha completa) |
-| Lições | **50** — Python 24, JavaScript 26 |
-| Exercícios | **100** — Python 46, JavaScript 54 |
-| Conquistas | **43** |
+| Lições | **58** — Python 32, JavaScript 26 |
+| Exercícios | **116** — Python 62, JavaScript 54 |
+| Conquistas | **45** |
 | Tags de perfil | **22** |
 | Perguntas do duelo | **88** — JS 40, Python 12, Java 10, geral 10, C# 8, C++ 8 |
 | Telas | **14** rotas |
-| Migrações SQL | **13** |
-| Suítes de teste | **12** |
+| Migrações SQL | **14** |
+| Suítes de teste | **13** |
 | Divisões do ranqueado | **22**, em 8 patamares |
 
 ---
@@ -67,7 +67,9 @@ Três decisões atravessam o projeto inteiro:
 
 ### 3.1 Trilhas e execução de código
 
-- **7 módulos por linguagem**: Fundamentos → Variáveis → Condicionais → Repetições → Funções →
+- **Python, 9 módulos**: Fundamentos → Variáveis → Condicionais → Repetições → Listas →
+  Dicionários → Funções → Desafios → Projeto Final.
+- **JavaScript, 7 módulos**: Fundamentos → Variáveis → Condicionais → Repetições → Funções →
   Desafios → Projeto Final.
 - Cada lição tem **teoria escrita**, exemplos e exercícios; o módulo N só abre com o N−1 inteiro
   concluído, e a rota `/licao/[id]` valida esse bloqueio (não adianta digitar a URL).
@@ -178,6 +180,66 @@ Mais `content:check` (integridade do currículo), `content:verify-python` e `con
 ## 4. Histórico de versões
 
 *Da mais recente para a mais antiga.*
+
+---
+
+### v1.11 — 01/09/2026 · Listas e Dicionários na trilha de Python
+
+Dois módulos novos no meio da trilha, e a correção de um exercício que estava recusando a resposta certa.
+
+**Corrigido — o exercício do parêntese recusava quem o resolvia**
+
+`py-fund-04-e2` pede para consertar `print("Tudo certo!"` — falta fechar o parêntese. Escrever
+`print("Tudo certo!")`, a única resposta possível, era **recusado**, com a mensagem "Corrija o nome
+da variável no print()". Uma variável que aquele exercício nunca teve.
+
+- **A causa.** A regra de estrutura tinha sido copiada do exercício de mesmo número da trilha de
+  JavaScript. Lá o exercício é outro: um erro de digitação no nome de uma variável
+  (`let mensagem` / `console.log(menssagem)`), e exigir `console.log(mensagem)` faz todo o sentido.
+  Em Python o exercício é um parêntese sem fechar, e a regra exigia `print(mensagem)` — impossível
+  de cumprir.
+- **Por que nenhum teste pegou.** `test:estrutura` confere a regra contra a solução de referência, e
+  a solução de referência tinha sido escrita para satisfazer a *regra* em vez de resolver o
+  *exercício* (`mensagem = "Tudo certo!"` / `print(mensagem)`). Regra e solução concordavam uma com
+  a outra e discordavam do enunciado. A verificação era circular.
+- **O conserto do buraco, não só do caso.** `test:estrutura` ganhou uma checagem nova: todo nome
+  próprio que uma regra **exige** tem de aparecer no próprio exercício — enunciado, código inicial,
+  dica ou explicação. Uma regra que pede `mensagem` num exercício que nunca fala em `mensagem` foi
+  copiada de outro lugar, e agora o teste diz isso.
+- E o verificador de saídas em Python deixou de manter uma **segunda cópia** das soluções de
+  referência: ele lê o mesmo `solucoes-referencia.json` que o outro teste. As duas cópias já tinham
+  divergido — era a antiga que ainda guardava a solução errada.
+
+**Novo — Listas e Dicionários**
+
+A ordem da trilha de Python passou a ser: Fundamentos → Variáveis → Condicionais → Repetições →
+**Listas** → **Dicionários** → Funções → Desafios → Projeto Final.
+
+- **📋 Listas** — 4 lições: criar e acessar por índice (incluindo o índice negativo), `append`/
+  `remove`/`pop` e alteração por posição, percorrer com `for ... in` e fatiar, e resumir com `sum`,
+  `max`, `min`, `sorted` e `join`.
+- **🗂️ Dicionários** — 4 lições: chave e valor contra a posição da lista, consulta segura com
+  `get()`/`in`/`del`, percurso com `items()`/`keys()`/`values()`, e o padrão de contagem
+  *ler com padrão, somar, guardar de volta*.
+- 8 lições, 16 exercícios, 2 medalhas de módulo. As 44 soluções de referência de Python foram
+  executadas de verdade: **44/44**.
+- A trilha inteira foi jogada no navegador, exercício por exercício: **62/62 aceitos**.
+
+**Novo — quem já tinha concluído a trilha**
+
+Como os módulos entraram no meio, quem terminou a trilha antes não está mais completo.
+
+- A medalha **Trilha de Python concluída** e a tag **Pythonista** são devolvidas de quem ainda tem
+  lições por fazer — e só elas.
+- **XP, nível, streak, progresso das lições e todas as outras conquistas ficam intactos.** Quem fez
+  Fundamentos até Funções fez de verdade.
+- As duas voltam sozinhas ao concluir os módulos novos, pela avaliação normal ou por
+  `conquistas_reavaliar()`.
+- A migração **se recusa a rodar** se o `seed.sql` novo ainda não tiver sido aplicado — sem as
+  lições novas no banco, ela puniria quem está em dia.
+- Suíte nova `test:trilha` (23 verificações) cobre exatamente isso, num Postgres de verdade.
+
+**SQL:** `seed.sql` (regerado) **e depois** `0014_trilha_python_listas_dicionarios.sql`.
 
 ---
 
@@ -576,6 +638,7 @@ quantas vezes for preciso (ele é idempotente).
 | `0011_cronometro_e_abandono.sql` | v1.10 | Cronômetro carimbado pelo servidor e abandono no estado da partida |
 | `0012_relogio_do_servidor.sql` | v1.10.1 | A pergunta devolve também o "agora" do servidor |
 | `0013_empate_zero_a_zero.sql` | v1.10.2 | Empate 0 a 0 deixa de valer a medalha de empate |
+| `0014_trilha_python_listas_dicionarios.sql` | v1.11 | Devolve a medalha/tag de trilha completa de quem ficou com dois módulos por fazer |
 
 ---
 

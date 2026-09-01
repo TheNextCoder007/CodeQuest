@@ -4,9 +4,11 @@ import { fundamentos } from './python/01-fundamentos';
 import { variaveis } from './python/02-variaveis';
 import { condicionais } from './python/03-condicionais';
 import { repeticoes } from './python/04-repeticoes';
-import { funcoes } from './python/05-funcoes';
-import { desafios } from './python/06-desafios';
-import { projetoFinal } from './python/07-projeto-final';
+import { listas } from './python/05-listas';
+import { dicionarios } from './python/06-dicionarios';
+import { funcoes } from './python/07-funcoes';
+import { desafios } from './python/08-desafios';
+import { projetoFinal } from './python/09-projeto-final';
 import { fundamentos as jsFundamentos } from './javascript/01-fundamentos';
 import { variaveis as jsVariaveis } from './javascript/02-variaveis';
 import { condicionais as jsCondicionais } from './javascript/03-condicionais';
@@ -35,7 +37,17 @@ export const languages: Language[] = [
     accent: 'from-mint-500 to-aqua-400',
     description: 'A linguagem mais amigável para começar. Trilha completa disponível.',
     available: true,
-    modules: [fundamentos, variaveis, condicionais, repeticoes, funcoes, desafios, projetoFinal],
+    modules: [
+      fundamentos,
+      variaveis,
+      condicionais,
+      repeticoes,
+      listas,
+      dicionarios,
+      funcoes,
+      desafios,
+      projetoFinal,
+    ],
   },
   {
     id: 'javascript',

@@ -1391,7 +1391,902 @@ insert into public.exercises (id, lesson_id, prompt, starter_code, validation_ty
   hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
   order_index = excluded.order_index;
 
-insert into public.modules (id, language_id, title, description, icon, order_index) values ('py-funcoes', 'python', 'Funções', 'Dar nome a um pedaço de lógica, reaproveitar código e parar de repetir você mesmo.', '⚙️', 5)
+insert into public.modules (id, language_id, title, description, icon, order_index) values ('py-listas', 'python', 'Listas', 'Guardar muitos valores num nome só — e trabalhar com todos eles de uma vez.', '📋', 5)
+  on conflict (id) do update set language_id = excluded.language_id, title = excluded.title,
+  description = excluded.description, icon = excluded.icon, order_index = excluded.order_index;
+insert into public.lessons (id, module_id, title, subtitle, content, polyglot, order_index) values ('py-lis-01', 'py-listas', 'Vários valores, um nome', 'Criar, acessar e contar', '## O problema de uma variável por valor
+
+Guardar três notas ainda dá para fazer com três variáveis:
+
+~~~py
+nota1 = 7.0
+nota2 = 9.5
+nota3 = 4.0
+~~~
+
+E trinta notas? E se você não souber quantas serão? A **lista** resolve isso: um nome só, guardando muitos valores em ordem.
+
+~~~py
+notas = [7.0, 9.5, 4.0]
+print(notas)
+~~~
+
+~~~text
+[7.0, 9.5, 4.0]
+~~~
+
+Colchetes `[ ]` criam a lista; as vírgulas separam os itens.
+
+## Cada item tem uma posição
+
+A posição chama-se **índice**, e a contagem começa em **zero** — não em um:
+
+~~~py
+linguagens = ["Python", "JavaScript", "Java"]
+print(linguagens[0])
+print(linguagens[2])
+~~~
+
+~~~text
+Python
+Java
+~~~
+
+| Item | `"Python"` | `"JavaScript"` | `"Java"` |
+| --- | --- | --- | --- |
+| Índice | 0 | 1 | 2 |
+
+Começar em zero parece estranho por uns dias e depois vira natural. Java, JavaScript, C# e C++ fazem igual.
+
+## Índice negativo: contando do fim
+
+Este aqui o Python tem e a maioria das linguagens não:
+
+~~~py
+linguagens = ["Python", "JavaScript", "Java"]
+print(linguagens[-1])
+~~~
+
+~~~text
+Java
+~~~
+
+`-1` é o último, `-2` o penúltimo. É bem mais legível que `linguagens[len(linguagens) - 1]`.
+
+## Quantos itens tem?
+
+`len()` responde — a mesma função que conta letras de um texto:
+
+~~~py
+linguagens = ["Python", "JavaScript", "Java"]
+print(len(linguagens))
+~~~
+
+~~~text
+3
+~~~
+
+> Cuidado com o índice que não existe: numa lista de 3 itens, o último índice válido é 2. Pedir `linguagens[3]` levanta `IndexError: list index out of range`.', '[{"language":"Python","code":"notas = [7, 9, 4]\nprint(notas[0])\nprint(len(notas))"},{"language":"JavaScript","code":"const notas = [7, 9, 4];\nconsole.log(notas[0]);\nconsole.log(notas.length);"},{"language":"Java","code":"int[] notas = {7, 9, 4};\nSystem.out.println(notas[0]);\nSystem.out.println(notas.length);"}]'::jsonb, 1)
+  on conflict (id) do update set module_id = excluded.module_id, title = excluded.title,
+  subtitle = excluded.subtitle, content = excluded.content, polyglot = excluded.polyglot,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'py-lis-01-e1', 'py-lis-01', 'Crie uma lista chamada `cores` com `azul`, `verde` e `roxo`, nessa ordem, e mostre o **primeiro** e o **último** item, um por linha.
+
+Saída esperada:
+
+~~~text
+azul
+roxo
+~~~',
+  '# crie a lista cores e mostre o primeiro e o último item
+', 'output_match', 'azul
+roxo',
+  null, null, 'cores[0] é o primeiro. Para o último, cores[-1] evita ter de contar.',
+  'O índice `0` é o primeiro item e `-1` é o último — sem precisar saber o tamanho da lista.', 30, 1)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'py-lis-01-e2', 'py-lis-01', 'A lista `compras` já existe. Mostre quantos itens ela tem.
+
+Saída esperada:
+
+~~~text
+4
+~~~',
+  'compras = ["arroz", "feijão", "café", "sal"]
+
+# mostre a quantidade de itens
+', 'output_match', '4',
+  null, null, 'len(compras) devolve a quantidade — deixe o Python contar por você.',
+  '`len()` conta os itens da lista. Escrever `print(4)` daria a mesma saída hoje e a saída errada assim que a lista mudasse.', 30, 2)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.lessons (id, module_id, title, subtitle, content, polyglot, order_index) values ('py-lis-02', 'py-listas', 'Listas mudam', 'append, remove e alterar por índice', '## Diferente de um número
+
+Quando você faz `idade = 25` e depois `idade = 26`, o valor antigo simplesmente some. Uma lista é diferente: ela pode **crescer, encolher e mudar por dentro**, continuando a ser a mesma lista.
+
+## Acrescentar no fim: append()
+
+~~~py
+tarefas = ["estudar"]
+tarefas.append("treinar")
+print(tarefas)
+~~~
+
+~~~text
+[''estudar'', ''treinar'']
+~~~
+
+Repare na forma: `tarefas.append(...)`. O ponto quer dizer "peça isto **à lista**". É um **método** — uma função que pertence a um valor.
+
+> `append()` não devolve a lista nova, ele altera a que já existe. Por isso `lista = lista.append(x)` é um erro clássico: você acaba com `None` no lugar da lista.
+
+## Trocar um item
+
+Basta atribuir na posição:
+
+~~~py
+tarefas = ["estudar", "treinar"]
+tarefas[0] = "dormir"
+print(tarefas)
+~~~
+
+~~~text
+[''dormir'', ''treinar'']
+~~~
+
+## Remover
+
+Duas formas, com propósitos diferentes:
+
+~~~py
+tarefas = ["dormir", "treinar", "ler"]
+tarefas.remove("treinar")
+print(tarefas)
+
+ultimo = tarefas.pop()
+print(ultimo)
+print(tarefas)
+~~~
+
+~~~text
+[''dormir'', ''ler'']
+ler
+[''dormir'']
+~~~
+
+| Método | O que faz |
+| --- | --- |
+| `append(x)` | põe `x` no fim |
+| `remove(x)` | tira a **primeira** ocorrência do valor `x` |
+| `pop()` | tira o último item **e devolve ele** |
+| `insert(i, x)` | põe `x` na posição `i` |
+
+Use `remove()` quando souber o **valor**; `pop()` quando quiser o item de volta.', null, 2)
+  on conflict (id) do update set module_id = excluded.module_id, title = excluded.title,
+  subtitle = excluded.subtitle, content = excluded.content, polyglot = excluded.polyglot,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'py-lis-02-e1', 'py-lis-02', 'A lista `time` já tem três nomes. Acrescente `Kauan` ao final e mostre a lista.
+
+Saída esperada:
+
+~~~text
+[''Ana'', ''Luiz'', ''Davi'', ''Kauan'']
+~~~',
+  'time = ["Ana", "Luiz", "Davi"]
+
+# acrescente Kauan e mostre a lista
+', 'output_match', '[''Ana'', ''Luiz'', ''Davi'', ''Kauan'']',
+  null, null, 'time.append("Kauan") altera a lista; depois basta um print(time).',
+  '`append()` acrescenta no fim e não devolve nada — ele mexe na lista que já existe. Por isso o `print()` vem depois, em outra linha.', 35, 1)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'py-lis-02-e2', 'py-lis-02', 'Na lista `fila`, troque o primeiro item por `Bruna`, remova `Carlos` e mostre a lista final.
+
+Saída esperada:
+
+~~~text
+[''Bruna'', ''Dora'']
+~~~',
+  'fila = ["Alan", "Carlos", "Dora"]
+
+# troque o primeiro por Bruna, remova Carlos e mostre
+', 'output_match', '[''Bruna'', ''Dora'']',
+  null, null, 'fila[0] = "Bruna" troca por posição; fila.remove("Carlos") tira pelo valor.',
+  'Atribuir em `fila[0]` troca o item daquela posição. `remove()` procura pelo **valor** e tira a primeira ocorrência dele.', 35, 2)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.lessons (id, module_id, title, subtitle, content, polyglot, order_index) values ('py-lis-03', 'py-listas', 'Percorrer a lista', 'for direto nos itens, in e fatias', '## O for que você já conhece, melhor
+
+No módulo anterior o `for` andava sobre números do `range()`. Ele também anda **direto sobre os itens** de uma lista:
+
+~~~py
+linguagens = ["Python", "JavaScript", "Java"]
+
+for linguagem in linguagens:
+    print(linguagem)
+~~~
+
+~~~text
+Python
+JavaScript
+Java
+~~~
+
+Sem índice, sem `len()`, sem risco de errar o limite. Este é o jeito Python de percorrer uma lista — e é o que se espera de você numa revisão de código.
+
+> Precisa da posição junto com o valor? `for i, item in enumerate(lista):` entrega os dois.
+
+## Está na lista? O operador in
+
+~~~py
+linguagens = ["Python", "JavaScript", "Java"]
+print("Java" in linguagens)
+print("Rust" in linguagens)
+~~~
+
+~~~text
+True
+False
+~~~
+
+`in` devolve `True` ou `False` — combina naturalmente com o `if` do módulo de condicionais.
+
+## Fatias: pedaços da lista
+
+`lista[inicio:fim]` devolve uma **lista nova** com o pedaço pedido. Como no `range()`, o fim é exclusivo:
+
+~~~py
+numeros = [10, 20, 30, 40, 50]
+print(numeros[1:3])
+print(numeros[:2])
+print(numeros[3:])
+~~~
+
+~~~text
+[20, 30]
+[10, 20]
+[40, 50]
+~~~
+
+Omitir o início quer dizer "desde o começo"; omitir o fim, "até o final".', '[{"language":"Python","code":"for cor in cores:\n    print(cor)"},{"language":"JavaScript","code":"for (const cor of cores) {\n  console.log(cor);\n}"},{"language":"Java","code":"for (String cor : cores) {\n  System.out.println(cor);\n}"}]'::jsonb, 3)
+  on conflict (id) do update set module_id = excluded.module_id, title = excluded.title,
+  subtitle = excluded.subtitle, content = excluded.content, polyglot = excluded.polyglot,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'py-lis-03-e1', 'py-lis-03', 'Percorra a lista `frutas` e mostre cada fruta em uma linha.
+
+Saída esperada:
+
+~~~text
+uva
+pera
+manga
+~~~',
+  'frutas = ["uva", "pera", "manga"]
+
+# percorra a lista e mostre uma por linha
+', 'output_match', 'uva
+pera
+manga',
+  null, null, 'for fruta in frutas: — o for anda direto nos itens, sem índice.',
+  'Percorrer direto nos itens é mais legível que usar índice, e não há como errar o limite da lista.', 35, 1)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'py-lis-03-e2', 'py-lis-03', 'Percorra a lista `numeros` e mostre **apenas** os números maiores que 20, um por linha.
+
+Saída esperada:
+
+~~~text
+30
+45
+~~~',
+  'numeros = [10, 30, 8, 45, 20]
+
+# mostre só os maiores que 20
+', 'output_match', '30
+45',
+  null, null, 'Um for percorrendo a lista, e dentro dele um if decidindo se mostra.',
+  'O `if` dentro do `for` é a combinação mais comum em programação: percorrer tudo e agir só no que interessa. Repare que 20 não entra — a condição é **maior que** 20, não maior ou igual.', 40, 2)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.lessons (id, module_id, title, subtitle, content, polyglot, order_index) values ('py-lis-04', 'py-listas', 'Resumir uma lista', 'sum, max, min e ordenação', '## O Python já sabe fazer as contas comuns
+
+No módulo de repetições você somou números com um acumulador. Para uma lista, o Python já traz isso pronto:
+
+~~~py
+notas = [7.0, 9.5, 4.0, 8.5]
+
+print(sum(notas))
+print(max(notas))
+print(min(notas))
+print(len(notas))
+~~~
+
+~~~text
+29.0
+9.5
+4.0
+4
+~~~
+
+A média sai da combinação de duas delas:
+
+~~~py
+notas = [7.0, 9.5, 4.0, 8.5]
+print(sum(notas) / len(notas))
+~~~
+
+~~~text
+7.25
+~~~
+
+> Escrever o acumulador à mão continua valendo como aprendizado — mas em código de verdade, use `sum()`: é mais curto, mais rápido e não tem como errar.
+
+## Ordenar
+
+Há duas formas, e a diferença entre elas importa:
+
+~~~py
+notas = [7.0, 9.5, 4.0]
+
+print(sorted(notas))
+print(notas)
+
+notas.sort()
+print(notas)
+~~~
+
+~~~text
+[4.0, 7.0, 9.5]
+[7.0, 9.5, 4.0]
+[4.0, 7.0, 9.5]
+~~~
+
+| Forma | O que faz com a lista original |
+| --- | --- |
+| `sorted(lista)` | não mexe — devolve uma **lista nova** ordenada |
+| `lista.sort()` | ordena **a própria lista** e devolve `None` |
+
+Para ordem decrescente, `sorted(lista, reverse=True)`.
+
+## Juntar numa frase
+
+`join()` cola os itens de uma lista de textos usando um separador:
+
+~~~py
+cores = ["azul", "verde", "roxo"]
+print(", ".join(cores))
+~~~
+
+~~~text
+azul, verde, roxo
+~~~
+
+Repare na ordem: quem faz o `join` é o **separador**, e a lista vai dentro dos parênteses.', null, 4)
+  on conflict (id) do update set module_id = excluded.module_id, title = excluded.title,
+  subtitle = excluded.subtitle, content = excluded.content, polyglot = excluded.polyglot,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'py-lis-04-e1', 'py-lis-04', 'Mostre a soma e a média da lista `valores`, nessa ordem.
+
+Saída esperada:
+
+~~~text
+40
+10.0
+~~~',
+  'valores = [10, 5, 20, 5]
+
+# mostre a soma e depois a média
+', 'output_match', '40
+10.0',
+  null, null, 'sum(valores) soma; a média é sum(valores) / len(valores).',
+  'A média sai da soma dividida pela quantidade. A divisão com `/` sempre devolve um número com casa decimal — por isso `10.0` e não `10`.', 40, 1)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'py-lis-04-e2', 'py-lis-04', 'Mostre a lista `pontos` ordenada do menor para o maior, **sem alterar** a lista original — e depois a original, para provar que ela continua como estava.
+
+Saída esperada:
+
+~~~text
+[3, 7, 12]
+[7, 3, 12]
+~~~',
+  'pontos = [7, 3, 12]
+
+# mostre a versão ordenada e depois a lista original
+', 'output_match', '[3, 7, 12]
+[7, 3, 12]',
+  null, null, 'sorted(pontos) devolve uma lista nova; pontos.sort() mudaria a original.',
+  '`sorted()` devolve uma cópia ordenada e deixa a original intacta — que é exatamente o que o exercício pede. `pontos.sort()` teria alterado a lista e a segunda linha sairia ordenada também.', 40, 2)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+
+insert into public.modules (id, language_id, title, description, icon, order_index) values ('py-dicionarios', 'python', 'Dicionários', 'Guardar dados por nome em vez de por posição — a estrutura mais usada no dia a dia.', '🗂️', 6)
+  on conflict (id) do update set language_id = excluded.language_id, title = excluded.title,
+  description = excluded.description, icon = excluded.icon, order_index = excluded.order_index;
+insert into public.lessons (id, module_id, title, subtitle, content, polyglot, order_index) values ('py-dic-01', 'py-dicionarios', 'Chave e valor', 'Quando a posição não diz nada', '## O limite da lista
+
+Numa lista, cada valor é identificado pela **posição**. Para os dados de uma pessoa, isso fica ruim depressa:
+
+~~~py
+aluno = ["Ana", 20, 8.5]
+print(aluno[2])
+~~~
+
+O que é `aluno[2]`? Você precisa lembrar. E se alguém acrescentar um campo no meio, todo o código que usa índices quebra em silêncio.
+
+## O dicionário guarda por nome
+
+~~~py
+aluno = {"nome": "Ana", "idade": 20, "media": 8.5}
+print(aluno["media"])
+~~~
+
+~~~text
+8.5
+~~~
+
+Agora o código **se explica**. Chaves `{ }` criam o dicionário; cada item é um par `"chave": valor`, separado por vírgula.
+
+| | Lista | Dicionário |
+| --- | --- | --- |
+| Identifica por | posição (`0`, `1`, `2`) | chave (`"nome"`, `"idade"`) |
+| Boa para | uma coleção de coisas iguais | os campos de **uma** coisa |
+| Sintaxe | `[ ]` | `{ }` |
+
+## Escrever e acrescentar
+
+A mesma sintaxe faz as duas coisas: se a chave existe, o valor é trocado; se não existe, ela é criada.
+
+~~~py
+aluno = {"nome": "Ana"}
+aluno["idade"] = 20
+aluno["nome"] = "Ana Paula"
+print(aluno)
+~~~
+
+~~~text
+{''nome'': ''Ana Paula'', ''idade'': 20}
+~~~
+
+Repare que a ordem de inserção é mantida — o `nome` continua na frente porque entrou primeiro.
+
+## Chave que não existe
+
+~~~py
+aluno = {"nome": "Ana"}
+print(aluno["telefone"])
+~~~
+
+~~~text
+KeyError: ''telefone''
+~~~
+
+Esse erro é tão comum que a próxima lição existe só para evitá-lo.', '[{"language":"Python","code":"aluno = {\"nome\": \"Ana\", \"idade\": 20}\nprint(aluno[\"nome\"])"},{"language":"JavaScript","code":"const aluno = { nome: \"Ana\", idade: 20 };\nconsole.log(aluno.nome);"},{"language":"Java","code":"Map<String, Object> aluno = Map.of(\"nome\", \"Ana\", \"idade\", 20);\nSystem.out.println(aluno.get(\"nome\"));"}]'::jsonb, 1)
+  on conflict (id) do update set module_id = excluded.module_id, title = excluded.title,
+  subtitle = excluded.subtitle, content = excluded.content, polyglot = excluded.polyglot,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'py-dic-01-e1', 'py-dic-01', 'Crie um dicionário chamado `livro` com a chave `titulo` valendo `Python Fluente` e a chave `paginas` valendo `800`. Mostre o título e depois as páginas, um por linha.
+
+Saída esperada:
+
+~~~text
+Python Fluente
+800
+~~~',
+  '# crie o dicionário livro e mostre o titulo e as paginas
+', 'output_match', 'Python Fluente
+800',
+  null, null, 'livro = {"titulo": "Python Fluente", "paginas": 800} e depois livro["titulo"].',
+  'O acesso é por chave, entre colchetes — `livro["titulo"]`. As chaves aqui são textos, então vão entre aspas na criação e no acesso.', 35, 1)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'py-dic-01-e2', 'py-dic-01', 'O dicionário `perfil` já existe. Acrescente a chave `cidade` com o valor `Recife`, troque o `nivel` para `5` e mostre o dicionário inteiro.
+
+Saída esperada:
+
+~~~text
+{''usuario'': ''dev'', ''nivel'': 5, ''cidade'': ''Recife''}
+~~~',
+  'perfil = {"usuario": "dev", "nivel": 3}
+
+# acrescente cidade, troque o nivel e mostre o dicionário
+', 'output_match', '{''usuario'': ''dev'', ''nivel'': 5, ''cidade'': ''Recife''}',
+  null, null, 'perfil["cidade"] = "Recife" cria a chave nova; perfil["nivel"] = 5 troca a que já existe.',
+  'A mesma sintaxe cria e atualiza: se a chave já existe o valor é trocado no lugar, se não existe ela entra no fim. Por isso `cidade` aparece por último.', 35, 2)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.lessons (id, module_id, title, subtitle, content, polyglot, order_index) values ('py-dic-02', 'py-dicionarios', 'Consultar sem quebrar', 'get(), in e del', '## O problema
+
+`dados["chave"]` derruba o programa quando a chave não existe. Em dados que vêm de fora — de um formulário, de um arquivo, de uma API — isso acontece o tempo todo.
+
+## get(): devolve None em vez de quebrar
+
+~~~py
+aluno = {"nome": "Ana"}
+print(aluno.get("telefone"))
+~~~
+
+~~~text
+None
+~~~
+
+E dá para escolher o que aparece no lugar:
+
+~~~py
+aluno = {"nome": "Ana"}
+print(aluno.get("telefone", "não informado"))
+~~~
+
+~~~text
+não informado
+~~~
+
+O segundo argumento é o **valor padrão**. Este é o jeito de ler campo opcional sem encher o código de `if`.
+
+## in: a chave existe?
+
+~~~py
+aluno = {"nome": "Ana", "idade": 20}
+print("idade" in aluno)
+print("media" in aluno)
+~~~
+
+~~~text
+True
+False
+~~~
+
+> Atenção: `in` procura entre as **chaves**, não entre os valores. `"Ana" in aluno` é `False`.
+
+## Quando usar cada um
+
+| Situação | Escolha |
+| --- | --- |
+| A chave tem de existir; se não existir é um bug | `dados["chave"]` |
+| Campo opcional, com um padrão razoável | `dados.get("chave", padrao)` |
+| Preciso **decidir** algo a partir da presença | `if "chave" in dados:` |
+
+Deixar o `KeyError` acontecer é a escolha certa quando a ausência da chave realmente indica um erro — o programa para perto do problema, em vez de seguir com dado errado.
+
+## Remover
+
+~~~py
+aluno = {"nome": "Ana", "rascunho": True}
+del aluno["rascunho"]
+print(aluno)
+~~~
+
+~~~text
+{''nome'': ''Ana''}
+~~~', null, 2)
+  on conflict (id) do update set module_id = excluded.module_id, title = excluded.title,
+  subtitle = excluded.subtitle, content = excluded.content, polyglot = excluded.polyglot,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'py-dic-02-e1', 'py-dic-02', 'O dicionário `config` não tem a chave `tema`. Mostre o valor de `tema` usando `escuro` como padrão, e depois o valor de `idioma`, que existe.
+
+Saída esperada:
+
+~~~text
+escuro
+pt-BR
+~~~',
+  'config = {"idioma": "pt-BR"}
+
+# mostre o tema (com padrão) e depois o idioma
+', 'output_match', 'escuro
+pt-BR',
+  null, null, 'config.get("tema", "escuro") devolve o padrão quando a chave não existe.',
+  'O segundo argumento de `get()` é o valor devolvido quando a chave falta. Sem ele viria `None`; com `config["tema"]` viria um `KeyError` e o programa pararia.', 40, 1)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'py-dic-02-e2', 'py-dic-02', 'Verifique se a chave `email` existe em `cadastro` e mostre `Cadastro completo` se existir, ou `Falta o e-mail` se não existir.
+
+Saída esperada:
+
+~~~text
+Falta o e-mail
+~~~',
+  'cadastro = {"nome": "Dev", "senha": "1234"}
+
+# decida a partir da presença da chave email
+', 'output_match', 'Falta o e-mail',
+  null, null, 'if "email" in cadastro: — o in procura entre as chaves.',
+  'O `in` pergunta pelas **chaves** do dicionário. Como `email` não está lá, o `else` é executado.', 40, 2)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.lessons (id, module_id, title, subtitle, content, polyglot, order_index) values ('py-dic-03', 'py-dicionarios', 'Percorrer um dicionário', 'items(), keys() e values()', '## O for sozinho dá as chaves
+
+~~~py
+aluno = {"nome": "Ana", "idade": 20}
+
+for chave in aluno:
+    print(chave)
+~~~
+
+~~~text
+nome
+idade
+~~~
+
+É o comportamento padrão, e ele engana quem está começando: você esperava os valores e recebeu as chaves.
+
+## items(): chave e valor de uma vez
+
+Quase sempre é isto que você quer:
+
+~~~py
+aluno = {"nome": "Ana", "idade": 20}
+
+for chave, valor in aluno.items():
+    print(chave, "->", valor)
+~~~
+
+~~~text
+nome -> Ana
+idade -> 20
+~~~
+
+O `for` recebe **duas** variáveis porque `items()` entrega um par a cada volta. Os nomes são livres — `for campo, conteudo in ...` funciona igual.
+
+## As três formas
+
+| Escrita | O que o for recebe |
+| --- | --- |
+| `for c in dados:` | as chaves |
+| `for c in dados.keys():` | as chaves (explícito) |
+| `for v in dados.values():` | os valores |
+| `for c, v in dados.items():` | os dois |
+
+## Somando valores
+
+`values()` combina direto com o `sum()` que você viu em listas:
+
+~~~py
+vendas = {"seg": 100, "ter": 150, "qua": 90}
+print(sum(vendas.values()))
+~~~
+
+~~~text
+340
+~~~
+
+## Formatando a saída
+
+Junto com a f-string do módulo de variáveis, sai um relatório legível em duas linhas:
+
+~~~py
+estoque = {"caneta": 12, "caderno": 3}
+
+for produto, quantidade in estoque.items():
+    print(f"{produto}: {quantidade}")
+~~~
+
+~~~text
+caneta: 12
+caderno: 3
+~~~', '[{"language":"Python","code":"for chave, valor in dados.items():\n    print(chave, valor)"},{"language":"JavaScript","code":"for (const [chave, valor] of Object.entries(dados)) {\n  console.log(chave, valor);\n}"}]'::jsonb, 3)
+  on conflict (id) do update set module_id = excluded.module_id, title = excluded.title,
+  subtitle = excluded.subtitle, content = excluded.content, polyglot = excluded.polyglot,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'py-dic-03-e1', 'py-dic-03', 'Percorra o dicionário `estoque` e mostre uma linha por produto no formato `produto: quantidade`.
+
+Saída esperada:
+
+~~~text
+caneta: 12
+caderno: 3
+borracha: 7
+~~~',
+  'estoque = {"caneta": 12, "caderno": 3, "borracha": 7}
+
+# uma linha por produto, no formato produto: quantidade
+', 'output_match', 'caneta: 12
+caderno: 3
+borracha: 7',
+  null, null, 'for produto, quantidade in estoque.items(): e um print com f-string.',
+  '`items()` entrega a chave e o valor a cada volta, e a f-string monta a linha. Sem `items()`, o `for` daria só os nomes dos produtos.', 40, 1)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'py-dic-03-e2', 'py-dic-03', 'Mostre o total vendido na semana, somando todos os valores de `vendas`.
+
+Saída esperada:
+
+~~~text
+340
+~~~',
+  'vendas = {"seg": 100, "ter": 150, "qua": 90}
+
+# mostre o total
+', 'output_match', '340',
+  null, null, 'sum(vendas.values()) soma os valores — sum(vendas) tentaria somar as chaves.',
+  '`values()` devolve só os valores, e `sum()` os soma. Passar o dicionário direto para `sum()` daria erro, porque ele tentaria somar os textos das chaves.', 40, 2)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.lessons (id, module_id, title, subtitle, content, polyglot, order_index) values ('py-dic-04', 'py-dicionarios', 'Contar com dicionário', 'O padrão que aparece em todo lugar', '## O problema clássico
+
+Quantas vezes cada palavra aparece numa lista? Com listas isso é trabalhoso. Com dicionário é o uso mais natural que existe: a **chave** é o que se conta, o **valor** é a contagem.
+
+~~~py
+votos = ["azul", "verde", "azul", "roxo", "azul"]
+contagem = {}
+
+for cor in votos:
+    if cor in contagem:
+        contagem[cor] = contagem[cor] + 1
+    else:
+        contagem[cor] = 1
+
+print(contagem)
+~~~
+
+~~~text
+{''azul'': 3, ''verde'': 1, ''roxo'': 1}
+~~~
+
+Leia devagar: a primeira vez que uma cor aparece, ela **não está** no dicionário, então entra com 1. Nas vezes seguintes, o valor que já existe é somado com 1.
+
+## A versão curta
+
+O `get()` da lição anterior encurta as quatro linhas para uma:
+
+~~~py
+votos = ["azul", "verde", "azul"]
+contagem = {}
+
+for cor in votos:
+    contagem[cor] = contagem.get(cor, 0) + 1
+
+print(contagem)
+~~~
+
+~~~text
+{''azul'': 2, ''verde'': 1}
+~~~
+
+Quando a cor ainda não existe, `get(cor, 0)` devolve 0 e a soma dá 1. Quando existe, devolve a contagem atual. É a mesma lógica, sem o `if`.
+
+> Este padrão — *ler com padrão, somar, guardar de volta* — resolve contagem, agrupamento, soma por categoria e totalização por chave. Vale reconhecê-lo.
+
+## Achando o maior
+
+Depois de contar, encontrar o campeão é um `for` guardando o melhor até agora:
+
+~~~py
+contagem = {"azul": 3, "verde": 1}
+campea = ""
+maior = 0
+
+for cor, quantidade in contagem.items():
+    if quantidade > maior:
+        maior = quantidade
+        campea = cor
+
+print(campea)
+~~~
+
+~~~text
+azul
+~~~', null, 4)
+  on conflict (id) do update set module_id = excluded.module_id, title = excluded.title,
+  subtitle = excluded.subtitle, content = excluded.content, polyglot = excluded.polyglot,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'py-dic-04-e1', 'py-dic-04', 'Conte quantas vezes cada animal aparece na lista `bichos` e mostre o dicionário de contagem.
+
+Saída esperada:
+
+~~~text
+{''gato'': 3, ''cão'': 2}
+~~~',
+  'bichos = ["gato", "cão", "gato", "gato", "cão"]
+contagem = {}
+
+# conte cada animal e mostre a contagem
+', 'output_match', '{''gato'': 3, ''cão'': 2}',
+  null, null, 'Percorra a lista e faça contagem[bicho] = contagem.get(bicho, 0) + 1.',
+  'O padrão *ler com padrão, somar, guardar de volta* resolve a contagem numa linha dentro do `for`. A ordem do resultado segue a ordem em que cada chave apareceu pela primeira vez.', 45, 1)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'py-dic-04-e2', 'py-dic-04', 'A partir do dicionário `pontos`, mostre o nome de quem tem mais pontos e, na linha seguinte, quantos pontos são.
+
+Saída esperada:
+
+~~~text
+Luiz
+95
+~~~',
+  'pontos = {"Ana": 80, "Luiz": 95, "Davi": 60}
+lider = ""
+maior = 0
+
+# descubra quem lidera e mostre o nome e os pontos
+', 'output_match', 'Luiz
+95',
+  null, null, 'Percorra com items() e guarde o melhor até agora sempre que achar um valor maior.',
+  'Guardar "o melhor até agora" enquanto se percorre é o mesmo raciocínio do acumulador que você usou no módulo de repetições — só que aqui o que se guarda são dois valores: quem e quanto.', 45, 2)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+
+insert into public.modules (id, language_id, title, description, icon, order_index) values ('py-funcoes', 'python', 'Funções', 'Dar nome a um pedaço de lógica, reaproveitar código e parar de repetir você mesmo.', '⚙️', 7)
   on conflict (id) do update set language_id = excluded.language_id, title = excluded.title,
   description = excluded.description, icon = excluded.icon, order_index = excluded.order_index;
 insert into public.lessons (id, module_id, title, subtitle, content, polyglot, order_index) values ('py-func-01', 'py-funcoes', 'Criando uma função', 'def e chamada', '## Dando nome a um bloco de código
@@ -1647,7 +2542,7 @@ insert into public.exercises (id, lesson_id, prompt, starter_code, validation_ty
   hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
   order_index = excluded.order_index;
 
-insert into public.modules (id, language_id, title, description, icon, order_index) values ('py-desafios', 'python', 'Desafios', 'Problemas que combinam tudo que você aprendeu. Nada de conteúdo novo — só raciocínio.', '🧩', 6)
+insert into public.modules (id, language_id, title, description, icon, order_index) values ('py-desafios', 'python', 'Desafios', 'Problemas que combinam tudo que você aprendeu. Nada de conteúdo novo — só raciocínio.', '🧩', 8)
   on conflict (id) do update set language_id = excluded.language_id, title = excluded.title,
   description = excluded.description, icon = excluded.icon, order_index = excluded.order_index;
 insert into public.lessons (id, module_id, title, subtitle, content, polyglot, order_index) values ('py-des-01', 'py-desafios', 'FizzBuzz', 'O desafio de entrevista mais famoso do mundo', '## O problema
@@ -1878,7 +2773,7 @@ Média: 7.25',
   hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
   order_index = excluded.order_index;
 
-insert into public.modules (id, language_id, title, description, icon, order_index) values ('py-projeto-final', 'python', 'Projeto Final', 'Um sistema completo de boletim escolar, construído em três etapas — do zero ao funcionando.', '🏆', 7)
+insert into public.modules (id, language_id, title, description, icon, order_index) values ('py-projeto-final', 'python', 'Projeto Final', 'Um sistema completo de boletim escolar, construído em três etapas — do zero ao funcionando.', '🏆', 9)
   on conflict (id) do update set language_id = excluded.language_id, title = excluded.title,
   description = excluded.description, icon = excluded.icon, order_index = excluded.order_index;
 insert into public.lessons (id, module_id, title, subtitle, content, polyglot, order_index) values ('py-proj-01', 'py-projeto-final', 'Sistema de Boletim', 'Juntando os sete módulos em um programa só', '## O que você vai construir
@@ -4733,7 +5628,7 @@ insert into public.achievements (id, title, description, icon, criteria) values 
 insert into public.achievements (id, title, description, icon, criteria) values ('aquecendo', 'Aquecendo os motores', 'Cinco lições concluídas. A rotina começou.', '🚀', '{"kind":"lessons_completed","count":5}'::jsonb)
   on conflict (id) do update set title = excluded.title, description = excluded.description,
   icon = excluded.icon, criteria = excluded.criteria;
-insert into public.achievements (id, title, description, icon, criteria) values ('meia-trilha', 'Meia trilha', 'Doze lições concluídas — você passou da metade da trilha de Python.', '🧭', '{"kind":"lessons_completed","count":12}'::jsonb)
+insert into public.achievements (id, title, description, icon, criteria) values ('meia-trilha', 'Meia trilha', 'Doze lições concluídas — a trilha de Python pegou ritmo.', '🧭', '{"kind":"lessons_completed","count":12}'::jsonb)
   on conflict (id) do update set title = excluded.title, description = excluded.description,
   icon = excluded.icon, criteria = excluded.criteria;
 insert into public.achievements (id, title, description, icon, criteria) values ('modulo-fundamentos', 'Fundamentos dominados', 'Você concluiu todo o módulo 🐣 Fundamentos.', '🐣', '{"kind":"module_completed","moduleId":"py-fundamentos"}'::jsonb)
@@ -4748,13 +5643,19 @@ insert into public.achievements (id, title, description, icon, criteria) values 
 insert into public.achievements (id, title, description, icon, criteria) values ('modulo-repeticoes', 'Domador de laços', 'Você concluiu todo o módulo 🔁 Repetições.', '🔁', '{"kind":"module_completed","moduleId":"py-repeticoes"}'::jsonb)
   on conflict (id) do update set title = excluded.title, description = excluded.description,
   icon = excluded.icon, criteria = excluded.criteria;
+insert into public.achievements (id, title, description, icon, criteria) values ('modulo-listas', 'Colecionador', 'Você concluiu todo o módulo 📋 Listas.', '📋', '{"kind":"module_completed","moduleId":"py-listas"}'::jsonb)
+  on conflict (id) do update set title = excluded.title, description = excluded.description,
+  icon = excluded.icon, criteria = excluded.criteria;
+insert into public.achievements (id, title, description, icon, criteria) values ('modulo-dicionarios', 'Guardião das chaves', 'Você concluiu todo o módulo 🗂️ Dicionários.', '🗂️', '{"kind":"module_completed","moduleId":"py-dicionarios"}'::jsonb)
+  on conflict (id) do update set title = excluded.title, description = excluded.description,
+  icon = excluded.icon, criteria = excluded.criteria;
 insert into public.achievements (id, title, description, icon, criteria) values ('modulo-funcoes', 'Arquiteto de funções', 'Você concluiu todo o módulo ⚙️ Funções.', '⚙️', '{"kind":"module_completed","moduleId":"py-funcoes"}'::jsonb)
   on conflict (id) do update set title = excluded.title, description = excluded.description,
   icon = excluded.icon, criteria = excluded.criteria;
 insert into public.achievements (id, title, description, icon, criteria) values ('modulo-desafios', 'Resolvedor de problemas', 'Você concluiu todo o módulo 🧩 Desafios, incluindo o FizzBuzz.', '🧩', '{"kind":"module_completed","moduleId":"py-desafios"}'::jsonb)
   on conflict (id) do update set title = excluded.title, description = excluded.description,
   icon = excluded.icon, criteria = excluded.criteria;
-insert into public.achievements (id, title, description, icon, criteria) values ('trilha-python', 'Trilha de Python concluída', 'Você terminou os sete módulos da trilha de Python. Respeito.', '🏆', '{"kind":"language_completed","languageSlug":"python"}'::jsonb)
+insert into public.achievements (id, title, description, icon, criteria) values ('trilha-python', 'Trilha de Python concluída', 'Você terminou os nove módulos da trilha de Python. Respeito.', '🏆', '{"kind":"language_completed","languageSlug":"python"}'::jsonb)
   on conflict (id) do update set title = excluded.title, description = excluded.description,
   icon = excluded.icon, criteria = excluded.criteria;
 insert into public.achievements (id, title, description, icon, criteria) values ('js-modulo-fundamentos', 'Primeiros passos no JavaScript', 'Você concluiu todo o módulo 🐣 Fundamentos da trilha de JavaScript.', '🐣', '{"kind":"module_completed","moduleId":"js-fundamentos"}'::jsonb)
@@ -4820,7 +5721,7 @@ insert into public.achievements (id, title, description, icon, criteria) values 
 insert into public.achievements (id, title, description, icon, criteria) values ('pvp-100-vitorias', '100 duelos vencidos', 'Cem vitórias no 1v1.', '💀', '{"kind":"pvp_wins","count":100}'::jsonb)
   on conflict (id) do update set title = excluded.title, description = excluded.description,
   icon = excluded.icon, criteria = excluded.criteria;
-insert into public.achievements (id, title, description, icon, criteria) values ('duelo-empate', 'Empate técnico', 'Terminou um duelo empatado — mesmo número de acertos e o mesmo bônus de velocidade. É o resultado mais raro do jogo.', '🤝', '{"kind":"pvp_draws","count":1}'::jsonb)
+insert into public.achievements (id, title, description, icon, criteria) values ('duelo-empate', 'Empate técnico', 'Terminou um duelo empatado com placar — mesmo número de acertos e o mesmo bônus de velocidade. É o resultado mais raro do jogo. Empate em 0 a 0 não conta: errar tudo dos dois lados não é feito nenhum.', '🤝', '{"kind":"pvp_draws","count":1}'::jsonb)
   on conflict (id) do update set title = excluded.title, description = excluded.description,
   icon = excluded.icon, criteria = excluded.criteria;
 insert into public.achievements (id, title, description, icon, criteria) values ('ranqueada-prata', 'Alcançou Prata', 'Saiu do Bronze na temporada ranqueada.', '🥈', '{"kind":"ranked_tier","patamar":1}'::jsonb)

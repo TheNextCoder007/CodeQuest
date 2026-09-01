@@ -11,7 +11,7 @@ export const projetoFinal: Module = {
   title: 'Projeto Final',
   description: 'Um sistema completo de boletim escolar, construído em três etapas — do zero ao funcionando.',
   icon: '🏆',
-  orderIndex: 7,
+  orderIndex: 9,
   lessons: [
     {
       id: 'py-proj-01',
