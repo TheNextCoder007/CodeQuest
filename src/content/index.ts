@@ -16,17 +16,32 @@ import { repeticoes as jsRepeticoes } from './javascript/04-repeticoes';
 import { funcoes as jsFuncoes } from './javascript/05-funcoes';
 import { desafios as jsDesafios } from './javascript/06-desafios';
 import { projetoFinal as jsProjetoFinal } from './javascript/07-projeto-final';
+import { fundamentos as javaFundamentos } from './java/01-fundamentos';
+import { variaveis as javaVariaveis } from './java/02-variaveis';
+import { condicionais as javaCondicionais } from './java/03-condicionais';
+import { repeticoes as javaRepeticoes } from './java/04-repeticoes';
+import { listas as javaListas } from './java/05-listas';
+import { mapas as javaMapas } from './java/06-mapas';
+import { metodos as javaMetodos } from './java/07-metodos';
+import { desafios as javaDesafios } from './java/08-desafios';
+import { projetoFinal as javaProjetoFinal } from './java/09-projeto-final';
 
 /**
  * Catalogo de linguagens do CodeQuest.
  *
- * Python e JavaScript tem conteudo populado (`available: true`). As demais
- * ficam com a estrutura pronta no catalogo e no banco, prontas para receber
- * modulos sem nenhuma mudanca de codigo.
+ * Python, JavaScript e Java tem conteudo populado (`available: true`). As
+ * demais ficam com a estrutura pronta no catalogo e no banco, prontas para
+ * receber modulos sem nenhuma mudanca de codigo.
  *
- * Os exercicios de codigo de cada trilha sao executados no proprio
- * dispositivo: Python via Pyodide, JavaScript via um Web Worker com o motor
- * do navegador. Quem decide isso e `@/lib/exercises/runtime`.
+ * Os exercicios de codigo de Python e JavaScript sao executados no proprio
+ * dispositivo: Pyodide num caso, um Web Worker com o motor do navegador no
+ * outro. Quem decide isso e `@/lib/exercises/runtime`.
+ *
+ * JAVA NAO TEM MOTOR - e por isso a trilha dele nao tem exercicio
+ * `output_match`. Rodar Java exigiria uma JVM, que no navegador so viria de um
+ * servico externo, e servico externo cobra por requisicao. A trilha usa
+ * `multiple_choice` para o conceito e `fill_blank` para a sintaxe, onde o
+ * aluno digita a palavra exata que o compilador cobraria.
  */
 export const languages: Language[] = [
   {
@@ -73,9 +88,19 @@ export const languages: Language[] = [
     slug: 'java',
     icon: '☕',
     accent: 'from-red-400 to-rose-600',
-    description: 'Forte no mercado corporativo. Trilha em produção.',
-    available: false,
-    modules: [],
+    description: 'Forte no mercado corporativo. Trilha completa disponível.',
+    available: true,
+    modules: [
+      javaFundamentos,
+      javaVariaveis,
+      javaCondicionais,
+      javaRepeticoes,
+      javaListas,
+      javaMapas,
+      javaMetodos,
+      javaDesafios,
+      javaProjetoFinal,
+    ],
   },
   {
     id: 'csharp',

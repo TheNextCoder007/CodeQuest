@@ -18,7 +18,7 @@ insert into public.languages (id, name, slug, icon, description, available, orde
 insert into public.languages (id, name, slug, icon, description, available, order_index) values ('javascript', 'JavaScript', 'javascript', '🟨', 'A linguagem da web, presente em todo navegador. Trilha completa disponível.', true, 2)
   on conflict (id) do update set name = excluded.name, slug = excluded.slug, icon = excluded.icon,
   description = excluded.description, available = excluded.available, order_index = excluded.order_index;
-insert into public.languages (id, name, slug, icon, description, available, order_index) values ('java', 'Java', 'java', '☕', 'Forte no mercado corporativo. Trilha em produção.', false, 3)
+insert into public.languages (id, name, slug, icon, description, available, order_index) values ('java', 'Java', 'java', '☕', 'Forte no mercado corporativo. Trilha completa disponível.', true, 3)
   on conflict (id) do update set name = excluded.name, slug = excluded.slug, icon = excluded.icon,
   description = excluded.description, available = excluded.available, order_index = excluded.order_index;
 insert into public.languages (id, name, slug, icon, description, available, order_index) values ('csharp', 'C#', 'csharp', '🎯', 'Ecossistema .NET e desenvolvimento de jogos. Trilha em produção.', false, 4)
@@ -5621,6 +5621,3100 @@ Aprovados: 1 de 3',
   hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
   order_index = excluded.order_index;
 
+-- Trilha de Java ------------------------------------------------------
+insert into public.modules (id, language_id, title, description, icon, order_index) values ('java-fundamentos', 'java', 'Fundamentos', 'A estrutura de um programa Java, a saída na tela e as primeiras mensagens de erro.', '🐣', 1)
+  on conflict (id) do update set language_id = excluded.language_id, title = excluded.title,
+  description = excluded.description, icon = excluded.icon, order_index = excluded.order_index;
+insert into public.lessons (id, module_id, title, subtitle, content, polyglot, order_index) values ('ja-fund-01', 'java-fundamentos', 'Todo programa mora numa classe', 'A estrutura mínima', '## O menor programa Java que existe
+
+Em Python, `print("Olá")` sozinho já é um programa. Em Java, não: **todo código precisa estar dentro de uma classe**, e a execução começa por um método chamado `main`.
+
+~~~java
+public class Principal {
+    public static void main(String[] args) {
+        System.out.println("Olá, CodeQuest!");
+    }
+}
+~~~
+
+~~~text
+Olá, CodeQuest!
+~~~
+
+Parece muita cerimônia para uma linha — e é. Mas cada palavra tem um motivo.
+
+## Lendo a linha do main
+
+`public static void main(String[] args)` é a assinatura que a JVM procura para começar.
+
+| Palavra | O que significa |
+| --- | --- |
+| `public` | qualquer um pode chamar — a JVM precisa conseguir |
+| `static` | pertence à classe, não a um objeto: roda sem ninguém criar nada antes |
+| `void` | não devolve valor |
+| `main` | o nome que a JVM procura; trocar isso e o programa não inicia |
+| `String[] args` | os argumentos da linha de comando, mesmo que você nunca use |
+
+> Se você renomear `main`, o código **compila** normalmente e só falha na hora de executar, com `Main method not found`. É o primeiro aviso de que compilar e rodar são dois momentos diferentes em Java.
+
+## O nome do arquivo importa
+
+Uma classe `public class Principal` precisa estar num arquivo chamado **`Principal.java`** — mesmo nome, mesma caixa alta. O compilador recusa qualquer outra coisa.
+
+Python e JavaScript não ligam para o nome do arquivo. Java liga, e essa é uma das primeiras diferenças que pega quem vem de outra linguagem.
+
+## Chaves delimitam blocos
+
+Onde o Python usa indentação, Java usa `{ }`:
+
+~~~java
+public class Exemplo {
+    public static void main(String[] args) {
+        System.out.println("dentro do main");
+    }
+}
+~~~
+
+A indentação em Java é só para humanos — o compilador ignora. Ainda assim, indente: código sem indentação é ilegível para a próxima pessoa (que costuma ser você, uma semana depois).', '[{"language":"Java","code":"public class Principal {\n    public static void main(String[] args) {\n        System.out.println(\"Olá\");\n    }\n}"},{"language":"Python","code":"print(\"Olá\")"},{"language":"JavaScript","code":"console.log(\"Olá\");"}]'::jsonb, 1)
+  on conflict (id) do update set module_id = excluded.module_id, title = excluded.title,
+  subtitle = excluded.subtitle, content = excluded.content, polyglot = excluded.polyglot,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-fund-01-e1', 'ja-fund-01', 'Por onde a JVM começa a executar um programa Java?',
+  null, 'multiple_choice', 'Pelo método `main`',
+  '["Pelo método `main`","Pela primeira linha do arquivo","Pelo construtor da classe","Pela última classe declarada"]'::jsonb, null, null,
+  'A JVM procura especificamente por `public static void main(String[] args)`. Sem ele o código até compila, mas não roda — o erro aparece só na execução.', 25, 1)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-fund-01-e2', 'ja-fund-01', 'Uma classe declarada como `public class Relatorio` precisa estar num arquivo com que nome?
+
+(Escreva o nome completo do arquivo.)',
+  null, 'fill_blank', 'Relatorio.java',
+  null, null, 'Mesmo nome da classe, mesma caixa alta, com a extensão .java.',
+  'O compilador exige que uma classe pública esteja num arquivo de mesmo nome — `Relatorio.java`. Python e JavaScript não têm essa regra; Java tem.', 30, 2)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.lessons (id, module_id, title, subtitle, content, polyglot, order_index) values ('ja-fund-02', 'java-fundamentos', 'Mostrar na tela', 'println, print e printf', '## System.out.println
+
+É o `print()` do Java, com um nome bem mais longo:
+
+~~~java
+System.out.println("Primeira linha");
+System.out.println("Segunda linha");
+~~~
+
+~~~text
+Primeira linha
+Segunda linha
+~~~
+
+O `ln` no fim é de *line*: ele pula para a linha seguinte depois de imprimir.
+
+## println x print
+
+~~~java
+System.out.print("sem ");
+System.out.print("pular");
+System.out.println("!");
+~~~
+
+~~~text
+sem pular!
+~~~
+
+| Comando | Pula linha ao terminar? |
+| --- | --- |
+| `System.out.println(x)` | sim |
+| `System.out.print(x)` | não |
+| `System.out.printf(...)` | só se você escrever `%n` |
+
+## Juntando texto e valores
+
+O `+` cola texto:
+
+~~~java
+String nome = "Ana";
+int idade = 20;
+System.out.println(nome + " tem " + idade + " anos");
+~~~
+
+~~~text
+Ana tem 20 anos
+~~~
+
+> Cuidado com a ordem: `System.out.println(1 + 2 + " itens")` mostra `3 itens`, mas `System.out.println("itens: " + 1 + 2)` mostra `itens: 12`. O `+` é avaliado da esquerda para a direita, e assim que encontra um texto, tudo dali para frente vira texto.
+
+## O ponto e vírgula
+
+Toda instrução em Java termina com `;`. Esquecer é o erro de compilação mais comum de todos — e a mensagem costuma apontar a linha **seguinte**, porque é ali que o compilador percebe que algo ficou faltando.', null, 2)
+  on conflict (id) do update set module_id = excluded.module_id, title = excluded.title,
+  subtitle = excluded.subtitle, content = excluded.content, polyglot = excluded.polyglot,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-fund-02-e1', 'ja-fund-02', 'Complete para que o programa mostre `Bem-vindo` e pule para a linha seguinte:
+
+~~~java
+System.out.______("Bem-vindo");
+~~~',
+  null, 'fill_blank', 'println',
+  null, null, 'O `ln` no fim do nome é de "line" — é ele que pula a linha.',
+  '`println` imprime e pula a linha. `print` imprimiria o mesmo texto, mas deixaria o cursor na mesma linha.', 30, 1)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-fund-02-e2', 'ja-fund-02', 'O que aparece na tela?
+
+~~~java
+System.out.println("total: " + 1 + 2);
+~~~',
+  null, 'multiple_choice', 'total: 12',
+  '["total: 12","total: 3","total: 1 2","Erro de compilação"]'::jsonb, null, null,
+  'O `+` é avaliado da esquerda para a direita. `"total: " + 1` já vira o texto `total: 1`, e o `+ 2` cola o `2` no fim. Para somar antes, use parênteses: `"total: " + (1 + 2)`.', 30, 2)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.lessons (id, module_id, title, subtitle, content, polyglot, order_index) values ('ja-fund-03', 'java-fundamentos', 'Comentários', 'Escrever para quem vem depois', '## Três formas
+
+~~~java
+// comentário de uma linha
+
+/*
+   comentário de
+   várias linhas
+*/
+
+/**
+ * Javadoc: vira documentação gerada automaticamente.
+ * É o formato usado para explicar classes e métodos públicos.
+ */
+~~~
+
+O compilador ignora os três. Quem lê são as pessoas — e as ferramentas, no caso do Javadoc.
+
+## Comentar para testar
+
+Enquanto você desenvolve, comentar uma linha é mais seguro que apagá-la:
+
+~~~java
+public class Teste {
+    public static void main(String[] args) {
+        // System.out.println("valor de depuração");
+        System.out.println("Relatório final");
+    }
+}
+~~~
+
+~~~text
+Relatório final
+~~~
+
+## O que NÃO comentar
+
+~~~java
+// soma 1 ao contador
+contador = contador + 1;
+~~~
+
+Esse comentário não acrescenta nada: o código já diz isso. Comentário bom explica **por quê**, não **o quê**:
+
+~~~java
+// O índice começa em 1 porque a planilha do RH conta a partir de 1.
+contador = 1;
+~~~
+
+> Comentário desatualizado é pior que comentário nenhum: ele mente com autoridade. Se você mudar o código, mude o comentário junto — ou apague.', null, 3)
+  on conflict (id) do update set module_id = excluded.module_id, title = excluded.title,
+  subtitle = excluded.subtitle, content = excluded.content, polyglot = excluded.polyglot,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-fund-03-e1', 'ja-fund-03', 'Qual símbolo inicia um comentário de uma linha em Java?',
+  null, 'fill_blank', '//|barra barra|duas barras',
+  null, null, 'São dois caracteres iguais, os mesmos do JavaScript.',
+  'Java usa `//` para uma linha e `/* ... */` para várias. O `#` do Python não vale aqui.', 25, 1)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-fund-03-e2', 'ja-fund-03', 'Qual destes comentários é útil?',
+  null, 'multiple_choice', '// O total começa em 1 porque a planilha do RH conta a partir de 1',
+  '["// O total começa em 1 porque a planilha do RH conta a partir de 1","// soma 1 ao total","// declara a variável total","// aqui usamos um int"]'::jsonb, null, null,
+  'Os três últimos repetem o que o código já diz. Comentário bom explica o **porquê** — a decisão, a regra de negócio, a armadilha — que o código sozinho não consegue contar.', 25, 2)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.lessons (id, module_id, title, subtitle, content, polyglot, order_index) values ('ja-fund-04', 'java-fundamentos', 'Quando dá erro', 'Compilação e execução são dois momentos', '## Java confere antes de rodar
+
+Python descobre a maioria dos problemas **enquanto executa**. Java tem uma etapa a mais: o **compilador** lê o programa inteiro antes, e recusa o que não fizer sentido.
+
+Isso é uma troca: você escreve mais e espera mais para ver o resultado, mas uma classe inteira de erros nunca chega ao usuário.
+
+## Erro de compilação
+
+O programa nem chega a rodar:
+
+~~~java
+int idade = "vinte";
+~~~
+
+~~~text
+error: incompatible types: String cannot be converted to int
+~~~
+
+Outros clássicos: ponto e vírgula faltando, chave não fechada, nome de variável escrito errado, método que não existe.
+
+## Erro de execução (exception)
+
+Compila, roda, e quebra no meio:
+
+~~~java
+int[] numeros = {1, 2, 3};
+System.out.println(numeros[5]);
+~~~
+
+~~~text
+Exception in thread "main" java.lang.ArrayIndexOutOfBoundsException: Index 5 out of bounds for length 3
+~~~
+
+O compilador não tinha como saber: o índice só existe na hora da execução.
+
+| Momento | Exemplo | Quando você descobre |
+| --- | --- | --- |
+| Compilação | tipo errado, `;` faltando | antes de rodar |
+| Execução | índice fora do array, divisão por zero | com o programa rodando |
+
+## Como ler a mensagem
+
+A última linha costuma ser a mais útil: ela diz **o tipo** do erro e **o que** ele esperava. Depois venha o `at ...`, que aponta a classe e a linha.
+
+> `NullPointerException` é o erro de execução mais famoso do Java: você usou algo que ainda é `null`. Quando aparecer, a pergunta certa é "quem eu esqueci de criar?".', null, 4)
+  on conflict (id) do update set module_id = excluded.module_id, title = excluded.title,
+  subtitle = excluded.subtitle, content = excluded.content, polyglot = excluded.polyglot,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-fund-04-e1', 'ja-fund-04', 'O código `int idade = "vinte";` falha. Em que momento?',
+  null, 'multiple_choice', 'Na compilação: o tipo não bate e o programa nem chega a rodar',
+  '["Na compilação: o tipo não bate e o programa nem chega a rodar","Na execução, ao chegar nessa linha","Não falha: Java converte o texto sozinho","Só falha se a variável for usada depois"]'::jsonb, null, null,
+  'Java é de tipagem estática: o compilador confere os tipos antes de gerar o programa. Um texto não entra num `int`, e isso é detectado sem executar nada.', 30, 1)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-fund-04-e2', 'ja-fund-04', 'Qual exceção o Java lança ao acessar `numeros[5]` num array de 3 posições?
+
+(Escreva só o nome da exceção.)',
+  null, 'fill_blank', 'ArrayIndexOutOfBoundsException',
+  null, null, 'O nome descreve exatamente o que aconteceu: o índice do array saiu dos limites.',
+  'Índice fora dos limites só pode ser detectado durante a execução — o compilador não tem como saber qual valor o índice terá. Num array de 3 posições, os índices válidos são 0, 1 e 2.', 35, 2)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.lessons (id, module_id, title, subtitle, content, polyglot, order_index) values ('ja-fund-05', 'java-fundamentos', 'Lendo do teclado', 'A classe Scanner', '## Programas que perguntam
+
+Para ler o que a pessoa digita, Java usa a classe `Scanner`. São três passos: importar, criar e ler.
+
+~~~java
+import java.util.Scanner;
+
+public class Saudacao {
+    public static void main(String[] args) {
+        Scanner entrada = new Scanner(System.in);
+
+        System.out.print("Qual é o seu nome? ");
+        String nome = entrada.nextLine();
+
+        System.out.println("Olá, " + nome + "!");
+    }
+}
+~~~
+
+~~~text
+Qual é o seu nome? Ana
+Olá, Ana!
+~~~
+
+## O import
+
+`import java.util.Scanner;` vai **antes** da classe e diz de onde a classe vem. Sem ele, o compilador não conhece o nome `Scanner`.
+
+## Um método de leitura para cada tipo
+
+| Método | Lê |
+| --- | --- |
+| `nextLine()` | a linha inteira, como texto |
+| `next()` | uma palavra só |
+| `nextInt()` | um número inteiro |
+| `nextDouble()` | um número com casas decimais |
+
+~~~java
+Scanner entrada = new Scanner(System.in);
+int idade = entrada.nextInt();
+~~~
+
+> A armadilha clássica: usar `nextInt()` e depois `nextLine()`. O `nextInt()` lê o número mas **deixa a quebra de linha** no buffer, e o `nextLine()` seguinte volta vazio na hora. A saída é chamar um `nextLine()` extra só para descartar a sobra.
+
+## Comparado ao Python
+
+Onde o Python faz `input()` e devolve texto sempre, Java já entrega o tipo que você pediu — mas exige que você diga qual é.', '[{"language":"Java","code":"Scanner entrada = new Scanner(System.in);\nString nome = entrada.nextLine();"},{"language":"Python","code":"nome = input()"},{"language":"JavaScript","code":"const nome = prompt();"}]'::jsonb, 5)
+  on conflict (id) do update set module_id = excluded.module_id, title = excluded.title,
+  subtitle = excluded.subtitle, content = excluded.content, polyglot = excluded.polyglot,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-fund-05-e1', 'ja-fund-05', 'Complete o import necessário para usar o Scanner:
+
+~~~java
+import java.util.______;
+~~~',
+  null, 'fill_blank', 'Scanner',
+  null, null, 'É o próprio nome da classe, com S maiúsculo.',
+  '`import java.util.Scanner;` diz ao compilador de qual pacote a classe vem. Sem o import, o nome `Scanner` não existe para ele.', 30, 1)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-fund-05-e2', 'ja-fund-05', 'Qual método do Scanner lê a linha inteira digitada, incluindo os espaços?',
+  null, 'multiple_choice', 'nextLine()',
+  '["nextLine()","next()","nextInt()","readAll()"]'::jsonb, null, null,
+  '`next()` para na primeira separação e devolve só uma palavra. `nextLine()` lê tudo até a quebra de linha — é o que você quer para um nome composto, por exemplo.', 30, 2)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+
+insert into public.modules (id, language_id, title, description, icon, order_index) values ('java-variaveis', 'java', 'Variáveis', 'Tipos declarados na frente do nome — o que Java ganha e o que cobra por isso.', '📦', 2)
+  on conflict (id) do update set language_id = excluded.language_id, title = excluded.title,
+  description = excluded.description, icon = excluded.icon, order_index = excluded.order_index;
+insert into public.lessons (id, module_id, title, subtitle, content, polyglot, order_index) values ('ja-var-01', 'java-variaveis', 'O tipo vem antes do nome', 'Os tipos primitivos', '## Declarar é dizer o tipo
+
+Em Python, `idade = 20` basta. Em Java, você diz de que tipo a variável é — e ela não muda mais:
+
+~~~java
+int idade = 20;
+double altura = 1.75;
+boolean ativo = true;
+char inicial = ''A'';
+~~~
+
+Isso se chama **tipagem estática**. O compilador passa a conhecer cada variável e recusa o que não fizer sentido antes de o programa rodar.
+
+## Os primitivos que você vai usar
+
+| Tipo | Guarda | Exemplo |
+| --- | --- | --- |
+| `int` | inteiro | `42` |
+| `double` | número com casas decimais | `3.14` |
+| `boolean` | `true` ou `false` | `true` |
+| `char` | **um** caractere | `''A''` |
+| `long` | inteiro muito grande | `9000000000L` |
+
+Existem outros (`byte`, `short`, `float`), mas no dia a dia `int`, `double` e `boolean` resolvem quase tudo.
+
+## Aspas simples e aspas duplas são coisas diferentes
+
+Esta é a pegadinha que mais aparece para quem vem do Python:
+
+~~~java
+char letra = ''A'';      // um caractere, aspas SIMPLES
+String palavra = "A";  // um texto, aspas DUPLAS
+~~~
+
+Trocar uma pela outra é erro de compilação. Em Python as duas formas são equivalentes; em Java, não.
+
+## O tipo não muda depois
+
+~~~java
+int idade = 20;
+idade = "vinte";
+~~~
+
+~~~text
+error: incompatible types: String cannot be converted to int
+~~~
+
+> Essa rigidez parece um estorvo no começo e vira uma rede de proteção depois: erros de tipo aparecem na compilação, e não com o programa nas mãos de alguém.', '[{"language":"Java","code":"int idade = 20;\ndouble altura = 1.75;"},{"language":"Python","code":"idade = 20\naltura = 1.75"},{"language":"JavaScript","code":"let idade = 20;\nlet altura = 1.75;"}]'::jsonb, 1)
+  on conflict (id) do update set module_id = excluded.module_id, title = excluded.title,
+  subtitle = excluded.subtitle, content = excluded.content, polyglot = excluded.polyglot,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-var-01-e1', 'ja-var-01', 'Complete a declaração de uma variável que guarda `1.75`:
+
+~~~java
+______ altura = 1.75;
+~~~',
+  null, 'fill_blank', 'double',
+  null, null, 'É o tipo padrão para números com casas decimais em Java.',
+  '`double` é o tipo usual para decimais. `int` só guarda inteiros e recusaria o `1.75` na compilação.', 30, 1)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-var-01-e2', 'ja-var-01', 'Qual declaração está **errada** em Java?',
+  null, 'multiple_choice', 'char inicial = "A";',
+  '["char inicial = \"A\";","char inicial = ''A'';","String nome = \"Ana\";","boolean ativo = true;"]'::jsonb, null, null,
+  'Aspas duplas produzem uma `String`, e uma `String` não cabe num `char`. Um caractere usa aspas simples: `char inicial = ''A'';`. Em Python as duas formas seriam equivalentes — em Java, não.', 30, 2)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.lessons (id, module_id, title, subtitle, content, polyglot, order_index) values ('ja-var-02', 'java-variaveis', 'Textos', 'String e seus métodos', '## String não é primitivo
+
+`String` começa com maiúscula porque é uma **classe**, não um tipo primitivo. Isso muda três coisas importantes.
+
+~~~java
+String nome = "Ana";
+System.out.println(nome.length());
+System.out.println(nome.toUpperCase());
+~~~
+
+~~~text
+3
+ANA
+~~~
+
+Repare no ponto: `nome.length()` pede algo **ao texto**. Primitivos não têm métodos; objetos têm.
+
+## Métodos que você usa toda hora
+
+| Método | Devolve |
+| --- | --- |
+| `length()` | quantidade de caracteres |
+| `toUpperCase()` / `toLowerCase()` | o texto em outra caixa |
+| `trim()` | sem espaços nas pontas |
+| `substring(i, f)` | um pedaço |
+| `contains("x")` | `true` se contém |
+| `equals(outro)` | `true` se o **conteúdo** é igual |
+
+## Nenhum deles muda o texto original
+
+~~~java
+String nome = "ana";
+nome.toUpperCase();
+System.out.println(nome);
+~~~
+
+~~~text
+ana
+~~~
+
+Strings em Java são **imutáveis**: os métodos devolvem um texto novo em vez de alterar o que existe. Para ficar com o resultado, guarde:
+
+~~~java
+nome = nome.toUpperCase();
+~~~
+
+> Esse é um erro silencioso clássico: o programa compila, roda, não reclama de nada — e simplesmente não faz o que você queria.
+
+## Concatenar
+
+~~~java
+String nome = "Ana";
+int idade = 20;
+System.out.println("Nome: " + nome + ", idade: " + idade);
+~~~
+
+~~~text
+Nome: Ana, idade: 20
+~~~
+
+O `+` converte números para texto automaticamente quando um dos lados já é texto.', null, 2)
+  on conflict (id) do update set module_id = excluded.module_id, title = excluded.title,
+  subtitle = excluded.subtitle, content = excluded.content, polyglot = excluded.polyglot,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-var-02-e1', 'ja-var-02', 'O que este trecho mostra?
+
+~~~java
+String nome = "ana";
+nome.toUpperCase();
+System.out.println(nome);
+~~~',
+  null, 'multiple_choice', 'ana — o texto original, inalterado',
+  '["ana — o texto original, inalterado","ANA — o texto inteiro em maiúsculas","Ana — só a primeira letra em maiúscula","Erro de compilação"]'::jsonb, null, null,
+  'Strings são imutáveis: `toUpperCase()` devolve um texto novo e deixa o original intacto. Como o retorno foi descartado, `nome` continua `ana`. O certo seria `nome = nome.toUpperCase();`.', 35, 1)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-var-02-e2', 'ja-var-02', 'Complete para obter a quantidade de caracteres do texto:
+
+~~~java
+String nome = "CodeQuest";
+int tamanho = nome.______;
+~~~',
+  null, 'fill_blank', 'length()',
+  null, null, 'É um método, então não esqueça os parênteses.',
+  'Em `String` é o método `length()`, com parênteses. Em array é o campo `length`, sem parênteses — uma inconsistência do Java que confunde todo mundo no começo.', 30, 2)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.lessons (id, module_id, title, subtitle, content, polyglot, order_index) values ('ja-var-03', 'java-variaveis', 'Convertendo tipos', 'Casting e parse', '## Texto para número
+
+O que vem do teclado ou de um arquivo é texto. Para calcular, converta:
+
+~~~java
+String digitado = "42";
+int numero = Integer.parseInt(digitado);
+System.out.println(numero + 10);
+~~~
+
+~~~text
+52
+~~~
+
+| Conversão | Como |
+| --- | --- |
+| texto → inteiro | `Integer.parseInt(texto)` |
+| texto → decimal | `Double.parseDouble(texto)` |
+| número → texto | `String.valueOf(n)` ou `"" + n` |
+
+> `Integer.parseInt("abc")` compila normalmente e lança `NumberFormatException` na execução. Conversão de texto é sempre um ponto onde o programa pode quebrar com dado de fora.
+
+## Entre números: o casting
+
+~~~java
+double preco = 19.99;
+int inteiro = (int) preco;
+System.out.println(inteiro);
+~~~
+
+~~~text
+19
+~~~
+
+`(int)` **corta** a parte decimal — não arredonda. Para arredondar, `Math.round(preco)`.
+
+## A divisão que engana
+
+~~~java
+System.out.println(7 / 2);
+System.out.println(7.0 / 2);
+~~~
+
+~~~text
+3
+3.5
+~~~
+
+Dois inteiros produzem um inteiro, e o resto é descartado. Basta um dos lados ser `double` para o resultado ter casas decimais.
+
+É a origem de uma quantidade enorme de médias erradas: `(nota1 + nota2) / 2` com notas inteiras devolve um inteiro.', null, 3)
+  on conflict (id) do update set module_id = excluded.module_id, title = excluded.title,
+  subtitle = excluded.subtitle, content = excluded.content, polyglot = excluded.polyglot,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-var-03-e1', 'ja-var-03', 'O que `System.out.println(7 / 2);` mostra em Java?',
+  null, 'multiple_choice', '3',
+  '["3","3.5","3.0","4"]'::jsonb, null, null,
+  'Divisão entre dois inteiros devolve inteiro, descartando o resto. Para obter `3.5`, basta um dos lados ser decimal: `7.0 / 2`.', 35, 1)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-var-03-e2', 'ja-var-03', 'Complete para transformar o texto digitado em número inteiro:
+
+~~~java
+String digitado = "42";
+int numero = ______(digitado);
+~~~',
+  null, 'fill_blank', 'Integer.parseInt',
+  null, null, 'É um método da classe Integer, com "parse" no nome.',
+  '`Integer.parseInt` converte texto em `int`. Se o texto não for um número válido, o programa lança `NumberFormatException` durante a execução.', 35, 2)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.lessons (id, module_id, title, subtitle, content, polyglot, order_index) values ('ja-var-04', 'java-variaveis', 'Operadores', 'Contas, resto e atalhos', '## Os aritméticos
+
+~~~java
+int a = 10;
+int b = 3;
+
+System.out.println(a + b);
+System.out.println(a - b);
+System.out.println(a * b);
+System.out.println(a / b);
+System.out.println(a % b);
+~~~
+
+~~~text
+13
+7
+30
+3
+1
+~~~
+
+O `%` é o **resto** da divisão. Ele parece um detalhe e resolve uma quantidade surpreendente de problemas:
+
+| Pergunta | Teste |
+| --- | --- |
+| é par? | `n % 2 == 0` |
+| é múltiplo de 3? | `n % 3 == 0` |
+| último dígito | `n % 10` |
+
+## Atalhos de atribuição
+
+~~~java
+int total = 10;
+total += 5;   // total = total + 5
+total -= 2;
+total *= 3;
+~~~
+
+E os incrementos, muito comuns em laços:
+
+~~~java
+int i = 0;
+i++;   // soma 1
+i--;   // subtrai 1
+~~~
+
+## final: a variável que não muda
+
+~~~java
+final double PI = 3.14159;
+PI = 3;
+~~~
+
+~~~text
+error: cannot assign a value to final variable PI
+~~~
+
+`final` é o `const` do JavaScript. Use em valores que não deveriam mudar — o compilador passa a defender essa decisão por você.
+
+> Convenção da comunidade: constantes em MAIÚSCULAS com `_` (`TAXA_JUROS`), variáveis e métodos em `camelCase` (`valorTotal`), classes em `PascalCase` (`ContaBancaria`). Ninguém é obrigado, mas todo código Java que você vai ler segue isso.', null, 4)
+  on conflict (id) do update set module_id = excluded.module_id, title = excluded.title,
+  subtitle = excluded.subtitle, content = excluded.content, polyglot = excluded.polyglot,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-var-04-e1', 'ja-var-04', 'Complete a condição que testa se `numero` é par:
+
+~~~java
+if (numero ______ 2 == 0) {
+    System.out.println("par");
+}
+~~~',
+  null, 'fill_blank', '%',
+  null, null, 'O operador que devolve o resto da divisão.',
+  'Um número é par quando o resto da divisão por 2 é zero. O `%` é o operador de resto — o mesmo símbolo do Python e do JavaScript.', 30, 1)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-var-04-e2', 'ja-var-04', 'O que `final` faz numa declaração de variável?',
+  null, 'multiple_choice', 'Impede que o valor seja alterado depois de atribuído',
+  '["Impede que o valor seja alterado depois de atribuído","Faz a variável ser apagada ao fim do método","Torna a variável visível para todas as classes","Converte a variável para texto automaticamente"]'::jsonb, null, null,
+  '`final` é o equivalente ao `const` do JavaScript: tentar reatribuir vira erro de compilação. É a forma de deixar registrado no código que aquele valor não deveria mudar.', 30, 2)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+
+insert into public.modules (id, language_id, title, description, icon, order_index) values ('java-condicionais', 'java', 'Condicionais', 'Fazer o programa decidir — e a armadilha do == com textos.', '🔀', 3)
+  on conflict (id) do update set language_id = excluded.language_id, title = excluded.title,
+  description = excluded.description, icon = excluded.icon, order_index = excluded.order_index;
+insert into public.lessons (id, module_id, title, subtitle, content, polyglot, order_index) values ('ja-cond-01', 'java-condicionais', 'Decidir com if', 'A condição entre parênteses', '## A forma
+
+~~~java
+int compra = 150;
+
+if (compra > 100) {
+    System.out.println("Tem desconto");
+}
+~~~
+
+~~~text
+Tem desconto
+~~~
+
+Três diferenças em relação ao Python:
+
+- a condição fica entre **parênteses**;
+- o bloco fica entre **chaves**, não depois de `:`;
+- não existe `elif` — é `else if`, duas palavras.
+
+## Os operadores de comparação
+
+| Operador | Pergunta |
+| --- | --- |
+| `==` | é igual? |
+| `!=` | é diferente? |
+| `>` `<` | maior / menor |
+| `>=` `<=` | maior ou igual / menor ou igual |
+
+O resultado é sempre um `boolean`.
+
+## A condição precisa ser boolean
+
+~~~java
+int idade = 20;
+if (idade) { }
+~~~
+
+~~~text
+error: incompatible types: int cannot be converted to boolean
+~~~
+
+Em Python e JavaScript, um número vale como condição (`0` é falso, o resto é verdadeiro). Java **não aceita**: a condição tem de ser um `boolean` de verdade. Escreva `if (idade > 0)`.
+
+> Isso elimina de vez o bug de escrever `if (x = 5)` — atribuição em vez de comparação — que em C e JavaScript passa despercebido. Em Java, `x = 5` devolve um `int`, e o compilador recusa.
+
+## As chaves são opcionais (e é melhor não abrir mão)
+
+~~~java
+if (compra > 100)
+    System.out.println("Tem desconto");
+~~~
+
+Funciona, mas só a **primeira** linha entra no `if`. Acrescentar uma segunda depois, achando que ela também está dentro, é um erro que já derrubou sistema em produção. Use sempre chaves.', '[{"language":"Java","code":"if (compra > 100) {\n    System.out.println(\"Tem desconto\");\n}"},{"language":"Python","code":"if compra > 100:\n    print(\"Tem desconto\")"},{"language":"JavaScript","code":"if (compra > 100) {\n  console.log(\"Tem desconto\");\n}"}]'::jsonb, 1)
+  on conflict (id) do update set module_id = excluded.module_id, title = excluded.title,
+  subtitle = excluded.subtitle, content = excluded.content, polyglot = excluded.polyglot,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-cond-01-e1', 'ja-cond-01', 'Por que `if (idade)` não compila em Java, sendo `idade` um `int`?',
+  null, 'multiple_choice', 'A condição de um if precisa ser um boolean, e um int não vira boolean sozinho',
+  '["A condição de um if precisa ser um boolean, e um int não vira boolean sozinho","Faltam as chaves do bloco","A variável precisa ser final","Compila normalmente: qualquer número diferente de zero é verdadeiro"]'::jsonb, null, null,
+  'Java não converte número em booleano. Escreva a comparação por extenso: `if (idade > 0)`. Em troca dessa rigidez, o erro clássico `if (x = 5)` deixa de existir.', 30, 1)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-cond-01-e2', 'ja-cond-01', 'Complete a palavra que, em Java, faz o papel do `elif` do Python:
+
+~~~java
+if (nota >= 7) {
+    System.out.println("Aprovado");
+} ______ (nota >= 5) {
+    System.out.println("Recuperação");
+}
+~~~
+
+(Escreva as duas palavras.)',
+  null, 'fill_blank', 'else if',
+  null, null, 'São duas palavras separadas por espaço — Java não tem uma palavra única para isso.',
+  'Java usa `else if`, duas palavras. O `elif` é exclusivo do Python; escrever `elif` em Java é erro de compilação.', 30, 2)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.lessons (id, module_id, title, subtitle, content, polyglot, order_index) values ('ja-cond-02', 'java-condicionais', 'Comparar textos', 'Por que == falha com String', '## O erro mais famoso da linguagem
+
+~~~java
+String a = new String("Ana");
+String b = new String("Ana");
+
+System.out.println(a == b);
+System.out.println(a.equals(b));
+~~~
+
+~~~text
+false
+true
+~~~
+
+Os dois textos têm o mesmo conteúdo, e mesmo assim `==` deu `false`.
+
+## Por que
+
+`String` é um objeto. Uma variável de objeto não guarda o texto: guarda **onde ele está na memória**.
+
+- `==` compara os endereços: "são o mesmo objeto?"
+- `.equals()` compara o conteúdo: "têm o mesmo texto?"
+
+Para textos, você quase sempre quer `.equals()`.
+
+| Comparação | Use |
+| --- | --- |
+| `int`, `double`, `char`, `boolean` | `==` |
+| `String` e outros objetos | `.equals()` |
+
+## Por que às vezes o == parece funcionar
+
+~~~java
+String a = "Ana";
+String b = "Ana";
+System.out.println(a == b);
+~~~
+
+~~~text
+true
+~~~
+
+Textos escritos literalmente no código são reaproveitados pela JVM: as duas variáveis apontam para o mesmo objeto. Mas assim que o texto vier de um `Scanner`, de um arquivo ou de uma concatenação, isso deixa de valer.
+
+> É o pior tipo de bug: funciona nos seus testes, com textos escritos à mão, e falha com dado de verdade. Use `.equals()` sempre — não só quando parecer necessário.
+
+## Ignorando maiúsculas
+
+~~~java
+String resposta = "SIM";
+System.out.println(resposta.equalsIgnoreCase("sim"));
+~~~
+
+~~~text
+true
+~~~', null, 2)
+  on conflict (id) do update set module_id = excluded.module_id, title = excluded.title,
+  subtitle = excluded.subtitle, content = excluded.content, polyglot = excluded.polyglot,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-cond-02-e1', 'ja-cond-02', 'Complete para comparar corretamente o **conteúdo** de dois textos:
+
+~~~java
+if (resposta.______("sim")) {
+    System.out.println("Confirmado");
+}
+~~~',
+  null, 'fill_blank', 'equals',
+  null, null, 'É o método que compara conteúdo, e não endereço de memória.',
+  '`.equals()` compara o texto em si. O `==` compararia se são o mesmo objeto na memória — o que costuma dar `false` justamente quando o texto vem de fora do código.', 35, 1)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-cond-02-e2', 'ja-cond-02', 'Um programa compara com `==` o nome digitado pelo usuário e funciona nos seus testes, mas falha com usuários reais. Por quê?',
+  null, 'multiple_choice', 'Textos escritos no código são reaproveitados pela JVM; texto vindo do teclado é outro objeto, e o == compara objetos',
+  '["Textos escritos no código são reaproveitados pela JVM; texto vindo do teclado é outro objeto, e o == compara objetos","O Scanner sempre devolve o texto em maiúsculas","O == não funciona dentro de um if","Falta converter o texto com Integer.parseInt"]'::jsonb, null, null,
+  'Literais iguais no código apontam para o mesmo objeto, então o `==` dá `true` por acidente. Texto lido em tempo de execução é um objeto novo, e a comparação passa a dar `false` mesmo com o conteúdo certo.', 35, 2)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.lessons (id, module_id, title, subtitle, content, polyglot, order_index) values ('ja-cond-03', 'java-condicionais', 'Vários caminhos', 'else if em cadeia', '## A cadeia
+
+~~~java
+int temperatura = 12;
+
+if (temperatura > 30) {
+    System.out.println("Calor");
+} else if (temperatura >= 15) {
+    System.out.println("Ameno");
+} else {
+    System.out.println("Frio");
+}
+~~~
+
+~~~text
+Frio
+~~~
+
+O Java testa de cima para baixo e **para no primeiro que der verdadeiro**. Os demais nem são avaliados.
+
+## A ordem é a regra
+
+~~~java
+if (nota >= 5) {
+    System.out.println("Recuperação");
+} else if (nota >= 7) {
+    System.out.println("Aprovado");
+}
+~~~
+
+Com `nota = 9`, isso mostra **Recuperação**. O primeiro teste já foi verdadeiro, e o segundo nunca chega a rodar.
+
+Numa cadeia de faixas, comece sempre pela **mais restritiva**.
+
+> Este erro não gera nenhum aviso: compila, roda e simplesmente classifica errado. É o tipo de defeito que só um teste com valores de cada faixa encontra.
+
+## O else é opcional
+
+Sem `else`, se nada bater, nada acontece. Com `else`, você garante que sempre há uma saída — e por isso ele é útil como rede de segurança em classificações.', null, 3)
+  on conflict (id) do update set module_id = excluded.module_id, title = excluded.title,
+  subtitle = excluded.subtitle, content = excluded.content, polyglot = excluded.polyglot,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-cond-03-e1', 'ja-cond-03', 'Com `nota = 9`, o que este trecho mostra?
+
+~~~java
+if (nota >= 5) {
+    System.out.println("Recuperação");
+} else if (nota >= 7) {
+    System.out.println("Aprovado");
+}
+~~~',
+  null, 'multiple_choice', 'Recuperação',
+  '["Recuperação","Aprovado","Recuperação e Aprovado","Nada"]'::jsonb, null, null,
+  'A cadeia para no primeiro teste verdadeiro. Como `9 >= 5` já é verdade, o `else if` nem é avaliado. Numa faixa, a condição mais restritiva vem primeiro.', 35, 1)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-cond-03-e2', 'ja-cond-03', 'Numa cadeia de `else if` que classifica faixas de valor, por onde a cadeia deve começar?',
+  null, 'multiple_choice', 'Pela condição mais restritiva',
+  '["Pela condição mais restritiva","Pela condição mais abrangente","Pela ordem alfabética das mensagens","Tanto faz: o Java avalia todas e escolhe a melhor"]'::jsonb, null, null,
+  'Como a execução para no primeiro teste verdadeiro, uma condição abrangente colocada antes engole todos os casos seguintes. Java não avalia as demais nem escolhe a "melhor".', 30, 2)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.lessons (id, module_id, title, subtitle, content, polyglot, order_index) values ('ja-cond-04', 'java-condicionais', 'Combinando condições', '&&, || e switch', '## E, OU, NÃO
+
+~~~java
+int idade = 22;
+boolean temHabilitacao = false;
+
+if (idade >= 18 && temHabilitacao) {
+    System.out.println("Pode dirigir");
+} else {
+    System.out.println("Não pode dirigir");
+}
+~~~
+
+~~~text
+Não pode dirigir
+~~~
+
+| Operador | Verdadeiro quando | Em Python |
+| --- | --- | --- |
+| `&&` | os **dois** lados são verdadeiros | `and` |
+| `\|\|` | **pelo menos um** é verdadeiro | `or` |
+| `!` | inverte | `not` |
+
+## Curto-circuito
+
+`&&` e `||` param assim que a resposta já está decidida:
+
+~~~java
+if (nome != null && nome.length() > 0) { }
+~~~
+
+Se `nome` for `null`, o lado direito **não é avaliado** — e é isso que evita o `NullPointerException`. Inverter a ordem dos dois testes quebraria o programa.
+
+> Guarde este padrão: verificar `!= null` **antes** de usar o objeto, no mesmo `&&`. É a defesa mais comum contra a exceção mais comum do Java.
+
+## switch: muitos valores exatos
+
+Quando você compara a **mesma variável** com vários valores fixos, o `switch` fica mais legível:
+
+~~~java
+int dia = 3;
+
+switch (dia) {
+    case 1:
+        System.out.println("Domingo");
+        break;
+    case 3:
+        System.out.println("Terça");
+        break;
+    default:
+        System.out.println("Outro dia");
+}
+~~~
+
+~~~text
+Terça
+~~~
+
+O `break` é obrigatório: sem ele a execução **continua no próximo case**, mesmo com o valor diferente. Esquecer o `break` é um clássico.
+
+`switch` serve para igualdade exata. Para faixas (`nota >= 7`), continue com `if / else if`.', null, 4)
+  on conflict (id) do update set module_id = excluded.module_id, title = excluded.title,
+  subtitle = excluded.subtitle, content = excluded.content, polyglot = excluded.polyglot,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-cond-04-e1', 'ja-cond-04', 'Complete o operador que exige as **duas** condições verdadeiras:
+
+~~~java
+if (idade >= 18 ______ temHabilitacao) {
+    System.out.println("Pode dirigir");
+}
+~~~',
+  null, 'fill_blank', '&&',
+  null, null, 'São dois caracteres iguais — o "and" do Java.',
+  '`&&` é o E lógico. Ele também tem curto-circuito: se o lado esquerdo já for falso, o direito nem é avaliado.', 30, 1)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-cond-04-e2', 'ja-cond-04', 'O que acontece num `switch` quando você esquece o `break` de um `case`?',
+  null, 'multiple_choice', 'A execução continua no case seguinte, mesmo com o valor diferente',
+  '["A execução continua no case seguinte, mesmo com o valor diferente","O switch inteiro é ignorado","Erro de compilação","Só o default é executado"]'::jsonb, null, null,
+  'É o chamado *fall-through*: sem `break`, o programa segue executando os próximos `case`. Compila sem nenhum aviso, então o defeito só aparece na saída errada.', 35, 2)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+
+insert into public.modules (id, language_id, title, description, icon, order_index) values ('java-repeticoes', 'java', 'Repetições', 'O for de três partes, o while e os acumuladores que resolvem quase tudo.', '🔁', 4)
+  on conflict (id) do update set language_id = excluded.language_id, title = excluded.title,
+  description = excluded.description, icon = excluded.icon, order_index = excluded.order_index;
+insert into public.lessons (id, module_id, title, subtitle, content, polyglot, order_index) values ('ja-rep-01', 'java-repeticoes', 'O for de três partes', 'Início, condição e passo', '## A forma clássica
+
+~~~java
+for (int i = 1; i <= 5; i++) {
+    System.out.println(i);
+}
+~~~
+
+~~~text
+1
+2
+3
+4
+5
+~~~
+
+O `for` do Java é bem diferente do Python: dentro dos parênteses vão **três coisas**, separadas por ponto e vírgula.
+
+| Parte | Neste exemplo | Quando roda |
+| --- | --- | --- |
+| início | `int i = 1` | uma vez, antes de tudo |
+| condição | `i <= 5` | antes de cada volta; se for falsa, o laço acaba |
+| passo | `i++` | ao fim de cada volta |
+
+Enquanto o Python diz "para cada número deste conjunto", o Java diz "comece assim, continue enquanto isso, e a cada volta faça aquilo". É mais trabalho e mais controle.
+
+## Contando de trás para frente
+
+~~~java
+for (int i = 5; i >= 1; i--) {
+    System.out.println(i);
+}
+~~~
+
+~~~text
+5
+4
+3
+2
+1
+~~~
+
+## De dois em dois
+
+~~~java
+for (int i = 0; i <= 10; i += 2) {
+    System.out.print(i + " ");
+}
+~~~
+
+~~~text
+0 2 4 6 8 10
+~~~
+
+## O escopo do i
+
+A variável declarada no `for` **só existe dentro dele**:
+
+~~~java
+for (int i = 0; i < 3; i++) { }
+System.out.println(i);
+~~~
+
+~~~text
+error: cannot find symbol
+~~~
+
+> Isso é proposital: evita que um contador vaze e seja reaproveitado sem querer mais adiante. Se você precisa do valor depois do laço, declare a variável antes dele.', '[{"language":"Java","code":"for (int i = 1; i <= 5; i++) {\n    System.out.println(i);\n}"},{"language":"Python","code":"for i in range(1, 6):\n    print(i)"},{"language":"JavaScript","code":"for (let i = 1; i <= 5; i++) {\n  console.log(i);\n}"}]'::jsonb, 1)
+  on conflict (id) do update set module_id = excluded.module_id, title = excluded.title,
+  subtitle = excluded.subtitle, content = excluded.content, polyglot = excluded.polyglot,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-rep-01-e1', 'ja-rep-01', 'Complete a condição para que o laço mostre os números de 1 a 5:
+
+~~~java
+for (int i = 1; ______; i++) {
+    System.out.println(i);
+}
+~~~',
+  null, 'fill_blank', 'i <= 5',
+  null, null, 'Precisa incluir o 5, então não é apenas "menor que".',
+  'Com `i < 5` o laço pararia no 4. Como a contagem começa em 1 e deve incluir o 5, a condição é `i <= 5`.', 30, 1)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-rep-01-e2', 'ja-rep-01', 'Quantas vezes o corpo deste laço executa?
+
+~~~java
+for (int i = 0; i < 4; i++) {
+    System.out.println("oi");
+}
+~~~',
+  null, 'multiple_choice', '4',
+  '["4","3","5","0"]'::jsonb, null, null,
+  'O `i` assume 0, 1, 2 e 3 — quatro voltas. Em `i = 4` a condição `i < 4` fica falsa e o laço termina. Começar em 0 com `<` limite é o formato mais comum em Java, justamente porque índices de array começam em 0.', 30, 2)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.lessons (id, module_id, title, subtitle, content, polyglot, order_index) values ('ja-rep-02', 'java-repeticoes', 'while e do-while', 'Quando você não sabe quantas voltas', '## while: enquanto der
+
+~~~java
+int contador = 3;
+
+while (contador >= 1) {
+    System.out.println(contador);
+    contador--;
+}
+
+System.out.println("Fim");
+~~~
+
+~~~text
+3
+2
+1
+Fim
+~~~
+
+Use `for` quando souber quantas voltas serão; `while` quando a parada depender de algo que acontece durante a execução — uma resposta do usuário, o fim de um arquivo, um valor encontrado.
+
+## O laço infinito
+
+~~~java
+int contador = 3;
+while (contador >= 1) {
+    System.out.println(contador);
+}
+~~~
+
+Sem o `contador--`, a condição nunca fica falsa e o programa trava. **Todo `while` precisa de algo no corpo que caminhe em direção à parada** — e vale conferir isso antes de rodar.
+
+## do-while: pelo menos uma vez
+
+~~~java
+int numero;
+do {
+    System.out.print("Digite um número positivo: ");
+    numero = entrada.nextInt();
+} while (numero <= 0);
+~~~
+
+A condição é testada **no fim**, então o corpo roda ao menos uma vez. É o formato natural para pedir algo até vir uma resposta válida.
+
+| Laço | Testa a condição | Corpo roda no mínimo |
+| --- | --- | --- |
+| `while` | antes | 0 vez |
+| `do-while` | depois | 1 vez |
+
+> O `do-while` termina com ponto e vírgula depois do `while (...)`. É a única estrutura do Java que exige isso, e esquecer dá erro de compilação.', null, 2)
+  on conflict (id) do update set module_id = excluded.module_id, title = excluded.title,
+  subtitle = excluded.subtitle, content = excluded.content, polyglot = excluded.polyglot,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-rep-02-e1', 'ja-rep-02', 'Qual a diferença prática entre `while` e `do-while`?',
+  null, 'multiple_choice', 'O do-while testa a condição no fim, então o corpo executa pelo menos uma vez',
+  '["O do-while testa a condição no fim, então o corpo executa pelo menos uma vez","O do-while é mais rápido","O while não aceita condições compostas","Não há diferença: são sinônimos"]'::jsonb, null, null,
+  'Com `while`, se a condição já começar falsa o corpo nunca roda. Com `do-while` ele roda uma vez antes do primeiro teste — por isso é o formato usado para pedir uma entrada até ela ser válida.', 30, 1)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-rep-02-e2', 'ja-rep-02', 'O que falta neste laço para ele não ser infinito?
+
+~~~java
+int contador = 3;
+while (contador >= 1) {
+    System.out.println(contador);
+}
+~~~',
+  null, 'multiple_choice', 'Uma linha que diminua o contador, como `contador--;`',
+  '["Uma linha que diminua o contador, como `contador--;`","Trocar o while por for","Declarar o contador como final","Um ponto e vírgula depois do while"]'::jsonb, null, null,
+  'A condição `contador >= 1` nunca fica falsa porque nada altera o `contador`. Todo `while` precisa de algo no corpo que caminhe em direção à parada.', 35, 2)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.lessons (id, module_id, title, subtitle, content, polyglot, order_index) values ('ja-rep-03', 'java-repeticoes', 'Acumuladores', 'Somar e contar dentro do laço', '## Somar
+
+O padrão é sempre o mesmo: uma variável **antes** do laço, alterada **dentro** dele, lida **depois**.
+
+~~~java
+int soma = 0;
+
+for (int i = 1; i <= 100; i++) {
+    soma += i;
+}
+
+System.out.println(soma);
+~~~
+
+~~~text
+5050
+~~~
+
+Se `soma` fosse declarada dentro do `for`, ela nasceria zerada a cada volta — e o resultado seria o último número, não o total.
+
+## Contar quando uma condição bate
+
+~~~java
+int quantidade = 0;
+
+for (int i = 1; i <= 20; i++) {
+    if (i % 3 == 0) {
+        quantidade++;
+    }
+}
+
+System.out.println(quantidade);
+~~~
+
+~~~text
+6
+~~~
+
+Um `for` percorrendo tudo e um `if` decidindo o que conta: é a combinação mais frequente em programação.
+
+## Guardar o maior
+
+~~~java
+int[] notas = {7, 9, 4, 8};
+int maior = notas[0];
+
+for (int i = 1; i < notas.length; i++) {
+    if (notas[i] > maior) {
+        maior = notas[i];
+    }
+}
+
+System.out.println(maior);
+~~~
+
+~~~text
+9
+~~~
+
+Repare que `maior` começa com o **primeiro elemento**, e não com zero. Começar em zero funcionaria aqui, mas quebraria com uma lista só de negativos — o maior de `{-5, -2}` sairia como `0`, que não está na lista.
+
+> Três acumuladores resolvem a maior parte dos exercícios: **soma** (começa em 0), **contador** (começa em 0) e **melhor até agora** (começa com o primeiro elemento).', null, 3)
+  on conflict (id) do update set module_id = excluded.module_id, title = excluded.title,
+  subtitle = excluded.subtitle, content = excluded.content, polyglot = excluded.polyglot,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-rep-03-e1', 'ja-rep-03', 'Por que a variável `soma` precisa ser declarada **antes** do `for`?',
+  null, 'multiple_choice', 'Declarada dentro do laço, ela seria recriada zerada a cada volta',
+  '["Declarada dentro do laço, ela seria recriada zerada a cada volta","Java não permite declarar variáveis dentro de um for","Para poder ser final","Para o laço executar mais rápido"]'::jsonb, null, null,
+  'Uma variável declarada no corpo do laço nasce e morre a cada volta. O acumulador precisa sobreviver entre as voltas, então mora fora — e por isso também continua acessível depois que o laço acaba.', 35, 1)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-rep-03-e2', 'ja-rep-03', 'Ao procurar o maior valor de uma lista, com que valor a variável `maior` deve começar?',
+  null, 'multiple_choice', 'Com o primeiro elemento da lista',
+  '["Com o primeiro elemento da lista","Com zero","Com o tamanho da lista","Com o último elemento da lista"]'::jsonb, null, null,
+  'Começar em zero parece funcionar até aparecer uma lista só com números negativos: o maior de `{-5, -2}` sairia como `0`, que sequer está na lista. Começar pelo primeiro elemento garante uma resposta que existe nos dados.', 35, 2)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.lessons (id, module_id, title, subtitle, content, polyglot, order_index) values ('ja-rep-04', 'java-repeticoes', 'Interromper e pular', 'break e continue', '## continue: pula esta volta
+
+~~~java
+for (int i = 1; i <= 10; i++) {
+    if (i == 7) {
+        continue;
+    }
+    System.out.print(i + " ");
+}
+~~~
+
+~~~text
+1 2 3 4 5 6 8 9 10
+~~~
+
+O `continue` abandona o **resto do corpo** e vai para a próxima volta. O laço continua normalmente.
+
+## break: encerra o laço
+
+~~~java
+int[] numeros = {4, 8, 15, 16, 23};
+
+for (int i = 0; i < numeros.length; i++) {
+    if (numeros[i] > 10) {
+        System.out.println("Primeiro maior que 10: " + numeros[i]);
+        break;
+    }
+}
+~~~
+
+~~~text
+Primeiro maior que 10: 15
+~~~
+
+Sem o `break`, o laço continuaria varrendo a lista inteira à toa. Quando você já achou o que procurava, pare.
+
+| Comando | Efeito |
+| --- | --- |
+| `continue` | pula para a próxima volta |
+| `break` | sai do laço |
+
+## Cuidado com o continue no while
+
+~~~java
+int i = 0;
+while (i < 5) {
+    if (i == 2) {
+        continue;
+    }
+    System.out.println(i);
+    i++;
+}
+~~~
+
+Este laço trava. Ao chegar em `i == 2`, o `continue` pula o `i++` — e `i` fica em 2 para sempre. No `for`, o passo roda de qualquer jeito; no `while`, o incremento faz parte do corpo e pode ser pulado.
+
+> Regra prática: `continue` combina bem com `for`. Num `while`, confira se o avanço acontece antes dele.', null, 4)
+  on conflict (id) do update set module_id = excluded.module_id, title = excluded.title,
+  subtitle = excluded.subtitle, content = excluded.content, polyglot = excluded.polyglot,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-rep-04-e1', 'ja-rep-04', 'Complete o comando que pula apenas a volta atual, sem encerrar o laço:
+
+~~~java
+for (int i = 1; i <= 10; i++) {
+    if (i == 7) {
+        ______;
+    }
+    System.out.print(i + " ");
+}
+~~~',
+  null, 'fill_blank', 'continue',
+  null, null, 'O outro comando, `break`, encerraria o laço inteiro.',
+  '`continue` abandona o resto do corpo e segue para a próxima volta. `break` sairia do laço e os números depois do 7 não apareceriam.', 30, 1)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-rep-04-e2', 'ja-rep-04', 'Por que usar `continue` dentro de um `while` é mais arriscado do que dentro de um `for`?',
+  null, 'multiple_choice', 'No while o incremento faz parte do corpo e pode ser pulado, travando o laço',
+  '["No while o incremento faz parte do corpo e pode ser pulado, travando o laço","O while não aceita continue","O continue só funciona com arrays","No while o continue encerra o laço, como um break"]'::jsonb, null, null,
+  'No `for`, o passo (`i++`) roda a cada volta independentemente do `continue`. No `while`, o incremento é só mais uma linha do corpo — se o `continue` vier antes dele, a variável para de avançar e o laço nunca termina.', 35, 2)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+
+insert into public.modules (id, language_id, title, description, icon, order_index) values ('java-listas', 'java', 'Listas', 'Array de tamanho fixo, ArrayList que cresce — e quando usar cada um.', '📋', 5)
+  on conflict (id) do update set language_id = excluded.language_id, title = excluded.title,
+  description = excluded.description, icon = excluded.icon, order_index = excluded.order_index;
+insert into public.lessons (id, module_id, title, subtitle, content, polyglot, order_index) values ('ja-lis-01', 'java-listas', 'Array', 'Tamanho fixo, decidido na criação', '## Declarando
+
+~~~java
+int[] notas = {7, 9, 4, 8};
+System.out.println(notas[0]);
+System.out.println(notas.length);
+~~~
+
+~~~text
+7
+4
+~~~
+
+Os colchetes vêm **no tipo**: `int[]` se lê "array de int". Como todo o resto em Java, um array tem um tipo só — `int[]` guarda inteiros e nada mais.
+
+## Criando vazio
+
+~~~java
+String[] nomes = new String[3];
+nomes[0] = "Ana";
+System.out.println(nomes[1]);
+~~~
+
+~~~text
+null
+~~~
+
+`new String[3]` reserva três posições já preenchidas com o valor padrão do tipo: `0` para números, `false` para booleanos e `null` para objetos.
+
+> Aquele `null` é a origem mais comum de `NullPointerException`: você criou o array, esqueceu de preencher uma posição, e chamou um método nela.
+
+## O tamanho não muda
+
+~~~java
+int[] notas = new int[4];
+~~~
+
+São quatro posições para sempre. Precisar de uma quinta significa criar outro array e copiar — e é exatamente esse incômodo que o `ArrayList` da próxima lição resolve.
+
+| | Array | ArrayList |
+| --- | --- | --- |
+| Tamanho | fixo | cresce e encolhe |
+| Tipos primitivos | aceita (`int[]`) | não (usa `Integer`) |
+| Tamanho se lê com | `.length` | `.size()` |
+
+## length sem parênteses
+
+~~~java
+notas.length      // array: campo, sem parênteses
+texto.length()    // String: método, com parênteses
+~~~
+
+Uma inconsistência do próprio Java. Não há truque: é decorar.
+
+> Os índices vão de `0` a `length - 1`. Pedir `notas[4]` num array de 4 posições lança `ArrayIndexOutOfBoundsException` — o erro que você viu no módulo de Fundamentos.', '[{"language":"Java","code":"int[] notas = {7, 9, 4};\nSystem.out.println(notas.length);"},{"language":"Python","code":"notas = [7, 9, 4]\nprint(len(notas))"},{"language":"JavaScript","code":"const notas = [7, 9, 4];\nconsole.log(notas.length);"}]'::jsonb, 1)
+  on conflict (id) do update set module_id = excluded.module_id, title = excluded.title,
+  subtitle = excluded.subtitle, content = excluded.content, polyglot = excluded.polyglot,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-lis-01-e1', 'ja-lis-01', 'Complete para obter a quantidade de posições de um array:
+
+~~~java
+int[] notas = {7, 9, 4, 8};
+int total = notas.______;
+~~~',
+  null, 'fill_blank', 'length',
+  null, null, 'Em array é um campo, não um método — então não leva parênteses.',
+  'Array usa `length` sem parênteses; `String` usa `length()` com parênteses. É uma inconsistência do Java que não tem regra — só prática.', 30, 1)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-lis-01-e2', 'ja-lis-01', 'O que `System.out.println(nomes[1]);` mostra?
+
+~~~java
+String[] nomes = new String[3];
+nomes[0] = "Ana";
+~~~',
+  null, 'multiple_choice', 'null',
+  '["null","\"\"","Ana","ArrayIndexOutOfBoundsException"]'::jsonb, null, null,
+  'O array foi criado com 3 posições e só a primeira foi preenchida. Posições de objeto começam em `null` — daí vem boa parte dos `NullPointerException` do mundo real.', 35, 2)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.lessons (id, module_id, title, subtitle, content, polyglot, order_index) values ('ja-lis-02', 'java-listas', 'ArrayList', 'A lista que cresce', '## Criando
+
+~~~java
+import java.util.ArrayList;
+
+ArrayList<String> tarefas = new ArrayList<>();
+tarefas.add("estudar");
+tarefas.add("treinar");
+
+System.out.println(tarefas);
+System.out.println(tarefas.size());
+~~~
+
+~~~text
+[estudar, treinar]
+2
+~~~
+
+O `<String>` entre os sinais de menor e maior é o **tipo genérico**: diz o que a lista guarda. Com ele, o compilador impede que um número entre numa lista de textos.
+
+O `<>` vazio do lado direito é o *diamond operator*: o Java deduz o tipo do lado esquerdo, e você não precisa repetir.
+
+## Os métodos principais
+
+| Método | Faz |
+| --- | --- |
+| `add(x)` | acrescenta no fim |
+| `get(i)` | devolve o item da posição `i` |
+| `set(i, x)` | troca o item da posição `i` |
+| `remove(i)` | remove pela **posição** |
+| `size()` | quantidade de itens |
+| `contains(x)` | `true` se contém |
+| `isEmpty()` | `true` se está vazia |
+
+~~~java
+tarefas.set(0, "dormir");
+tarefas.remove(1);
+System.out.println(tarefas);
+~~~
+
+~~~text
+[dormir]
+~~~
+
+## Colchete não funciona aqui
+
+~~~java
+tarefas[0]
+~~~
+
+~~~text
+error: array required, but ArrayList found
+~~~
+
+Colchetes são só para array. Em `ArrayList` é `get(0)`.
+
+## Primitivo não entra
+
+~~~java
+ArrayList<int> numeros = new ArrayList<>();
+~~~
+
+Não compila. Genéricos só aceitam objetos, então use `Integer`, `Double`, `Boolean` — as versões "objeto" dos primitivos:
+
+~~~java
+ArrayList<Integer> numeros = new ArrayList<>();
+numeros.add(10);
+~~~
+
+> Repare que `numeros.add(10)` funciona mesmo com `10` sendo um `int`: o Java converte sozinho para `Integer`. Isso se chama *autoboxing*.
+
+## A ambiguidade do remove
+
+Numa `ArrayList<Integer>`, `remove(1)` remove **a posição 1**, não o número 1. Para remover pelo valor, `remove(Integer.valueOf(1))`.', null, 2)
+  on conflict (id) do update set module_id = excluded.module_id, title = excluded.title,
+  subtitle = excluded.subtitle, content = excluded.content, polyglot = excluded.polyglot,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-lis-02-e1', 'ja-lis-02', 'Complete para acrescentar um item ao fim da lista:
+
+~~~java
+ArrayList<String> tarefas = new ArrayList<>();
+tarefas.______("estudar");
+~~~',
+  null, 'fill_blank', 'add',
+  null, null, 'É o método de acrescentar — o mesmo nome usado em quase toda coleção do Java.',
+  '`add()` acrescenta no fim e faz a lista crescer. É justamente isso que um array não consegue: o tamanho dele é fixo desde a criação.', 30, 1)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-lis-02-e2', 'ja-lis-02', 'Por que `ArrayList<int>` não compila?',
+  null, 'multiple_choice', 'Genéricos só aceitam objetos; para inteiros use ArrayList<Integer>',
+  '["Genéricos só aceitam objetos; para inteiros use ArrayList<Integer>","ArrayList só guarda texto","Falta importar java.util.int","O tipo genérico precisa vir depois do nome da variável"]'::jsonb, null, null,
+  '`int` é primitivo e não pode ser tipo genérico. `Integer` é a versão objeto dele. Na prática o Java converte sozinho entre os dois (*autoboxing*), então `numeros.add(10)` funciona normalmente.', 35, 2)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.lessons (id, module_id, title, subtitle, content, polyglot, order_index) values ('ja-lis-03', 'java-listas', 'Percorrer', 'O for-each', '## Com índice
+
+~~~java
+String[] linguagens = {"Java", "Python", "C++"};
+
+for (int i = 0; i < linguagens.length; i++) {
+    System.out.println(linguagens[i]);
+}
+~~~
+
+~~~text
+Java
+Python
+C++
+~~~
+
+Funciona, mas você tem de acertar o `0`, o `<` e o `length`. Errar qualquer um vira `ArrayIndexOutOfBoundsException`.
+
+## O for-each
+
+~~~java
+for (String linguagem : linguagens) {
+    System.out.println(linguagem);
+}
+~~~
+
+Lê-se "para cada `String linguagem` **em** `linguagens`". Os dois-pontos fazem o papel do `in` do Python.
+
+Sem índice, sem `length`, sem como errar o limite. Quando você não precisa da posição, é a forma preferida — e é o que se espera de você numa revisão de código.
+
+| Precisa de... | Use |
+| --- | --- |
+| só o valor | `for (Tipo x : colecao)` |
+| a posição também | `for (int i = 0; ...)` |
+| remover durante o percurso | `Iterator` |
+
+## Funciona igual no ArrayList
+
+~~~java
+ArrayList<String> tarefas = new ArrayList<>();
+tarefas.add("estudar");
+tarefas.add("treinar");
+
+for (String tarefa : tarefas) {
+    System.out.println(tarefa);
+}
+~~~
+
+~~~text
+estudar
+treinar
+~~~
+
+## Não dá para alterar por ali
+
+~~~java
+for (String tarefa : tarefas) {
+    tarefa = tarefa.toUpperCase();
+}
+~~~
+
+A lista não muda. A variável do for-each é uma **cópia da referência**: reatribuí-la não mexe na coleção. Para alterar, use índice e `set()`.
+
+> E remover itens durante um for-each lança `ConcurrentModificationException`. A coleção percebe que mudou de tamanho no meio do percurso e interrompe — de propósito, porque o resultado seria imprevisível.', '[{"language":"Java","code":"for (String cor : cores) {\n    System.out.println(cor);\n}"},{"language":"Python","code":"for cor in cores:\n    print(cor)"},{"language":"JavaScript","code":"for (const cor of cores) {\n  console.log(cor);\n}"}]'::jsonb, 3)
+  on conflict (id) do update set module_id = excluded.module_id, title = excluded.title,
+  subtitle = excluded.subtitle, content = excluded.content, polyglot = excluded.polyglot,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-lis-03-e1', 'ja-lis-03', 'Complete o for-each que percorre a lista:
+
+~~~java
+for (String fruta ______ frutas) {
+    System.out.println(fruta);
+}
+~~~',
+  null, 'fill_blank', ':|dois pontos',
+  null, null, 'Um único caractere de pontuação — o que faz o papel do `in` do Python.',
+  'O for-each usa dois-pontos: `for (Tipo variavel : colecao)`. Escrever `in` ali é um reflexo de quem vem do Python, e não compila.', 30, 1)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-lis-03-e2', 'ja-lis-03', 'O que acontece ao remover itens de uma lista **durante** um for-each sobre ela?',
+  null, 'multiple_choice', 'O programa lança ConcurrentModificationException',
+  '["O programa lança ConcurrentModificationException","A lista é percorrida normalmente e os itens somem","Erro de compilação","O for-each recomeça do zero"]'::jsonb, null, null,
+  'A coleção detecta que mudou de tamanho no meio do percurso e interrompe de propósito — continuar daria um resultado imprevisível. Para remover enquanto percorre, use um `Iterator` e o `remove()` dele.', 35, 2)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.lessons (id, module_id, title, subtitle, content, polyglot, order_index) values ('ja-lis-04', 'java-listas', 'Resumir e ordenar', 'Somar, achar o maior, ordenar', '## Somar e tirar a média
+
+Java não tem um `sum()` pronto para array como o Python. O caminho é o acumulador do módulo anterior:
+
+~~~java
+int[] valores = {10, 5, 20, 5};
+int soma = 0;
+
+for (int valor : valores) {
+    soma += valor;
+}
+
+System.out.println(soma);
+System.out.println((double) soma / valores.length);
+~~~
+
+~~~text
+40
+10.0
+~~~
+
+Repare no `(double)` antes da divisão: sem ele, `soma / valores.length` seria divisão entre inteiros e a média sairia truncada.
+
+## Maior e menor
+
+`Math.max` e `Math.min` comparam **dois** valores, então continuam servindo dentro do laço:
+
+~~~java
+int maior = valores[0];
+for (int valor : valores) {
+    maior = Math.max(maior, valor);
+}
+System.out.println(maior);
+~~~
+
+~~~text
+20
+~~~
+
+## Ordenar
+
+~~~java
+import java.util.Arrays;
+
+int[] pontos = {7, 3, 12};
+Arrays.sort(pontos);
+System.out.println(Arrays.toString(pontos));
+~~~
+
+~~~text
+[3, 7, 12]
+~~~
+
+Duas coisas importantes aqui:
+
+- `Arrays.sort` ordena **o próprio array**, no lugar. Não existe cópia: a ordem original se perde.
+- `System.out.println(pontos)` sozinho não mostra o conteúdo — imprime algo como `[I@1b6d3586`, que é o tipo e o endereço. Para ver os valores, `Arrays.toString(pontos)`.
+
+| Coleção | Ordenar | Imprimir |
+| --- | --- | --- |
+| array | `Arrays.sort(a)` | `Arrays.toString(a)` |
+| ArrayList | `Collections.sort(lista)` | `System.out.println(lista)` |
+
+`ArrayList` já imprime bonito sozinho, porque tem um `toString()` próprio. Array não tem — ele herda o padrão de `Object`.
+
+> Precisa manter a ordem original? Copie antes: `int[] copia = Arrays.copyOf(pontos, pontos.length);` e ordene a cópia.', null, 4)
+  on conflict (id) do update set module_id = excluded.module_id, title = excluded.title,
+  subtitle = excluded.subtitle, content = excluded.content, polyglot = excluded.polyglot,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-lis-04-e1', 'ja-lis-04', 'Por que `System.out.println(pontos);` não mostra os números de um `int[]`?',
+  null, 'multiple_choice', 'Array não tem toString() próprio, então imprime tipo e endereço de memória',
+  '["Array não tem toString() próprio, então imprime tipo e endereço de memória","Arrays só podem ser impressos dentro de um laço","Falta importar java.util.Arrays","Porque o array ainda não foi ordenado"]'::jsonb, null, null,
+  'A saída fica parecida com `[I@1b6d3586`. `Arrays.toString(pontos)` resolve. Um `ArrayList`, ao contrário, tem `toString()` próprio e imprime o conteúdo direto.', 35, 1)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-lis-04-e2', 'ja-lis-04', 'Complete para ordenar o array em ordem crescente:
+
+~~~java
+import java.util.Arrays;
+
+int[] pontos = {7, 3, 12};
+______(pontos);
+~~~',
+  null, 'fill_blank', 'Arrays.sort',
+  null, null, 'Método da classe utilitária `Arrays`, importada acima.',
+  '`Arrays.sort` ordena o próprio array, no lugar — a ordem original se perde. Para uma `ArrayList` o equivalente é `Collections.sort(lista)`.', 35, 2)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+
+insert into public.modules (id, language_id, title, description, icon, order_index) values ('java-mapas', 'java', 'Mapas', 'HashMap: guardar dados por nome em vez de por posição.', '🗂️', 6)
+  on conflict (id) do update set language_id = excluded.language_id, title = excluded.title,
+  description = excluded.description, icon = excluded.icon, order_index = excluded.order_index;
+insert into public.lessons (id, module_id, title, subtitle, content, polyglot, order_index) values ('ja-map-01', 'java-mapas', 'Chave e valor', 'HashMap', '## O limite da lista
+
+Numa lista, cada valor é identificado pela **posição**. Para os dados de uma pessoa, isso envelhece mal:
+
+~~~java
+String[] aluno = {"Ana", "20", "8.5"};
+System.out.println(aluno[2]);
+~~~
+
+O que é `aluno[2]`? Você precisa lembrar. E note o outro problema: como o array tem um tipo só, a idade e a nota viraram texto.
+
+## O mapa guarda por nome
+
+~~~java
+import java.util.HashMap;
+
+HashMap<String, Integer> idades = new HashMap<>();
+idades.put("Ana", 20);
+idades.put("Luiz", 25);
+
+System.out.println(idades.get("Ana"));
+~~~
+
+~~~text
+20
+~~~
+
+Agora são **dois** tipos genéricos: `<String, Integer>` é "chave texto, valor inteiro".
+
+| | ArrayList | HashMap |
+| --- | --- | --- |
+| Identifica por | posição (`0`, `1`) | chave (`"Ana"`) |
+| Boa para | uma coleção de coisas iguais | os campos de **uma** coisa, ou pares nome→valor |
+| Acrescentar | `add(x)` | `put(chave, valor)` |
+| Ler | `get(i)` | `get(chave)` |
+
+## put cria e atualiza
+
+~~~java
+idades.put("Ana", 20);
+idades.put("Ana", 21);
+System.out.println(idades);
+~~~
+
+~~~text
+{Ana=21}
+~~~
+
+Se a chave já existe, o valor é substituído. Não há erro nem aviso: é assim que se atualiza.
+
+## A ordem não é garantida
+
+`HashMap` **não** guarda a ordem de inserção. Imprimir pode sair em qualquer ordem, e ela pode até mudar entre execuções.
+
+> Isso surpreende quem vem do Python, onde o dicionário mantém a ordem de inserção desde a versão 3.7. Se a ordem importar, use `LinkedHashMap` (ordem de inserção) ou `TreeMap` (ordenado pela chave) — os dois têm exatamente os mesmos métodos.
+
+## Chave que não existe
+
+~~~java
+System.out.println(idades.get("Kauan"));
+~~~
+
+~~~text
+null
+~~~
+
+Diferente do Python, que lança `KeyError`, o Java devolve `null` em silêncio. É mais educado e mais perigoso: o programa segue com `null` na mão e quebra mais adiante, longe da causa.', '[{"language":"Java","code":"HashMap<String, Integer> idades = new HashMap<>();\nidades.put(\"Ana\", 20);"},{"language":"Python","code":"idades = {}\nidades[\"Ana\"] = 20"},{"language":"JavaScript","code":"const idades = {};\nidades.Ana = 20;"}]'::jsonb, 1)
+  on conflict (id) do update set module_id = excluded.module_id, title = excluded.title,
+  subtitle = excluded.subtitle, content = excluded.content, polyglot = excluded.polyglot,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-map-01-e1', 'ja-map-01', 'Complete para guardar o valor `20` sob a chave `"Ana"`:
+
+~~~java
+HashMap<String, Integer> idades = new HashMap<>();
+idades.______("Ana", 20);
+~~~',
+  null, 'fill_blank', 'put',
+  null, null, 'É o método de guardar num mapa — o equivalente ao `add` da lista.',
+  '`put(chave, valor)` insere ou atualiza. Se a chave já existir, o valor anterior é substituído sem nenhum aviso.', 30, 1)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-map-01-e2', 'ja-map-01', 'O que `idades.get("Kauan")` devolve, se a chave `"Kauan"` não existe no mapa?',
+  null, 'multiple_choice', 'null',
+  '["null","0","Lança KeyError","Lança NullPointerException"]'::jsonb, null, null,
+  'O Java devolve `null` em silêncio, ao contrário do Python, que lança `KeyError`. O risco é o programa seguir com `null` na mão e só quebrar bem mais adiante, longe da causa.', 35, 2)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.lessons (id, module_id, title, subtitle, content, polyglot, order_index) values ('ja-map-02', 'java-mapas', 'Consultar sem quebrar', 'containsKey e getOrDefault', '## O problema do null
+
+`get()` devolvendo `null` só adia o erro:
+
+~~~java
+HashMap<String, Integer> estoque = new HashMap<>();
+int quantidade = estoque.get("caneta");
+~~~
+
+~~~text
+Exception in thread "main" java.lang.NullPointerException
+~~~
+
+O `null` não cabe num `int`, e a conversão automática de `Integer` para `int` estoura. O erro aparece nesta linha, mas a causa é a chave que não existia.
+
+## getOrDefault: um valor de reserva
+
+~~~java
+int quantidade = estoque.getOrDefault("caneta", 0);
+System.out.println(quantidade);
+~~~
+
+~~~text
+0
+~~~
+
+Este é o jeito de ler um campo opcional sem encher o código de `if`. É também a peça central da contagem, na última lição do módulo.
+
+## containsKey: a chave existe?
+
+~~~java
+if (estoque.containsKey("caneta")) {
+    System.out.println("Temos caneta");
+} else {
+    System.out.println("Acabou a caneta");
+}
+~~~
+
+~~~text
+Acabou a caneta
+~~~
+
+| Situação | Escolha |
+| --- | --- |
+| A chave tem de existir; faltar é bug | `get(chave)` |
+| Campo opcional, com padrão razoável | `getOrDefault(chave, padrao)` |
+| Preciso **decidir** algo pela presença | `if (containsKey(chave))` |
+
+Deixar o `null` acontecer é a escolha certa quando a ausência realmente indica um defeito: o programa para perto do problema, em vez de seguir com dado errado.
+
+> `containsKey` procura entre as **chaves**. Para procurar entre os valores existe `containsValue`, que é bem mais lento — ele varre o mapa inteiro, enquanto `containsKey` vai direto.
+
+## Remover
+
+~~~java
+estoque.remove("caneta");
+~~~
+
+Remover uma chave que não existe não dá erro: simplesmente não faz nada.', null, 2)
+  on conflict (id) do update set module_id = excluded.module_id, title = excluded.title,
+  subtitle = excluded.subtitle, content = excluded.content, polyglot = excluded.polyglot,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-map-02-e1', 'ja-map-02', 'Complete para ler a quantidade usando `0` quando a chave não existir:
+
+~~~java
+int quantidade = estoque.______("caneta", 0);
+~~~',
+  null, 'fill_blank', 'getOrDefault',
+  null, null, 'O nome do método diz o que ele faz: pega, ou usa o padrão.',
+  '`getOrDefault(chave, padrao)` devolve o padrão quando a chave falta. Com `get()` viria `null`, e atribuir `null` a um `int` lança `NullPointerException`.', 35, 1)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-map-02-e2', 'ja-map-02', 'Por que `int quantidade = estoque.get("caneta");` lança `NullPointerException` quando a chave não existe?',
+  null, 'multiple_choice', 'get devolve null, e null não pode ser convertido para o primitivo int',
+  '["get devolve null, e null não pode ser convertido para o primitivo int","O HashMap não aceita ser lido antes de ter itens","Falta declarar a variável como Integer","Porque o mapa está vazio, e mapa vazio não pode ser consultado"]'::jsonb, null, null,
+  'O mapa guarda `Integer` (objeto), e a atribuição a um `int` exige a conversão automática. Converter `null` estoura. `getOrDefault` resolve dando um valor de verdade.', 35, 2)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.lessons (id, module_id, title, subtitle, content, polyglot, order_index) values ('ja-map-03', 'java-mapas', 'Percorrer um mapa', 'entrySet, keySet e values', '## Chave e valor de uma vez
+
+~~~java
+HashMap<String, Integer> estoque = new HashMap<>();
+estoque.put("caneta", 12);
+estoque.put("caderno", 3);
+
+for (Map.Entry<String, Integer> item : estoque.entrySet()) {
+    System.out.println(item.getKey() + ": " + item.getValue());
+}
+~~~
+
+~~~text
+caneta: 12
+caderno: 3
+~~~
+
+`entrySet()` devolve os pares. Cada `Map.Entry` tem `getKey()` e `getValue()`.
+
+É mais verboso que o `for chave, valor in dados.items()` do Python — em Java, um par precisa de um tipo com nome, e esse tipo é o `Map.Entry`.
+
+> Precisa do `import java.util.Map;` para escrever `Map.Entry`, além do import do `HashMap`.
+
+## As três formas
+
+| Escrita | O que o for recebe |
+| --- | --- |
+| `for (String c : mapa.keySet())` | as chaves |
+| `for (Integer v : mapa.values())` | os valores |
+| `for (Map.Entry<K,V> e : mapa.entrySet())` | os dois |
+
+## Só as chaves
+
+~~~java
+for (String produto : estoque.keySet()) {
+    System.out.println(produto);
+}
+~~~
+
+~~~text
+caneta
+caderno
+~~~
+
+Usar `keySet()` e depois chamar `get(produto)` dentro do laço funciona, mas faz duas buscas por item. Quando você precisa dos dois, `entrySet()` é a forma certa.
+
+## Somando os valores
+
+~~~java
+int total = 0;
+for (int quantidade : estoque.values()) {
+    total += quantidade;
+}
+System.out.println(total);
+~~~
+
+~~~text
+15
+~~~
+
+## A versão curta
+
+A partir do Java 8 dá para escrever assim:
+
+~~~java
+estoque.forEach((produto, quantidade) ->
+    System.out.println(produto + ": " + quantidade));
+~~~
+
+Aquela seta é uma **expressão lambda** — uma função escrita ali mesmo, sem nome. Você vai encontrar isso em código Java moderno o tempo todo.', null, 3)
+  on conflict (id) do update set module_id = excluded.module_id, title = excluded.title,
+  subtitle = excluded.subtitle, content = excluded.content, polyglot = excluded.polyglot,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-map-03-e1', 'ja-map-03', 'Complete o método que devolve os pares chave/valor para percorrer:
+
+~~~java
+for (Map.Entry<String, Integer> item : estoque.______) {
+    System.out.println(item.getKey());
+}
+~~~',
+  null, 'fill_blank', 'entrySet()',
+  null, null, 'O nome fala em "entradas" — os pares do mapa. Não esqueça os parênteses.',
+  '`entrySet()` devolve os pares. `keySet()` daria só as chaves e `values()` só os valores — e aí você não teria os dois de uma vez.', 35, 1)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-map-03-e2', 'ja-map-03', 'Você precisa da chave **e** do valor de cada item. Por que `entrySet()` é melhor que `keySet()` com `get()` dentro do laço?',
+  null, 'multiple_choice', 'Com keySet + get você faz duas buscas por item; o entrySet já traz o par',
+  '["Com keySet + get você faz duas buscas por item; o entrySet já traz o par","keySet não funciona dentro de um for-each","get() não pode ser chamado dentro de um laço","Não há diferença: as duas formas são idênticas"]'::jsonb, null, null,
+  'As duas funcionam, mas `keySet()` seguido de `get(chave)` procura no mapa de novo a cada volta. `entrySet()` entrega chave e valor juntos, numa passagem só.', 35, 2)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.lessons (id, module_id, title, subtitle, content, polyglot, order_index) values ('ja-map-04', 'java-mapas', 'Contar com mapa', 'O padrão que aparece em todo lugar', '## O problema clássico
+
+Quantas vezes cada palavra aparece numa lista? Com listas isso é trabalhoso; com mapa é o uso mais natural que existe: a **chave** é o que se conta, o **valor** é a contagem.
+
+~~~java
+String[] votos = {"azul", "verde", "azul", "roxo", "azul"};
+HashMap<String, Integer> contagem = new HashMap<>();
+
+for (String cor : votos) {
+    if (contagem.containsKey(cor)) {
+        contagem.put(cor, contagem.get(cor) + 1);
+    } else {
+        contagem.put(cor, 1);
+    }
+}
+
+System.out.println(contagem);
+~~~
+
+~~~text
+{azul=3, roxo=1, verde=1}
+~~~
+
+Leia devagar: na primeira vez que uma cor aparece ela **não está** no mapa, então entra com 1. Nas vezes seguintes, o valor que já existe é somado com 1.
+
+## A versão curta
+
+O `getOrDefault` da segunda lição encurta as quatro linhas para uma:
+
+~~~java
+for (String cor : votos) {
+    contagem.put(cor, contagem.getOrDefault(cor, 0) + 1);
+}
+~~~
+
+Quando a cor ainda não existe, `getOrDefault(cor, 0)` devolve 0 e a soma dá 1. Quando existe, devolve a contagem atual. Mesma lógica, sem o `if`.
+
+> Este padrão — *ler com padrão, somar, guardar de volta* — resolve contagem, agrupamento, soma por categoria e totalização por chave. Vale reconhecê-lo: ele aparece em praticamente todo sistema que produz relatório.
+
+## Achando o campeão
+
+Depois de contar, encontrar o maior é o "melhor até agora" do módulo de repetições, agora sobre um mapa:
+
+~~~java
+String campea = "";
+int maior = 0;
+
+for (Map.Entry<String, Integer> item : contagem.entrySet()) {
+    if (item.getValue() > maior) {
+        maior = item.getValue();
+        campea = item.getKey();
+    }
+}
+
+System.out.println(campea + " com " + maior);
+~~~
+
+~~~text
+azul com 3
+~~~
+
+## E se houver empate?
+
+Este código fica com o **primeiro** que atingiu o valor máximo — e como `HashMap` não garante ordem, "o primeiro" pode mudar entre execuções. Se o empate importar para a sua regra de negócio, trate explicitamente: guarde uma lista de campeões em vez de um só.', null, 4)
+  on conflict (id) do update set module_id = excluded.module_id, title = excluded.title,
+  subtitle = excluded.subtitle, content = excluded.content, polyglot = excluded.polyglot,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-map-04-e1', 'ja-map-04', 'Complete a contagem em uma linha:
+
+~~~java
+for (String cor : votos) {
+    contagem.put(cor, contagem.______(cor, 0) + 1);
+}
+~~~',
+  null, 'fill_blank', 'getOrDefault',
+  null, null, 'Precisa devolver 0 na primeira vez que a cor aparecer.',
+  'Na primeira ocorrência, `getOrDefault(cor, 0)` devolve 0 e a soma grava 1. Nas seguintes devolve a contagem atual. É o padrão *ler com padrão, somar, guardar de volta*.', 40, 1)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-map-04-e2', 'ja-map-04', 'Ao procurar a chave de maior valor num `HashMap`, por que o resultado pode variar entre execuções em caso de empate?',
+  null, 'multiple_choice', 'HashMap não garante ordem, então "o primeiro a atingir o máximo" pode mudar',
+  '["HashMap não garante ordem, então \"o primeiro a atingir o máximo\" pode mudar","Porque getValue() devolve valores aleatórios","Porque o laço precisa ser um while","Não varia: o HashMap sempre percorre em ordem alfabética"]'::jsonb, null, null,
+  'Como a comparação é `>` estrita, quem chega primeiro fica com o posto — e a ordem de percurso de um `HashMap` não é garantida. Se o empate importa, guarde uma lista de campeões, ou use `LinkedHashMap`/`TreeMap` para ter ordem previsível.', 40, 2)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+
+insert into public.modules (id, language_id, title, description, icon, order_index) values ('java-metodos', 'java', 'Métodos', 'Dar nome a um pedaço de código — e o tipo de retorno que o Java exige na frente.', '⚙️', 7)
+  on conflict (id) do update set language_id = excluded.language_id, title = excluded.title,
+  description = excluded.description, icon = excluded.icon, order_index = excluded.order_index;
+insert into public.lessons (id, module_id, title, subtitle, content, polyglot, order_index) values ('ja-met-01', 'java-metodos', 'Criar um método', 'A assinatura', '## Por que separar
+
+Um bloco que você repete em três lugares é um bloco que você vai corrigir em três lugares. Um **método** dá nome a esse pedaço e passa a existir num lugar só.
+
+~~~java
+public class Jogo {
+
+    static void abrirJogo() {
+        System.out.println("Partida iniciada");
+    }
+
+    public static void main(String[] args) {
+        abrirJogo();
+        abrirJogo();
+    }
+}
+~~~
+
+~~~text
+Partida iniciada
+Partida iniciada
+~~~
+
+Em Java, o que outras linguagens chamam de "função" chama-se **método**, porque sempre pertence a uma classe.
+
+## Lendo a assinatura
+
+`static void abrirJogo()`
+
+| Parte | Significa |
+| --- | --- |
+| `static` | pertence à classe; dá para chamar sem criar objeto |
+| `void` | não devolve nada |
+| `abrirJogo` | o nome, em `camelCase` |
+| `()` | não recebe parâmetros |
+
+## Por que static aqui
+
+O `main` é `static`. Um método `static` só chama outros `static` diretamente — chamar um não-static de dentro do `main` dá:
+
+~~~text
+error: non-static method abrirJogo() cannot be referenced from a static context
+~~~
+
+É uma das mensagens que mais aparecem para quem está começando. Enquanto todo o seu programa vive numa classe só, deixe os métodos `static`.
+
+> Métodos sem `static` fazem sentido quando existem objetos — cada objeto tem os seus dados, e o método trabalha sobre eles. É o assunto de orientação a objetos, que vem depois desta trilha.
+
+## Onde declarar
+
+Dentro da classe, **fora** do `main`. A ordem não importa: o Java enxerga todos os métodos da classe, mesmo os declarados abaixo.', '[{"language":"Java","code":"static void abrirJogo() {\n    System.out.println(\"Partida iniciada\");\n}"},{"language":"Python","code":"def abrir_jogo():\n    print(\"Partida iniciada\")"},{"language":"JavaScript","code":"function abrirJogo() {\n  console.log(\"Partida iniciada\");\n}"}]'::jsonb, 1)
+  on conflict (id) do update set module_id = excluded.module_id, title = excluded.title,
+  subtitle = excluded.subtitle, content = excluded.content, polyglot = excluded.polyglot,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-met-01-e1', 'ja-met-01', 'Complete o tipo de retorno de um método que apenas imprime e não devolve nada:
+
+~~~java
+static ______ abrirJogo() {
+    System.out.println("Partida iniciada");
+}
+~~~',
+  null, 'fill_blank', 'void',
+  null, null, 'Quatro letras, e significa exatamente "vazio".',
+  '`void` declara que o método não devolve valor. Java exige o tipo de retorno na assinatura — não existe método sem essa declaração.', 30, 1)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-met-01-e2', 'ja-met-01', 'Por que aparece `non-static method cannot be referenced from a static context` ao chamar um método a partir do `main`?',
+  null, 'multiple_choice', 'O main é static e só chama outros métodos static diretamente',
+  '["O main é static e só chama outros métodos static diretamente","O método foi declarado depois do main","Falta um import","Métodos não podem ser chamados dentro do main"]'::jsonb, null, null,
+  'Um método não-static pertence a um objeto, e no `main` ainda não há objeto nenhum. Enquanto o programa vive numa classe só, declare os métodos como `static`.', 35, 2)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.lessons (id, module_id, title, subtitle, content, polyglot, order_index) values ('ja-met-02', 'java-metodos', 'Parâmetros e retorno', 'Entrada e saída do método', '## Recebendo valores
+
+Cada parâmetro tem tipo e nome:
+
+~~~java
+static void saudar(String nome, int vezes) {
+    for (int i = 0; i < vezes; i++) {
+        System.out.println("Olá, " + nome);
+    }
+}
+~~~
+
+Chamando:
+
+~~~java
+saudar("Ana", 2);
+~~~
+
+~~~text
+Olá, Ana
+Olá, Ana
+~~~
+
+A ordem dos argumentos é a da declaração. Java não tem argumento nomeado como o Python — `saudar(vezes: 2, nome: "Ana")` não existe.
+
+## Devolvendo
+
+Trocar `void` por um tipo obriga o método a devolver aquele tipo:
+
+~~~java
+static double calcularMedia(double a, double b) {
+    return (a + b) / 2;
+}
+
+public static void main(String[] args) {
+    System.out.println(calcularMedia(7, 9));
+}
+~~~
+
+~~~text
+8.0
+~~~
+
+O `return` faz duas coisas ao mesmo tempo: entrega o valor e **encerra o método** ali. Código depois dele não roda.
+
+## O compilador cobra o retorno
+
+~~~java
+static int dobro(int n) {
+    System.out.println(n * 2);
+}
+~~~
+
+~~~text
+error: missing return statement
+~~~
+
+Prometeu `int`, tem de devolver `int` em **todos** os caminhos possíveis. Um `return` só dentro de um `if` não basta: se a condição for falsa, o método terminaria sem devolver nada, e o compilador recusa.
+
+> Isso é uma vantagem concreta sobre Python e JavaScript, onde um caminho sem `return` devolve `None`/`undefined` em silêncio e o problema só aparece bem depois.
+
+## Imprimir não é devolver
+
+~~~java
+static void mediaErrada(double a, double b) {
+    System.out.println((a + b) / 2);
+}
+~~~
+
+Este método mostra a média e não devolve nada — o valor não pode ser reaproveitado. **Quem calcula devolve; quem chamou decide o que fazer com o resultado.** É o que mantém o método reutilizável.', null, 2)
+  on conflict (id) do update set module_id = excluded.module_id, title = excluded.title,
+  subtitle = excluded.subtitle, content = excluded.content, polyglot = excluded.polyglot,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-met-02-e1', 'ja-met-02', 'Complete o tipo de retorno para um método que devolve a média de dois `double`:
+
+~~~java
+static ______ calcularMedia(double a, double b) {
+    return (a + b) / 2;
+}
+~~~',
+  null, 'fill_blank', 'double',
+  null, null, 'A divisão de dois decimais devolve um decimal.',
+  'O tipo declarado precisa bater com o que o `return` entrega. Declarar `int` aqui daria erro de compilação, porque `(a + b) / 2` é `double`.', 30, 1)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-met-02-e2', 'ja-met-02', 'Por que o Java recusa um método `int` cujo `return` está apenas dentro de um `if`?',
+  null, 'multiple_choice', 'Se a condição for falsa o método terminaria sem devolver nada, e o compilador exige retorno em todos os caminhos',
+  '["Se a condição for falsa o método terminaria sem devolver nada, e o compilador exige retorno em todos os caminhos","Porque return não pode aparecer dentro de if","Porque o if precisa ter else obrigatoriamente","Porque métodos int não podem ter condicionais"]'::jsonb, null, null,
+  'A mensagem é `missing return statement`. Em Python o mesmo código devolveria `None` em silêncio; o Java prefere reclamar antes de o programa existir.', 35, 2)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.lessons (id, module_id, title, subtitle, content, polyglot, order_index) values ('ja-met-03', 'java-metodos', 'Sobrecarga', 'Mesmo nome, assinaturas diferentes', '## Um nome, várias formas
+
+Java permite vários métodos com o **mesmo nome**, desde que os parâmetros sejam diferentes:
+
+~~~java
+static int somar(int a, int b) {
+    return a + b;
+}
+
+static double somar(double a, double b) {
+    return a + b;
+}
+
+static int somar(int a, int b, int c) {
+    return a + b + c;
+}
+~~~
+
+~~~java
+System.out.println(somar(2, 3));
+System.out.println(somar(2.5, 3.5));
+System.out.println(somar(1, 2, 3));
+~~~
+
+~~~text
+5
+6.0
+6
+~~~
+
+Isso é **sobrecarga** (*overloading*). O compilador escolhe a versão pelo tipo e pela quantidade dos argumentos — e essa escolha acontece na compilação, não durante a execução.
+
+Você já usava isso sem saber: `System.out.println` é sobrecarregado para `int`, `double`, `String`, `boolean` e outros. É por isso que ele imprime qualquer coisa.
+
+## O que diferencia é a assinatura
+
+Só contam **tipo e quantidade** dos parâmetros. Estes dois não coexistem:
+
+~~~java
+static int calcular(int a) { return a; }
+static double calcular(int a) { return a; }
+~~~
+
+~~~text
+error: method calcular(int) is already defined
+~~~
+
+O tipo de retorno **não** faz parte da assinatura. Faz sentido: em `calcular(5);`, sem usar o resultado, o compilador não teria como escolher.
+
+| Muda o quê | Serve para sobrecarregar? |
+| --- | --- |
+| tipo dos parâmetros | sim |
+| quantidade de parâmetros | sim |
+| nome dos parâmetros | não |
+| tipo de retorno | não |
+
+> Sobrecarga é conveniência, não obrigação. Se as versões fazem coisas **diferentes**, dê nomes diferentes: `buscarPorId` e `buscarPorNome` são mais claros que dois `buscar`.', null, 3)
+  on conflict (id) do update set module_id = excluded.module_id, title = excluded.title,
+  subtitle = excluded.subtitle, content = excluded.content, polyglot = excluded.polyglot,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-met-03-e1', 'ja-met-03', 'O que precisa mudar para dois métodos terem o mesmo nome na mesma classe?',
+  null, 'multiple_choice', 'O tipo ou a quantidade dos parâmetros',
+  '["O tipo ou a quantidade dos parâmetros","Apenas o tipo de retorno","O nome dos parâmetros","Nada: nomes repetidos são sempre permitidos"]'::jsonb, null, null,
+  'É a assinatura que diferencia. O tipo de retorno não entra: em `calcular(5);`, sem usar o resultado, não haveria como o compilador escolher a versão.', 35, 1)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-met-03-e2', 'ja-met-03', 'Qual método sobrecarregado é escolhido em `somar(2.5, 3.5)`, havendo `somar(int, int)` e `somar(double, double)`?',
+  null, 'multiple_choice', 'somar(double, double), decidido na compilação pelos tipos dos argumentos',
+  '["somar(double, double), decidido na compilação pelos tipos dos argumentos","somar(int, int), com arredondamento automático","O primeiro declarado na classe","Nenhum: a chamada é ambígua e não compila"]'::jsonb, null, null,
+  '`2.5` e `3.5` são `double`, então a versão `double` é a única compatível. A escolha acontece na compilação — por isso a saída é `6.0` e não `6`.', 35, 2)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.lessons (id, module_id, title, subtitle, content, polyglot, order_index) values ('ja-met-04', 'java-metodos', 'Escopo', 'Onde cada variável existe', '## Variável local morre no método
+
+~~~java
+static void contar() {
+    int total = 0;
+    total++;
+    System.out.println(total);
+}
+~~~
+
+Chamando `contar()` três vezes, a saída é `1`, `1`, `1`. A cada chamada, `total` nasce de novo.
+
+Para que o valor sobreviva entre as chamadas, ele precisa morar **na classe**:
+
+~~~java
+public class Contador {
+
+    static int total = 0;
+
+    static void contar() {
+        total++;
+        System.out.println(total);
+    }
+
+    public static void main(String[] args) {
+        contar();
+        contar();
+        contar();
+    }
+}
+~~~
+
+~~~text
+1
+2
+3
+~~~
+
+## Os três escopos
+
+| Onde é declarada | Existe |
+| --- | --- |
+| dentro de um bloco (`if`, `for`) | só naquele bloco |
+| dentro de um método | só naquela chamada |
+| na classe (`static int total`) | enquanto o programa roda |
+
+## O bloco também conta
+
+~~~java
+if (true) {
+    int x = 10;
+}
+System.out.println(x);
+~~~
+
+~~~text
+error: cannot find symbol
+~~~
+
+Precisa do valor depois? Declare antes do bloco.
+
+## Parâmetro é uma cópia
+
+~~~java
+static void dobrar(int n) {
+    n = n * 2;
+}
+
+public static void main(String[] args) {
+    int valor = 5;
+    dobrar(valor);
+    System.out.println(valor);
+}
+~~~
+
+~~~text
+5
+~~~
+
+O método recebeu uma **cópia** do número. Alterá-la não toca no original. Para ficar com o resultado, devolva: `valor = dobrar(valor);`.
+
+> Com objetos a história muda: a cópia é da **referência**, então os dois nomes apontam para o mesmo objeto. Alterar o conteúdo de uma `ArrayList` recebida por parâmetro **afeta** a lista de quem chamou — mas reatribuir a variável dentro do método, não.
+
+## Menos estado, menos bug
+
+Variável de classe é conveniente e perigosa: qualquer método pode alterá-la, e descobrir quem mudou o quê fica difícil. Prefira passar por parâmetro e devolver por `return`. Só promova a variável de classe quando o valor realmente precisar sobreviver entre chamadas.', null, 4)
+  on conflict (id) do update set module_id = excluded.module_id, title = excluded.title,
+  subtitle = excluded.subtitle, content = excluded.content, polyglot = excluded.polyglot,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-met-04-e1', 'ja-met-04', 'O que este programa mostra?
+
+~~~java
+static void dobrar(int n) {
+    n = n * 2;
+}
+
+public static void main(String[] args) {
+    int valor = 5;
+    dobrar(valor);
+    System.out.println(valor);
+}
+~~~',
+  null, 'multiple_choice', '5',
+  '["5","10","0","Erro de compilação"]'::jsonb, null, null,
+  'O parâmetro recebe uma cópia do valor. Alterar `n` dentro do método não toca em `valor`. Para aproveitar o resultado, o método precisaria devolvê-lo com `return`.', 35, 1)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-met-04-e2', 'ja-met-04', 'Onde declarar uma variável que precisa manter o valor **entre** várias chamadas de um método?',
+  null, 'multiple_choice', 'Na classe, fora dos métodos',
+  '["Na classe, fora dos métodos","Dentro do próprio método","Dentro do bloco do for","Como parâmetro do método"]'::jsonb, null, null,
+  'Variável local nasce e morre a cada chamada. Na classe, ela vive enquanto o programa roda. Vale usar com parcimônia: estado compartilhado é conveniente e é onde os bugs difíceis se escondem.', 30, 2)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+
+insert into public.modules (id, language_id, title, description, icon, order_index) values ('java-desafios', 'java', 'Desafios', 'Problemas clássicos que juntam laços, condições, métodos e coleções.', '🧩', 8)
+  on conflict (id) do update set language_id = excluded.language_id, title = excluded.title,
+  description = excluded.description, icon = excluded.icon, order_index = excluded.order_index;
+insert into public.lessons (id, module_id, title, subtitle, content, polyglot, order_index) values ('ja-des-01', 'java-desafios', 'FizzBuzz', 'A ordem das condições é tudo', '## O problema
+
+De 1 a 15, mostre o número — mas múltiplos de 3 viram `Fizz`, múltiplos de 5 viram `Buzz`, e múltiplos de ambos viram `FizzBuzz`.
+
+~~~java
+for (int i = 1; i <= 15; i++) {
+    if (i % 3 == 0 && i % 5 == 0) {
+        System.out.println("FizzBuzz");
+    } else if (i % 3 == 0) {
+        System.out.println("Fizz");
+    } else if (i % 5 == 0) {
+        System.out.println("Buzz");
+    } else {
+        System.out.println(i);
+    }
+}
+~~~
+
+~~~text
+1
+2
+Fizz
+4
+Buzz
+Fizz
+7
+8
+Fizz
+Buzz
+11
+Fizz
+13
+14
+FizzBuzz
+~~~
+
+## Por que ele é usado em entrevista
+
+Não é a dificuldade — é a **ordem**. Quem testa `i % 3` primeiro nunca chega no `FizzBuzz`: o 15 é múltiplo de 3, o primeiro teste dá verdadeiro, e a cadeia para ali.
+
+O caso mais específico (múltiplo de 3 **e** de 5) tem de vir primeiro. É a mesma regra da cadeia de `else if` do módulo de Condicionais, num problema onde o erro fica visível.
+
+## Uma variação sem duplicar a condição
+
+~~~java
+for (int i = 1; i <= 15; i++) {
+    String saida = "";
+    if (i % 3 == 0) saida += "Fizz";
+    if (i % 5 == 0) saida += "Buzz";
+    System.out.println(saida.isEmpty() ? i : saida);
+}
+~~~
+
+Aqui não há cadeia: cada teste acrescenta um pedaço, e o 15 recebe os dois. O `? :` é o **operador ternário** — um `if/else` que cabe numa expressão e devolve um valor.
+
+> Ternário é ótimo para escolher entre dois valores e péssimo quando aninhado. Se você precisar de um ternário dentro de outro, volte para o `if`.', null, 1)
+  on conflict (id) do update set module_id = excluded.module_id, title = excluded.title,
+  subtitle = excluded.subtitle, content = excluded.content, polyglot = excluded.polyglot,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-des-01-e1', 'ja-des-01', 'Por que testar `i % 3 == 0` **antes** de `i % 3 == 0 && i % 5 == 0` quebra o FizzBuzz?',
+  null, 'multiple_choice', 'O 15 entraria no primeiro teste e imprimiria Fizz; o FizzBuzz nunca apareceria',
+  '["O 15 entraria no primeiro teste e imprimiria Fizz; o FizzBuzz nunca apareceria","O operador % não funciona com o número 15","A cadeia else if avalia todas as condições e imprime as duas","Não quebra: a ordem dos else if não importa"]'::jsonb, null, null,
+  'A cadeia para no primeiro teste verdadeiro. Como 15 é múltiplo de 3, ele sairia como `Fizz`. O caso mais específico — múltiplo de 3 **e** de 5 — precisa vir primeiro.', 40, 1)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-des-01-e2', 'ja-des-01', 'Complete o operador que testa se `i` é múltiplo de 5:
+
+~~~java
+if (i ______ 5 == 0) {
+    System.out.println("Buzz");
+}
+~~~',
+  null, 'fill_blank', '%',
+  null, null, 'O operador de resto — múltiplo é quando o resto dá zero.',
+  'Resto zero significa divisão exata, ou seja, múltiplo. O `%` é a ferramenta de "é divisível por" em qualquer linguagem da família C.', 30, 2)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.lessons (id, module_id, title, subtitle, content, polyglot, order_index) values ('ja-des-02', 'java-desafios', 'Validar com retorno antecipado', 'Um return por problema', '## O problema
+
+Validar uma senha e dizer **por quê** ela não serve:
+
+- menos de 8 caracteres → `Senha muito curta`
+- igual a `12345678` → `Senha óbvia demais`
+- caso contrário → `Senha aceita`
+
+## Com retorno antecipado
+
+~~~java
+static String validarSenha(String senha) {
+    if (senha.length() < 8) {
+        return "Senha muito curta";
+    }
+    if (senha.equals("12345678")) {
+        return "Senha óbvia demais";
+    }
+    return "Senha aceita";
+}
+~~~
+
+~~~java
+System.out.println(validarSenha("abc"));
+System.out.println(validarSenha("12345678"));
+System.out.println(validarSenha("codequest2026"));
+~~~
+
+~~~text
+Senha muito curta
+Senha óbvia demais
+Senha aceita
+~~~
+
+Cada problema tem o seu `return`, e o caso bom fica no fim. Como o `return` encerra o método na hora, não é preciso `else`.
+
+## Comparado ao aninhamento
+
+~~~java
+static String validarSenha(String senha) {
+    if (senha.length() >= 8) {
+        if (!senha.equals("12345678")) {
+            return "Senha aceita";
+        } else {
+            return "Senha óbvia demais";
+        }
+    } else {
+        return "Senha muito curta";
+    }
+}
+~~~
+
+Faz o mesmo e é bem mais difícil de ler. Com três regras a mais, isso vira uma escada. O retorno antecipado mantém tudo no mesmo nível de indentação.
+
+> Repare no `.equals()`: comparar a senha com `==` funcionaria nos seus testes com texto escrito no código e falharia com a senha vinda de um formulário. É exatamente a armadilha do módulo de Condicionais.
+
+## A ordem também importa aqui
+
+`"1234"` é curta **e** óbvia. Como a checagem de tamanho vem primeiro, a resposta é `Senha muito curta`. Se a regra de negócio exigir outra prioridade, é só reordenar os `if` — e é bom que essa decisão fique visível no código.', null, 2)
+  on conflict (id) do update set module_id = excluded.module_id, title = excluded.title,
+  subtitle = excluded.subtitle, content = excluded.content, polyglot = excluded.polyglot,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-des-02-e1', 'ja-des-02', 'Por que o retorno antecipado dispensa o `else`?',
+  null, 'multiple_choice', 'O return encerra o método na hora, então o que vem depois só roda se a condição foi falsa',
+  '["O return encerra o método na hora, então o que vem depois só roda se a condição foi falsa","Porque o Java proíbe else dentro de métodos que devolvem String","Porque o compilador insere o else automaticamente","Não dispensa: o else é obrigatório"]'::jsonb, null, null,
+  'Saindo do método dentro do `if`, o código seguinte já é, na prática, o "senão". Isso mantém tudo no mesmo nível de indentação em vez de virar uma escada de blocos aninhados.', 40, 1)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-des-02-e2', 'ja-des-02', 'Complete a comparação correta do conteúdo da senha:
+
+~~~java
+if (senha.______("12345678")) {
+    return "Senha óbvia demais";
+}
+~~~',
+  null, 'fill_blank', 'equals',
+  null, null, 'Comparar texto com `==` é a armadilha clássica do Java.',
+  '`.equals()` compara o conteúdo. Com `==`, o teste passaria nos seus experimentos (texto escrito no código) e falharia com a senha vinda de um formulário.', 35, 2)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.lessons (id, module_id, title, subtitle, content, polyglot, order_index) values ('ja-des-03', 'java-desafios', 'Percorrer e resumir', 'Maior, menor e média numa passagem', '## O problema
+
+De uma lista de notas, obter a maior e a média.
+
+~~~java
+double[] notas = {7.0, 9.5, 4.0, 8.5};
+
+double maior = notas[0];
+double soma = 0;
+
+for (double nota : notas) {
+    soma += nota;
+    if (nota > maior) {
+        maior = nota;
+    }
+}
+
+System.out.println("Maior: " + maior);
+System.out.println("Média: " + soma / notas.length);
+~~~
+
+~~~text
+Maior: 9.5
+Média: 7.25
+~~~
+
+Uma passagem só, dois acumuladores: `soma` começando em 0 e `maior` começando **no primeiro elemento**. Percorrer a lista duas vezes daria o mesmo resultado e faria o dobro do trabalho.
+
+## As três armadilhas deste exercício
+
+**1. `maior` começando em zero.** Funciona com notas, que são positivas. Com temperaturas negativas, o maior de `{-5, -2}` sairia `0` — um valor que nem está na lista.
+
+**2. Divisão inteira.** Se as notas fossem `int`, `soma / notas.length` truncaria a média. Aqui `notas` é `double[]`, então a divisão já sai decimal. Com inteiros, seria preciso `(double) soma / notas.length`.
+
+**3. Lista vazia.** `notas[0]` lança `ArrayIndexOutOfBoundsException` e a divisão por `length` zero daria problema. Código de produção começa perguntando:
+
+~~~java
+if (notas.length == 0) {
+    System.out.println("Sem notas para resumir");
+    return;
+}
+~~~
+
+> Vale a pena ficar com o hábito: toda vez que você escrever `[0]` ou dividir por um tamanho, pergunte-se o que acontece se a coleção estiver vazia. É o caso que os testes esquecem e o usuário encontra.
+
+## Formatando a saída
+
+`7.25` já sai legível, mas `7.333333333333333` não. Para duas casas:
+
+~~~java
+System.out.printf("Média: %.2f%n", soma / notas.length);
+~~~
+
+O `%.2f` formata com duas casas decimais e o `%n` pula a linha.', null, 3)
+  on conflict (id) do update set module_id = excluded.module_id, title = excluded.title,
+  subtitle = excluded.subtitle, content = excluded.content, polyglot = excluded.polyglot,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-des-03-e1', 'ja-des-03', 'Um método calcula a média de um `int[]` com `soma / notas.length`, e a média sai sempre sem casas decimais. Por quê?',
+  null, 'multiple_choice', 'Divisão entre dois inteiros devolve inteiro; falta converter, como em `(double) soma / notas.length`',
+  '["Divisão entre dois inteiros devolve inteiro; falta converter, como em `(double) soma / notas.length`","O método length devolve texto","Porque a variável soma precisa ser final","Porque arrays não podem ser divididos"]'::jsonb, null, null,
+  '`soma` e `length` são `int`, então o resultado é truncado antes mesmo de ser atribuído. Basta um dos lados virar `double` para a divisão sair decimal.', 40, 1)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-des-03-e2', 'ja-des-03', 'Ao resumir uma lista, qual caso costuma ser esquecido e quebra o programa em produção?',
+  null, 'multiple_choice', 'A lista vazia: `notas[0]` lança exceção e a divisão pelo tamanho zero não faz sentido',
+  '["A lista vazia: `notas[0]` lança exceção e a divisão pelo tamanho zero não faz sentido","A lista com um único elemento","A lista já ordenada","A lista com elementos repetidos"]'::jsonb, null, null,
+  'Sempre que você escrever `[0]` ou dividir por um tamanho, pergunte o que acontece com a coleção vazia. É o caso que passa pelos testes escritos à mão e aparece com dado real.', 40, 2)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+
+insert into public.modules (id, language_id, title, description, icon, order_index) values ('java-projeto-final', 'java', 'Projeto Final', 'Um boletim de turma completo, montado por etapas com tudo o que a trilha ensinou.', '🏁', 9)
+  on conflict (id) do update set language_id = excluded.language_id, title = excluded.title,
+  description = excluded.description, icon = excluded.icon, order_index = excluded.order_index;
+insert into public.lessons (id, module_id, title, subtitle, content, polyglot, order_index) values ('ja-proj-01', 'java-projeto-final', 'A regra de negócio', 'Um método que decide a situação', '## O projeto
+
+Um boletim: para cada aluno, a média das duas notas e a situação — **Aprovado** (média ≥ 7), **Recuperação** (≥ 5) ou **Reprovado**.
+
+Vamos montar em duas etapas. Primeiro a decisão, isolada num método.
+
+## A regra sozinha
+
+~~~java
+static String situacao(double media) {
+    if (media >= 7) {
+        return "Aprovado";
+    }
+    if (media >= 5) {
+        return "Recuperação";
+    }
+    return "Reprovado";
+}
+~~~
+
+~~~java
+System.out.println(situacao(8.0));
+System.out.println(situacao(6.0));
+System.out.println(situacao(3.0));
+~~~
+
+~~~text
+Aprovado
+Recuperação
+Reprovado
+~~~
+
+Repare no que este método **não** faz: ele não imprime nada. Ele devolve o texto e deixa quem chamou decidir o destino — tela, arquivo, tela de outro sistema.
+
+> Essa separação é o que permite testar a regra sem olhar para a saída, e reaproveitá-la na etapa seguinte sem alterar uma linha. Método que calcula **e** imprime serve para um lugar só.
+
+## Por que a ordem funciona
+
+A cadeia começa pela faixa mais alta. Com `media = 8`, o primeiro `return` já sai. Com `media = 6`, o primeiro teste falha e o segundo pega. O último `return` é o "caso restante" — e como `return` encerra o método, nenhum `else` é necessário.
+
+Invertida, a cadeia classificaria tudo errado, exatamente como no módulo de Condicionais.
+
+## Onde o método mora
+
+~~~java
+public class Boletim {
+
+    static String situacao(double media) {
+        // ...
+    }
+
+    public static void main(String[] args) {
+        System.out.println(situacao(8.0));
+    }
+}
+~~~
+
+Dentro da classe, fora do `main`, e `static` — porque o `main` também é.', null, 1)
+  on conflict (id) do update set module_id = excluded.module_id, title = excluded.title,
+  subtitle = excluded.subtitle, content = excluded.content, polyglot = excluded.polyglot,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-proj-01-e1', 'ja-proj-01', 'Complete o tipo de retorno do método que devolve a situação do aluno:
+
+~~~java
+static ______ situacao(double media) {
+    if (media >= 7) {
+        return "Aprovado";
+    }
+    return "Reprovado";
+}
+~~~',
+  null, 'fill_blank', 'String',
+  null, null, 'O que ele devolve é texto — e em Java o tipo começa com maiúscula.',
+  '`String` com S maiúsculo, porque é uma classe e não um primitivo. O tipo declarado precisa bater com o que todos os `return` entregam.', 35, 1)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-proj-01-e2', 'ja-proj-01', 'Por que o método `situacao` devolve o texto em vez de imprimi-lo direto?',
+  null, 'multiple_choice', 'Devolvendo, quem chamou decide o que fazer com o resultado — e o método serve para tela, arquivo ou relatório',
+  '["Devolvendo, quem chamou decide o que fazer com o resultado — e o método serve para tela, arquivo ou relatório","Porque System.out.println não funciona dentro de métodos","Porque métodos static não podem imprimir","Porque imprimir dentro do método causa erro de compilação"]'::jsonb, null, null,
+  'Um método que calcula e imprime só serve para um destino. Separando a decisão da apresentação, a mesma regra é reaproveitada na etapa seguinte sem nenhuma alteração.', 35, 2)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.lessons (id, module_id, title, subtitle, content, polyglot, order_index) values ('ja-proj-02', 'java-projeto-final', 'O relatório da turma', 'Percorrer, calcular e fechar', '## Os dados
+
+Cada aluno tem nome e duas notas. Com o que a trilha cobriu, um array de arrays resolve:
+
+~~~java
+String[] nomes = {"Ana", "Luiz", "Kauan"};
+double[][] notas = {
+    {7.0, 9.0},
+    {4.0, 5.0},
+    {6.0, 6.0},
+};
+~~~
+
+`double[][]` é um array de arrays: `notas[0]` é `{7.0, 9.0}`, e `notas[0][1]` é `9.0`.
+
+> Num sistema de verdade você criaria uma **classe** `Aluno` com nome e notas, e teria um `Aluno[]`. É o próximo assunto depois desta trilha — e o motivo de o Java existir do jeito que existe.
+
+## Uma linha por aluno
+
+~~~java
+for (int i = 0; i < nomes.length; i++) {
+    double media = (notas[i][0] + notas[i][1]) / 2;
+    System.out.println(nomes[i] + ": média " + media + " - " + situacao(media));
+}
+~~~
+
+~~~text
+Ana: média 8.0 - Aprovado
+Luiz: média 4.5 - Reprovado
+Kauan: média 6.0 - Recuperação
+~~~
+
+Aqui o `for` com índice é o certo, e não o for-each: são **duas** listas percorridas em paralelo, e o `i` liga o nome às notas.
+
+## O fechamento
+
+Dois acumuladores, do módulo de Repetições:
+
+~~~java
+double somaDasMedias = 0;
+int aprovados = 0;
+
+for (int i = 0; i < nomes.length; i++) {
+    double media = (notas[i][0] + notas[i][1]) / 2;
+    System.out.println(nomes[i] + ": média " + media + " - " + situacao(media));
+
+    somaDasMedias += media;
+    if (situacao(media).equals("Aprovado")) {
+        aprovados++;
+    }
+}
+
+System.out.println("---");
+System.out.printf("Média da turma: %.2f%n", somaDasMedias / nomes.length);
+System.out.println("Aprovados: " + aprovados + " de " + nomes.length);
+~~~
+
+~~~text
+Ana: média 8.0 - Aprovado
+Luiz: média 4.5 - Reprovado
+Kauan: média 6.0 - Recuperação
+---
+Média da turma: 6.17
+Aprovados: 1 de 3
+~~~
+
+## O que este programa junta
+
+| Da trilha | Onde aparece |
+| --- | --- |
+| classe e `main` | a estrutura toda |
+| tipos e conversão | `double`, a média decimal |
+| `if / else if` em ordem | dentro de `situacao` |
+| `for` com índice | percorrer duas listas juntas |
+| acumuladores | soma das médias e contagem |
+| métodos com `return` | `situacao` isolada |
+| arrays | nomes e notas |
+| `.equals()` | comparar a situação |
+
+Repare no `.equals()` na comparação da situação: com `==` funcionaria por acidente — os textos vêm de literais dentro do método — e quebraria assim que a situação passasse a vir de um banco de dados.
+
+## Um passo além
+
+Se quiser continuar por conta própria: troque os dois arrays por uma `ArrayList` de uma classe `Aluno`, e o `aprovados++` por um `HashMap<String, Integer>` contando quantos há em cada situação. Os dois módulos anteriores já deram as ferramentas.', null, 2)
+  on conflict (id) do update set module_id = excluded.module_id, title = excluded.title,
+  subtitle = excluded.subtitle, content = excluded.content, polyglot = excluded.polyglot,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-proj-02-e1', 'ja-proj-02', 'Por que percorrer com `for (int i = 0; ...)` em vez de for-each neste relatório?',
+  null, 'multiple_choice', 'São duas listas percorridas em paralelo, e o índice liga o nome às notas',
+  '["São duas listas percorridas em paralelo, e o índice liga o nome às notas","O for-each não funciona com double","Porque o for-each não permite calcular médias","Porque arrays não aceitam for-each"]'::jsonb, null, null,
+  'O for-each entrega o valor, mas não a posição. Com `nomes` e `notas` separados, é o `i` que garante que a nota corresponde ao nome certo.', 40, 1)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+insert into public.exercises (id, lesson_id, prompt, starter_code, validation_type,
+  expected_answer, options, stdin, hint, explanation, xp_reward, order_index) values (
+  'ja-proj-02-e2', 'ja-proj-02', 'Complete o formato que imprime a média da turma com duas casas decimais:
+
+~~~java
+System.out.printf("Média da turma: ______%n", somaDasMedias / nomes.length);
+~~~',
+  null, 'fill_blank', '%.2f',
+  null, null, 'Começa com % e termina com f, de "float". O número no meio é a quantidade de casas.',
+  '`%.2f` formata um decimal com duas casas. Sem isso, uma média como `6.166666666666667` sairia inteira na tela. O `%n` no fim pula a linha.', 40, 2)
+  on conflict (id) do update set lesson_id = excluded.lesson_id, prompt = excluded.prompt,
+  starter_code = excluded.starter_code, validation_type = excluded.validation_type,
+  expected_answer = excluded.expected_answer, options = excluded.options, stdin = excluded.stdin,
+  hint = excluded.hint, explanation = excluded.explanation, xp_reward = excluded.xp_reward,
+  order_index = excluded.order_index;
+
 -- Conquistas ---------------------------------------------------------------
 insert into public.achievements (id, title, description, icon, criteria) values ('primeiro-desafio', 'Primeiro desafio concluído', 'Você resolveu sua primeira lição no CodeQuest.', '🎯', '{"kind":"first_lesson"}'::jsonb)
   on conflict (id) do update set title = excluded.title, description = excluded.description,
@@ -5677,6 +8771,33 @@ insert into public.achievements (id, title, description, icon, criteria) values 
   on conflict (id) do update set title = excluded.title, description = excluded.description,
   icon = excluded.icon, criteria = excluded.criteria;
 insert into public.achievements (id, title, description, icon, criteria) values ('trilha-javascript', 'Trilha de JavaScript concluída', 'Você terminou os sete módulos da trilha de JavaScript. A web é sua.', '🟨', '{"kind":"language_completed","languageSlug":"javascript"}'::jsonb)
+  on conflict (id) do update set title = excluded.title, description = excluded.description,
+  icon = excluded.icon, criteria = excluded.criteria;
+insert into public.achievements (id, title, description, icon, criteria) values ('java-modulo-fundamentos', 'public static void main', 'Você concluiu todo o módulo 🐣 Fundamentos da trilha de Java.', '🐣', '{"kind":"module_completed","moduleId":"java-fundamentos"}'::jsonb)
+  on conflict (id) do update set title = excluded.title, description = excluded.description,
+  icon = excluded.icon, criteria = excluded.criteria;
+insert into public.achievements (id, title, description, icon, criteria) values ('java-modulo-variaveis', 'Tipado na veia', 'Você concluiu todo o módulo 📦 Variáveis e sabe por que o tipo vem antes do nome.', '📦', '{"kind":"module_completed","moduleId":"java-variaveis"}'::jsonb)
+  on conflict (id) do update set title = excluded.title, description = excluded.description,
+  icon = excluded.icon, criteria = excluded.criteria;
+insert into public.achievements (id, title, description, icon, criteria) values ('java-modulo-condicionais', 'Time do .equals()', 'Você concluiu todo o módulo 🔀 Condicionais e nunca mais compara texto com ==.', '🔀', '{"kind":"module_completed","moduleId":"java-condicionais"}'::jsonb)
+  on conflict (id) do update set title = excluded.title, description = excluded.description,
+  icon = excluded.icon, criteria = excluded.criteria;
+insert into public.achievements (id, title, description, icon, criteria) values ('java-modulo-repeticoes', 'For de três partes', 'Você concluiu todo o módulo 🔁 Repetições da trilha de Java.', '🔁', '{"kind":"module_completed","moduleId":"java-repeticoes"}'::jsonb)
+  on conflict (id) do update set title = excluded.title, description = excluded.description,
+  icon = excluded.icon, criteria = excluded.criteria;
+insert into public.achievements (id, title, description, icon, criteria) values ('java-modulo-listas', 'Array e ArrayList', 'Você concluiu todo o módulo 📋 Listas da trilha de Java.', '📋', '{"kind":"module_completed","moduleId":"java-listas"}'::jsonb)
+  on conflict (id) do update set title = excluded.title, description = excluded.description,
+  icon = excluded.icon, criteria = excluded.criteria;
+insert into public.achievements (id, title, description, icon, criteria) values ('java-modulo-mapas', 'Dono do HashMap', 'Você concluiu todo o módulo 🗂️ Mapas da trilha de Java.', '🗂️', '{"kind":"module_completed","moduleId":"java-mapas"}'::jsonb)
+  on conflict (id) do update set title = excluded.title, description = excluded.description,
+  icon = excluded.icon, criteria = excluded.criteria;
+insert into public.achievements (id, title, description, icon, criteria) values ('java-modulo-metodos', 'Assinatura completa', 'Você concluiu todo o módulo ⚙️ Métodos da trilha de Java.', '⚙️', '{"kind":"module_completed","moduleId":"java-metodos"}'::jsonb)
+  on conflict (id) do update set title = excluded.title, description = excluded.description,
+  icon = excluded.icon, criteria = excluded.criteria;
+insert into public.achievements (id, title, description, icon, criteria) values ('java-modulo-desafios', 'FizzBuzz sem medo', 'Você concluiu todo o módulo 🧩 Desafios da trilha de Java.', '🧩', '{"kind":"module_completed","moduleId":"java-desafios"}'::jsonb)
+  on conflict (id) do update set title = excluded.title, description = excluded.description,
+  icon = excluded.icon, criteria = excluded.criteria;
+insert into public.achievements (id, title, description, icon, criteria) values ('trilha-java', 'Trilha de Java concluída', 'Você terminou os nove módulos da trilha de Java. Bem-vindo ao mercado corporativo.', '☕', '{"kind":"language_completed","languageSlug":"java"}'::jsonb)
   on conflict (id) do update set title = excluded.title, description = excluded.description,
   icon = excluded.icon, criteria = excluded.criteria;
 insert into public.achievements (id, title, description, icon, criteria) values ('desafio-primeiro', 'Primeiro desafio do dia', 'Você concluiu o seu primeiro desafio diário.', '📅', '{"kind":"daily_challenges","count":1}'::jsonb)

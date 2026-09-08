@@ -5,8 +5,8 @@ cada atualização acrescentou.
 
 | | |
 | --- | --- |
-| **Versão atual** | `v1.11.2` |
-| **Última atualização** | 01/09/2026 |
+| **Versão atual** | `v1.12` |
+| **Última atualização** | 07/09/2026 |
 | **Migração mais recente** | `0015_conquistas_no_perfil_publico.sql` |
 | **PDF** | [`CodeQuest-Versoes.pdf`](CodeQuest-Versoes.pdf) — gerado por `npm run doc:pdf` |
 
@@ -50,10 +50,10 @@ Três decisões atravessam o projeto inteiro:
 
 | | |
 | --- | --- |
-| Linguagens no catálogo | **5** (Python e JavaScript com trilha completa) |
-| Lições | **58** — Python 32, JavaScript 26 |
-| Exercícios | **116** — Python 62, JavaScript 54 |
-| Conquistas | **45** |
+| Linguagens no catálogo | **5** (Python, JavaScript e Java com trilha completa) |
+| Lições | **92** — Python 32, JavaScript 26, Java 34 |
+| Exercícios | **184** — Python 62, JavaScript 54, Java 68 |
+| Conquistas | **54** |
 | Tags de perfil | **22** |
 | Perguntas do duelo | **88** — JS 40, Python 12, Java 10, geral 10, C# 8, C++ 8 |
 | Telas | **14** rotas |
@@ -71,12 +71,17 @@ Três decisões atravessam o projeto inteiro:
   Dicionários → Funções → Desafios → Projeto Final.
 - **JavaScript, 7 módulos**: Fundamentos → Variáveis → Condicionais → Repetições → Funções →
   Desafios → Projeto Final.
+- **Java, 9 módulos**: Fundamentos → Variáveis → Condicionais → Repetições → Listas → Mapas →
+  Métodos → Desafios → Projeto Final.
 - Cada lição tem **teoria escrita**, exemplos e exercícios; o módulo N só abre com o N−1 inteiro
   concluído, e a rota `/licao/[id]` valida esse bloqueio (não adianta digitar a URL).
 - Três tipos de exercício: **múltipla escolha**, **resposta digitada** e **código executado de
   verdade**.
 - **Python roda no próprio aparelho** via Pyodide; **JavaScript roda num Web Worker** com o motor do
   próprio navegador. Nenhum serviço externo, nenhum custo por requisição, funciona offline.
+- **Java não tem motor** — rodá-lo exigiria uma JVM, que no navegador só viria de um serviço externo,
+  e serviço externo cobra por requisição. A trilha de Java usa **múltipla escolha** para o conceito e
+  **completar** para a sintaxe, onde o aluno digita a palavra exata que o compilador cobraria.
 - O worker de JavaScript tem `fetch`, `XMLHttpRequest`, `WebSocket`, `importScripts`, `indexedDB`,
   `caches` e `Worker` removidos antes de rodar o código do aluno; laço infinito morre por
   `terminate()`.
@@ -86,7 +91,7 @@ Três decisões atravessam o projeto inteiro:
   resolveu certo.
 - As **alternativas são embaralhadas** por aluno, tanto na trilha quanto no duelo.
 - As soluções de referência são executadas de verdade nos testes: **44/44 em Python, 33/33 em
-  JavaScript**.
+  JavaScript**. Java não entra aqui: sem motor, não há saída para conferir.
 
 ### 3.2 Gamificação
 
@@ -94,7 +99,7 @@ Três decisões atravessam o projeto inteiro:
 - **12 títulos de nível**, de Iniciante (1) a Mito (50): Iniciante, Aprendiz, Programador,
   Engenheiro, Arquiteto, Veterano, Mestre, Grão-mestre, Lenda do código, Lenda viva, Fenômeno, Mito.
 - **Streak** por data local: estudou ontem soma 1, pulou um dia volta pra 1.
-- **45 conquistas**, avaliadas a cada conclusão, com cartão animado no desbloqueio.
+- **54 conquistas**, avaliadas a cada conclusão, com cartão animado no desbloqueio.
 - **22 tags** de perfil, incluindo quatro **secretas** e a tag exclusiva **Desenvolvedor/Dono**,
   atribuída só por campo direto no banco.
 - **Ranking** por XP, com aba Global e aba Amigos.
@@ -184,6 +189,50 @@ Mais `content:check` (integridade do currículo), `content:verify-python` e `con
 ## 4. Histórico de versões
 
 *Da mais recente para a mais antiga.*
+
+---
+
+### v1.12 — 07/09/2026 · a trilha de Java, inteira
+
+**Nova — 9 módulos, 34 lições, 68 exercícios**
+
+Fundamentos → Variáveis → Condicionais → Repetições → Listas → Mapas → Métodos → Desafios →
+Projeto Final. Mesma estrutura da trilha de Python, com o que Java tem de próprio: classe e `main`,
+tipagem estática, `ArrayList`, `HashMap` e sobrecarga de métodos.
+
+**A decisão que moldou a trilha: Java não tem motor de execução**
+
+Python roda via Pyodide e JavaScript pelo motor do próprio navegador. Java precisaria de uma **JVM**,
+que no navegador só viria de um serviço externo — e serviço externo cobra por requisição, o que
+quebra a regra de custo zero do projeto.
+
+A arquitetura já previa isso: `runtimeDaLinguagem` devolve `null` para Java, e a interface
+simplesmente não oferece exercício de código. Então a trilha usa dois tipos de exercício:
+
+- **múltipla escolha** para o conceito ("por que isso dá erro?");
+- **completar** para a sintaxe, onde o aluno **digita** a palavra exata — `println`, `equals`,
+  `getOrDefault`, `%.2f`. É o que mantém a trilha com as mãos no teclado.
+
+Nenhum serviço externo foi adicionado, e nada mudou no custo do projeto.
+
+**O que a trilha ensina que as outras não ensinavam**
+
+Java expõe assuntos que Python e JavaScript escondem, e as lições se apoiam neles:
+
+- **compilação × execução** — tipo errado é pego antes de rodar; índice fora do array, só durante;
+- **`==` × `.equals()`** — a armadilha mais famosa da linguagem, com o detalhe cruel de o `==`
+  *parecer* funcionar com texto escrito no código e falhar com texto vindo de um formulário;
+- **divisão inteira**, `null` em posição de array não preenchida, `break` esquecido no `switch`,
+  `ConcurrentModificationException` ao remover durante um for-each.
+
+**Verificado no navegador**
+
+Java é a primeira trilha sem motor, e a interface toda tinha sido construída em cima de trilhas que
+têm editor, terminal e botão "Executar". Um teste percorre as **34 lições**, responde os **68
+exercícios** e confere que nenhuma tela oferece editor ou "Executar", e que nada quebra no console.
+
+**SQL:** nenhuma migração nova — o conteúdo entra pelo `seed.sql`, que é idempotente. Java passou a
+`available: true` no catálogo.
 
 ---
 

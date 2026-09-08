@@ -207,6 +207,76 @@ export const achievements: AchievementDefinition[] = [
     icon: '🟨',
     criteria: { kind: 'language_completed', languageSlug: 'javascript' },
   },
+
+  /* ---------------------------------------------------------------------
+   * Trilha de Java
+   *
+   * Mesma estrutura das outras duas: uma medalha por modulo (menos o projeto
+   * final, coberto pela medalha da trilha inteira).
+   * ------------------------------------------------------------------ */
+  {
+    id: 'java-modulo-fundamentos',
+    title: 'public static void main',
+    description: 'Você concluiu todo o módulo 🐣 Fundamentos da trilha de Java.',
+    icon: '🐣',
+    criteria: { kind: 'module_completed', moduleId: 'java-fundamentos' },
+  },
+  {
+    id: 'java-modulo-variaveis',
+    title: 'Tipado na veia',
+    description: 'Você concluiu todo o módulo 📦 Variáveis e sabe por que o tipo vem antes do nome.',
+    icon: '📦',
+    criteria: { kind: 'module_completed', moduleId: 'java-variaveis' },
+  },
+  {
+    id: 'java-modulo-condicionais',
+    title: 'Time do .equals()',
+    description: 'Você concluiu todo o módulo 🔀 Condicionais e nunca mais compara texto com ==.',
+    icon: '🔀',
+    criteria: { kind: 'module_completed', moduleId: 'java-condicionais' },
+  },
+  {
+    id: 'java-modulo-repeticoes',
+    title: 'For de três partes',
+    description: 'Você concluiu todo o módulo 🔁 Repetições da trilha de Java.',
+    icon: '🔁',
+    criteria: { kind: 'module_completed', moduleId: 'java-repeticoes' },
+  },
+  {
+    id: 'java-modulo-listas',
+    title: 'Array e ArrayList',
+    description: 'Você concluiu todo o módulo 📋 Listas da trilha de Java.',
+    icon: '📋',
+    criteria: { kind: 'module_completed', moduleId: 'java-listas' },
+  },
+  {
+    id: 'java-modulo-mapas',
+    title: 'Dono do HashMap',
+    description: 'Você concluiu todo o módulo 🗂️ Mapas da trilha de Java.',
+    icon: '🗂️',
+    criteria: { kind: 'module_completed', moduleId: 'java-mapas' },
+  },
+  {
+    id: 'java-modulo-metodos',
+    title: 'Assinatura completa',
+    description: 'Você concluiu todo o módulo ⚙️ Métodos da trilha de Java.',
+    icon: '⚙️',
+    criteria: { kind: 'module_completed', moduleId: 'java-metodos' },
+  },
+  {
+    id: 'java-modulo-desafios',
+    title: 'FizzBuzz sem medo',
+    description: 'Você concluiu todo o módulo 🧩 Desafios da trilha de Java.',
+    icon: '🧩',
+    criteria: { kind: 'module_completed', moduleId: 'java-desafios' },
+  },
+  {
+    id: 'trilha-java',
+    title: 'Trilha de Java concluída',
+    description: 'Você terminou os nove módulos da trilha de Java. Bem-vindo ao mercado corporativo.',
+    icon: '☕',
+    criteria: { kind: 'language_completed', languageSlug: 'java' },
+  },
   /* ---------------------------------------------------------------------
    * Desafios diarios - a mesma progressao 1 / 10 / 50 / 100 do duelo
    * ------------------------------------------------------------------ */
