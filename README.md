@@ -11,7 +11,7 @@ A mesma base de código roda em **quatro formatos**:
 
 | Formato | Tecnologia | Arquivo gerado |
 | --- | --- | --- |
-| 🌐 Site | Next.js na Vercel | — |
+| 🌐 Site | Next.js na Vercel | `Site: code-quest-three-orpin.vercel.app` |
 | 🤖 Android | Capacitor | `codequest.apk` |
 | 🪟 Windows | Tauri | `CodeQuest_1.0.0_x64-setup.exe` |
 | 🐧 Linux | Tauri | `.AppImage` e `.deb` |
